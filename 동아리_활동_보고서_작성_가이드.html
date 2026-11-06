@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>과학동아리 [코스모스] 탐구 보고서 작성 가이드</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMath()"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    
+    * {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    }
+    
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Print styling for direct report form export */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-page {
+        page-break-after: always;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
+        border: 1px solid #111 !important;
+        margin: 0 0 20px 0 !important;
+        padding: 25px !important;
+      }
+    }
+
+    .report-table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .report-table th, .report-table td {
+      border: 1px solid #374151;
+      padding: 10px 14px;
+      vertical-align: top;
+    }
+    .report-table th {
+      background-color: #f3f4f6;
+      font-weight: 600;
+      color: #111827;
+      text-align: center;
+    }
+    .dark .report-table th {
+      background-color: #1e293b;
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+    .dark .report-table td {
+      border-color: #334155;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER (No print) -->
+  <header class="no-print border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i data-lucide="atom" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-white flex items-center gap-2">
+            과학동아리 <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-400">[코스모스]</span>
+            <span class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">2026학년도 공식 양식 대응</span>
+          </h1>
+          <p class="text-xs text-slate-400">8대 실험 탐구 보고서 올인원 작성 가이드 & 양식 생성기</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          양식 인쇄 (A4)
+        </button>
+        <button onclick="copyCurrentFullReport()" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
+          <i data-lucide="copy" class="w-4 h-4"></i>
+          보고서 전문 복사
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8">
+    
+    <!-- LEFT SIDEBAR: EXPERIMENT SELECTION (No print) -->
+    <aside class="no-print w-full lg:w-72 shrink-0 space-y-4">
+      
+      <!-- Key Rules Card -->
+      <div class="bg-gradient-to-br from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center gap-2 text-indigo-400 font-bold text-sm mb-2">
+          <i data-lucide="award" class="w-4 h-4"></i>
+          <span>보고서 평가 핵심 감점 방지 3원칙</span>
+        </div>
+        <ul class="text-xs space-y-2 text-slate-300">
+          <li class="flex items-start gap-1.5">
+            <span class="text-indigo-400 font-bold">1.</span>
+            <span><strong>결론 딱 3줄 규칙</strong>: 조건 ➔ 정량수치 ➔ 물리법칙 도출</span>
+          </li>
+          <li class="flex items-start gap-1.5">
+            <span class="text-purple-400 font-bold">2.</span>
+            <span><strong>결과 3단 콤보</strong>: 한계점 ➔ 보완연구 ➔ 실제 활용방안</span>
+          </li>
+          <li class="flex items-start gap-1.5">
+            <span class="text-pink-400 font-bold">3.</span>
+            <span><strong>느낀점 딱 3줄 규칙</strong>: 단순 감상 배제, 오차 극복과 진로 다짐</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Navigation list of 8+1 experiments -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3 shadow-lg">
+        <div class="text-xs font-semibold text-slate-400 px-3 py-2 uppercase tracking-wider flex items-center justify-between">
+          <span>탐구 실험 선택</span>
+          <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">9개 모듈</span>
+        </div>
+        <div class="space-y-1 mt-1" id="expNavList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Career Linking Guide -->
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 text-xs text-slate-400 space-y-2">
+        <div class="font-semibold text-slate-300 flex items-center gap-1.5">
+          <i data-lucide="compass" class="w-4 h-4 text-cyan-400"></i>
+          <span>희망 진로 매칭 팁</span>
+        </div>
+        <p>각 실험 카드에 <strong class="text-slate-200">추천 진로</strong>와 <strong class="text-slate-200">확장 탐구 수식</strong>이 탑재되어 있습니다. 자신의 세특 방향성에 맞춰 문장을 응용하세요.</p>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT CONTENT: REPORT VIEW & DETAILS -->
+    <section class="flex-1 min-w-0 space-y-6">
+
+      <!-- TOP INFO BANNER (No print) -->
+      <div class="no-print bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span id="currentTag" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">실험 1</span>
+            <span id="currentCategory" class="text-xs text-slate-400 font-medium">항공/유체역학</span>
+          </div>
+          <h2 id="currentTitle" class="text-xl font-bold text-white tracking-tight"></h2>
+          <p id="currentCareer" class="text-xs text-cyan-400 mt-1 flex items-center gap-1">
+            <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+            <span>추천 진로: 항공우주공학, 기계공학, 물리학</span>
+          </p>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button id="viewToggleBtn" onclick="toggleViewMode()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+            <i data-lucide="layout-template" class="w-4 h-4 text-indigo-400"></i>
+            <span id="viewModeText">양식 미리보기 모드</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW MODE A: ACTUAL REPORT FORM (양식 2페이지 그대로) -->
+      <div id="paperReportContainer" class="space-y-8">
+        
+        <!-- PAGE 1 OF REPORT FORM -->
+        <div class="print-page bg-white text-slate-900 p-8 sm:p-12 rounded-2xl shadow-2xl border border-slate-200 relative">
+          <!-- Page Tag for screen -->
+          <div class="no-print absolute top-3 right-4 text-[11px] font-mono font-bold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+            [보고서 1페이지]
+          </div>
+
+          <!-- Header -->
+          <div class="text-right text-[11px] text-slate-500 font-medium mb-3">
+            2026학년도 동아리 활동 보고서
+          </div>
+          <div class="text-center font-bold text-2xl tracking-widest text-slate-900 mb-6 pb-2 border-b-2 border-slate-900">
+            동아리 활동 탐구 보고서
+          </div>
+
+          <!-- Table 1: Meta & Body -->
+          <table class="report-table text-xs">
+            <colgroup>
+              <col style="width: 22%;">
+              <col style="width: 28%;">
+              <col style="width: 22%;">
+              <col style="width: 28%;">
+            </colgroup>
+            <tbody>
+              <tr>
+                <th>학번</th>
+                <td class="font-mono font-medium text-slate-700" id="formStudentId">[본인 학번 입력]</td>
+                <th>이름</th>
+                <td class="font-medium text-slate-700" id="formStudentName">[본인 이름 입력]</td>
+              </tr>
+              <tr>
+                <th>희망 진로 및 학과</th>
+                <td colspan="3" class="font-semibold text-indigo-700" id="formCareerTarget"></td>
+              </tr>
+              <tr>
+                <th>탐구 주제</th>
+                <td colspan="3" class="font-bold text-slate-900 text-sm leading-snug" id="formTopicTitle"></td>
+              </tr>
+              <tr>
+                <th>활동 팀명</th>
+                <td class="font-medium">코스모스 (COSMOS)</td>
+                <th>팀에서 맡은 역할</th>
+                <td class="font-medium" id="formRole">실험 장치 제작 및 정량 데이터 분석 총괄</td>
+              </tr>
+              <tr>
+                <th>활동(탐구) 동기</th>
+                <td colspan="3" class="leading-relaxed text-slate-800 text-[13px] py-4 whitespace-pre-line" id="formMotivation"></td>
+              </tr>
+              <tr>
+                <th style="height: 240px;" class="align-middle">활동(탐구) 내용<br><span class="text-[10px] text-slate-500 font-normal">(1페이지)</span></th>
+                <td colspan="3" class="leading-relaxed text-slate-800 text-[13px] py-4 whitespace-pre-line" id="formContentPart1"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="text-center text-xs text-slate-400 mt-6 font-mono">
+            - 1 -
+          </div>
+        </div>
+
+        <!-- PAGE 2 OF REPORT FORM -->
+        <div class="print-page bg-white text-slate-900 p-8 sm:p-12 rounded-2xl shadow-2xl border border-slate-200 relative">
+          <!-- Page Tag for screen -->
+          <div class="no-print absolute top-3 right-4 text-[11px] font-mono font-bold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+            [보고서 2페이지]
+          </div>
+
+          <!-- Header -->
+          <div class="text-right text-[11px] text-slate-500 font-medium mb-3">
+            2026학년도 동아리 활동 보고서
+          </div>
+
+          <!-- Table 2: Continuing Body, Summary, Results, Extension, Reflection -->
+          <table class="report-table text-xs">
+            <colgroup>
+              <col style="width: 24%;">
+              <col style="width: 76%;">
+            </colgroup>
+            <tbody>
+              <tr>
+                <th style="height: 180px;" class="align-middle">활동(탐구) 내용<br><span class="text-[10px] text-slate-500 font-normal">(이어서)</span></th>
+                <td class="leading-relaxed text-slate-800 text-[13px] py-3.5 whitespace-pre-line" id="formContentPart2"></td>
+              </tr>
+              <tr>
+                <th>탐구 요약<br><span class="text-[10px] text-red-600 font-semibold">(결론/3줄 이내)</span></th>
+                <td class="leading-relaxed text-slate-900 font-medium text-[13px] py-3 bg-red-50/30 whitespace-pre-line border-l-2 border-l-red-500" id="formSummary"></td>
+              </tr>
+              <tr>
+                <th>활동(탐구) 결과<br><span class="text-[10px] text-slate-500 font-normal leading-tight">• 한계점<br>• 보완연구<br>• 활용방안</span></th>
+                <td class="leading-relaxed text-slate-800 text-[12.5px] py-3.5 whitespace-pre-line" id="formResults"></td>
+              </tr>
+              <tr>
+                <th>확장 탐구<br><span class="text-[10px] text-slate-500 font-normal">(선택사항 / 심화)</span></th>
+                <td class="leading-relaxed text-slate-800 text-[12.5px] py-3.5 bg-indigo-50/20 whitespace-pre-line" id="formExtension"></td>
+              </tr>
+              <tr>
+                <th>느낀점<br><span class="text-[10px] text-blue-600 font-semibold">(3줄 이내)</span></th>
+                <td class="leading-relaxed text-slate-900 font-medium text-[13px] py-3 bg-blue-50/30 whitespace-pre-line border-l-2 border-l-blue-500" id="formReflection"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="text-center text-xs text-slate-400 mt-6 font-mono">
+            - 2 -
+          </div>
+        </div>
+
+      </div>
+
+      <!-- VIEW MODE B: DETAILED BREAKDOWN & TIPS (대화형 분석 카드) -->
+      <div id="breakdownContainer" class="hidden space-y-6">
+        
+        <!-- Interactive Tip Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+            <h3 class="text-sm font-bold text-indigo-400 flex items-center gap-2 mb-2">
+              <i data-lucide="crosshair" class="w-4 h-4"></i>
+              핵심 물리/공학 변인 통제
+            </h3>
+            <p id="tipVariables" class="text-xs text-slate-300 leading-relaxed"></p>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+            <h3 class="text-sm font-bold text-pink-400 flex items-center gap-2 mb-2">
+              <i data-lucide="binary" class="w-4 h-4"></i>
+              수식 및 정량 공식
+            </h3>
+            <div id="tipMathFormula" class="text-xs text-slate-300 leading-relaxed font-mono"></div>
+          </div>
+        </div>
+
+        <!-- Section Copy Boxes -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
+          <h3 class="text-base font-bold text-white flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <i data-lucide="clipboard-copy" class="w-5 h-5 text-indigo-400"></i>
+              항목별 복사 클립보드
+            </span>
+            <span class="text-xs text-slate-400 font-normal">한글(HWP) 파일에 항목별로 바로 붙여넣기 하세요</span>
+          </h3>
+
+          <div class="space-y-3" id="clipSectionList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toast" class="no-print fixed bottom-6 right-6 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-2xl transform translate-y-20 opacity-0 transition duration-300 flex items-center gap-2 z-50">
+    <i data-lucide="check" class="w-4 h-4 text-emerald-300"></i>
+    <span id="toastMsg">클립보드에 복사되었습니다!</span>
+  </div>
+
+  <script>
+    // 8+1 Experiments Full Dataset (담백하고 전문적인 학생 보고서 문체)
+    const experimentsData = [
+      {
+        id: "exp-3a",
+        num: "실험 1",
+        code: "3번-A",
+        name: "종이비행기 비행 역학",
+        category: "항공우주 / 유체역학",
+        careers: "항공우주공학과, 기계공학과, 자동차공학과, 물리학과",
+        title: "무게중심(CG)과 압력중심(CP)의 상대 위치 및 승강타(Elevator) 각도에 따른 고정익 비행체의 종안정성(Longitudinal Stability) 분석",
+        motivation: "물리학Ⅰ의 '힘의 평형' 단원에서 배운 회전 모멘트 개념을 실제 비행체에 적용해보고자 함. 고정익기가 외부 외란에도 수평 활공을 유지하는 정적 세로 안정성의 조건을 확인하기 위해 무게중심 위치와 조종면 각도를 통제 변인으로 설정하여 실험을 설계함.",
+        content1: "1. 이론적 배경:\n- 비행체 4대 힘(양력 L, 중력 W, 추력 T, 항력 D)의 평형: \\(\\Sigma \\vec{F} = \\vec{L} + \\vec{W} + \\vec{T} + \\vec{D} = 0\\)\n- 정적 세로 안정성 복원 모멘트: \\(M = -C_m \\alpha\\). 무게중심(CG)이 압력중심(CP/중립점 NP) 전방에 위치해야 받음각(\\(\\alpha\\)) 증가 시 기수를 낮추는 음(-)의 피칭 모멘트가 발생하여 수평이 복원됨.\n\n2. 가설:\n- CG가 CP보다 약 10~15% 전방에 위치할 때 실속(Stall) 없이 가장 높은 활공비(L/D)를 기록할 것으로 예상함.",
+        content2: "3. 실험 변인 및 절차:\n- 독립변인: 무게중심 4단계 [기본형(CG_mid), 기수 클립 1개(CG_front), 동체 중앙(CG_center), 꼬리 클립(CG_rear)]\n- 조작변인: 날개 뒷전 승강타 플랩 1~3mm 상향 절각 및 좌우 비대칭 조절\n- 통제변인: 동일 80g A4 용지, 동일 다트형 접기, 투하 높이 1.8m, 초기 사출 각도 0도\n\n4. 측정 결과:\n- CG_front(기수 클립): 평균 활공 거리 7.4m, 실속 없는 직진 활공 확인\n- CG_rear(꼬리 클립): 평균 활공 거리 3.1m, 사출 직후 노즈업(Nose-up)에 의한 실속 후 급강하\n- 승강타 2mm 상향 절각 시 피치 다운 복원 모멘트가 적절히 형성되어 체공 시간이 1.4초 증가함.",
+        summary: "1. 고정익 종이비행기의 무게중심(CG) 위치와 승강타 각도를 조작하여 활공 궤적의 안정성을 정량 분석함.\n2. CG가 압력중심(CP)보다 기수 쪽으로 약 10~15% 전방에 위치할 때 실속 없이 최장 활공 거리(평균 7.4m)를 기록함.\n3. 고정익 비행체의 종안정성을 유지하기 위해서는 음(-)의 피칭 복원 모멘트 형성이 필수적임을 실측으로 검증함.",
+        results: "• 한계점: 인력 투척 방식으로 인해 초기 사출 속도와 각도에 미세한 오차가 발생함.\n• 보완연구: 고무줄 장력을 이용한 기계식 레일 런처를 제작하여 발사 초기 조건을 동일하게 통제할 필요가 있음.\n• 활용방안: 무인 글라이더(UAV) 및 공중 투하 센서의 적재 하중 무게중심 배치 가이드라인에 적용 가능함.",
+        extension: "• 중립점(Neutral Point, NP)과 정안정성 여유(Static Margin, SM) 수식 유도:\n\\(SM = \\frac{X_{NP} - X_{CG}}{\\bar{c}}\\)\n여기서 \\(\\bar{c}\\)는 평균공력익현. SM > 0 조건에서 비행체가 자체적인 복원 토크를 가짐을 수식으로 확인하고, 여객기와 전투기의 SM 차이(안정성 vs 기동성)를 비교 분석함.",
+        reflection: "1. 무게중심의 미세한 위치 차이가 비행체의 안정성과 실속 여부를 결정한다는 점을 데이터로 확인함.\n2. 반복 실험과 궤적 영상 분석을 통해 변인 통제의 중요성과 이론 모델의 유효 범위를 체득함.\n3. 공기역학적 효율과 제어 안정성 사이의 균형점을 설계에 반영하는 공학적 접근 방식을 학습함.",
+        formula: "\\Sigma \\vec{F} = 0, \\quad M = -C_m \\alpha, \\quad SM = \\frac{X_{NP} - X_{CG}}{\\bar{c}}"
+      },
+      {
+        id: "exp-3b",
+        num: "실험 2",
+        code: "3번-B",
+        name: "드론 회전익 4축 제어 및 외란 복원",
+        category: "로봇 / 전자제어",
+        careers: "로봇공학과, 전자전기공학과, 제어계측공학과, 컴퓨터공학과",
+        title: "쿼드콥터 드론의 로터 회전 방향별 반작용 토크 상쇄 메커니즘과 측풍 외란 시 비행제어장치(FC)의 자세 복원 특성 분석",
+        motivation: "단일 로터 헬리콥터와 달리 4개의 로터를 사용하는 쿼드콥터가 동체의 회전 없이 공중에 정지(Hovering)하는 원리를 역학적으로 규명하고자 함. 또한 바람이나 편심 하중 같은 외란이 발생했을 때 비행제어장치(FC)가 어떻게 복원 모멘트를 형성하는지 관찰하기 위해 실험을 진행함.",
+        content1: "1. 회전익 토크 상쇄 원리:\n- 4개 로터 중 대각선 쌍(1, 3번)은 CW, 다른 쌍(2, 4번)은 CCW로 회전하여 전체 요(Yaw) 축 반작용 토크를 상쇄: \\(\\Sigma \\tau_{yaw} = 0\\)\n- 롤(Roll)/피치(Pitch) 제어: 마주 보는 모터 간의 차등 RPM 제어로 양력 불균형을 발생시켜 기체를 기울임.\n\n2. 피드백 제어 구조:\n- 내장 6축 IMU 센서(가속도계/자이로)가 기체 기울기 오차를 감지하고, PID 알고리즘을 통해 각 모터 출력을 실시간으로 보정함.",
+        content2: "3. 실험 변인 및 절차:\n- 조건 1 (편심 하중): 호버링 상태에서 한쪽 모터 암에 클립(약 1g)을 부착해 하중 불균형 인가\n- 조건 2 (측풍 외란): 송풍기로 측면 풍속(2.5m/s)을 인가한 후 원래 자세 복원 시간 및 기울기 측정\n\n4. 측정 결과:\n- 편심 하중 인가 시 하중 측 모터 RPM이 즉각 상승하여 약 0.28초 내에 기울기 오차가 ±1.2도 이내로 억제됨.\n- 측풍 인가 시 기체는 바람 방향으로 약 8도 기울어진 상태(Bank)로 평형을 유지하며 호버링 위치를 지킴.",
+        summary: "1. 쿼드콥터의 4로터 토크 상쇄 메커니즘과 외란 인가 시 비행제어장치(FC)의 복원 특성을 분석함.\n2. 편심 하중 및 측풍 인가 시 FC의 차등 RPM 제어로 0.3초 이내에 자세 평형이 회복됨을 확인함.\n3. 센서 피드백을 기반으로 한 차동 추력 제어가 회전익 기체의 호버링 유지 핵심 원리임을 확인함.",
+        results: "• 한계점: 기체 내부 FC의 실시간 모터별 PWM 출력 신호 수치를 직접 추출하지 못해 모터 출력 변화를 간접적으로만 파악함.\n• 보완연구: 오픈소스 FC(Betaflight 등)를 연동하여 외란 인가 시 각속도 및 PWM 출력 시계열 데이터를 직접 로깅할 필요가 있음.\n• 활용방안: 돌풍 환경에서 임무를 수행하는 배송 및 정찰용 드론의 자세 제어 알고리즘 개선에 활용 가능함.",
+        extension: "• PID 제어기(비례-적분-미분) 수식 모델링:\n\\(u(t) = K_p e(t) + K_i \\int_0^t e(\\tau) d\\tau + K_d \\frac{de(t)}{dt}\\)\n현재 오차를 줄이는 비례항(P), 지속적인 편심 오차를 제거하는 적분항(I), 급격한 외란의 변화를 억제하는 미분항(D)의 역할을 제어 블록 다이어그램으로 정리함.",
+        reflection: "1. 기계적 링크 구조 없이 센서 데이터와 소프트웨어 연산만으로 동적 평형을 유지하는 임베디드 제어 원리를 이해함.\n2. 외란에 반응하여 모터 출력을 즉각 보정하는 피드백 루프의 동작 과정을 직접 확인하는 계기가 됨.\n3. 하드웨어 역학 특성과 소프트웨어 제어 알고리즘 간의 유기적 상호작용을 파악함.",
+        formula: "\\Sigma \\tau_{yaw} = 0, \\quad u(t) = K_p e(t) + K_i \\int e dt + K_d \\frac{de}{dt}"
+      },
+      {
+        id: "exp-4",
+        num: "실험 3",
+        code: "4번",
+        name: "글라이더 날개(에어포일) 및 윙렛 개조",
+        category: "항공우주 / 공기역학",
+        careers: "항공우주공학과, 신소재공학과, 기계공학과, 물리교육과",
+        title: "에어포일 윗면 캠버(Camber) 성형 및 윙렛(Winglet) 장착에 따른 유도항력 저감과 활공비(L/D) 변화 분석",
+        motivation: "베르누이 정리와 뉴턴 운동 법칙을 기반으로 날개 단면 형상에 따른 양력 발생 원리를 학습함. 실제 항공기 날개 끝에 장착되는 윙렛이 날개 끝 와류(Wingtip Vortex)와 유도항력을 줄이는 메커니즘을 확인하기 위해, 스티로폼 글라이더 날개를 직접 개조하여 활공 성능을 비교함.",
+        content1: "1. 공기역학적 원리:\n- 캠버(Camber): 날개 윗면을 볼록하게 가공하면 유속 차이에 따른 압력 강하로 양력이 증가함.\n- 유도항력(Induced Drag): 날개 아랫면(고압)에서 윗면(저압)으로 공기가 유입되며 발생하는 날개 끝 와류로 인해 후방 항력이 유발됨.\n- 윙렛의 기능: 와류 형성을 물리적으로 억제하여 유효 가로세로비(AR)를 증가시키고 유도항력을 감소시킴.\n\n2. 비교군 구성:\n- Type A: 순정 평판 날개\n- Type B: 윗면 캠버 성형 날개 (사포 샌딩 가공)\n- Type C: 캠버 날개 끝에 수직 윙렛(우드락 3mm) 부착 기체",
+        content2: "3. 변인 통제 및 측정:\n- 통제변인: 동체 무게(18.2g), 주날개 면적, 발사 고무줄 장력(15cm 인장), 사출 각도 5도\n- 측정 항목: 활공 거리(줄자 측정), 체공 시간(초고속 영상 분석)\n\n4. 측정 데이터:\n- Type A(순정): 평균 활공 거리 5.2m / 체공 시간 1.8초 (활공비 3.4)\n- Type B(캠버): 평균 활공 거리 8.6m / 체공 시간 2.9초 (거리 65% 증가)\n- Type C(캠버+윙렛): 평균 활공 거리 11.4m / 체공 시간 3.8초 (순정 대비 거리 119% 증가, 직진 궤적 유지)",
+        summary: "1. 글라이더 주날개의 캠버 가공과 윙렛 부착이 활공비(L/D)에 미치는 영향을 비교 측정함.\n2. 캠버 가공 시 활공 거리가 65% 증가하였고, 윙렛 장착 시 유도항력 저감으로 최장 활공 거리(11.4m)를 기록함.\n3. 에어포일 곡률에 의한 양력 증가와 날개 끝 와류 억제를 통한 비행 효율 향상 메커니즘을 실측으로 확인함.",
+        results: "• 한계점: 수작업 샌딩 가공으로 인해 좌우 날개의 곡률 대칭성을 정밀하게 일치시키지 못함.\n• 보완연구: 3D 프린터나 열선 커터를 이용하여 표준 NACA 규격(예: NACA 4412) 에어포일을 오차 없이 제작할 필요가 있음.\n• 활용방안: 고고도 장기체공 무인기 및 친환경 수송기 날개의 공기역학적 효율 개선에 적용 가능함.",
+        extension: "• 유도항력 계수 공식 분석:\n\\(C_{Di} = \\frac{C_L^2}{\\pi e AR}\\)\n날개 가로세로비(\\(AR = b^2/S\\))와 오스왈드 효율 계수(\\(e\\))의 관계를 분석함. 윙렛 부착이 유효 가로세로비를 높여 유도항력 계수를 낮추는 과정을 수식으로 정리함.",
+        reflection: "1. 날개 단면의 미세한 곡률 변화와 끝단 구조물이 비행 거리와 활공비에 직접적인 영향을 미침을 확인함.\n2. 이론으로 배운 유체역학 공식을 실제 제작 기체의 비행 궤적으로 검증하며 실험 설계의 가치를 체득함.\n3. 항력 최소화와 양력 극대화라는 공학적 최적화 설계의 개념을 구체화하는 계기가 됨.",
+        formula: "C_{Di} = \\frac{C_L^2}{\\pi e AR}, \\quad \\text{Glide Ratio} = \\frac{L}{D} = \\frac{\\Delta x}{\\Delta h}"
+      },
+      {
+        id: "exp-5",
+        num: "실험 4",
+        code: "5번",
+        name: "투사체 마그누스 효과 및 딤플 분석",
+        category: "유체역학 / 응용물리",
+        careers: "기계공학과, 물리학과, 스포츠과학과, 조선해양공학과",
+        title: "투사체의 백스핀 각속도 및 표면 거칠기(딤플 구조)에 따른 마그누스 힘과 유체 경계층 박리 특성 분석",
+        motivation: "회전하는 물체가 휘어지는 마그누스 효과의 원리를 유체역학적으로 이해하고자 함. 특히 골프공 표면의 딤플 구조가 매끄러운 표면과 비교해 경계층 박리(Boundary Layer Separation)를 어떻게 지연시키고 항력을 줄이는지 규명하기 위해 실험을 수행함.",
+        content1: "1. 마그누스 효과 원리:\n- 역회전(Backspin) 시 물체 상단은 유속 증가로 압력이 낮아지고, 하단은 유속 감소로 압력이 높아져 상향 양력 발생: \\(\\vec{F}_M = S (\\vec{\\omega} \\times \\vec{v})\\)\n\n2. 딤플과 항력 감소 메커니즘:\n- 매끄러운 구: 층류 경계층이 물체 전방에서 조기 박리되어 후방에 넓은 저압 후류(Wake) 형성 ➔ 압력항력 증가\n- 딤플 표면: 미세 와류를 발생시켜 난류 경계층으로 조기 전이 유도 ➔ 유체가 표면에 더 오래 부착되어 박리 지연 ➔ 후류 영역 축소로 전체 항력 감소",
+        content2: "3. 실험군 및 측정 방식:\n- 투사체 1: 종이컵 롤러 (매끄러운 면 vs 딤플 테이프 부착 면)\n- 투사체 2: 매끄러운 탁구공 vs 딤플 골프공\n- 고무줄 런처를 사용하여 일정한 탄성력으로 백스핀 인가, 격자 배경에서 240fps 고속 촬영 진행\n\n4. 정량 분석 결과:\n- 백스핀 인가 시 무회전 투사체 대비 상향 곡률을 그리며 체공 시간이 연장됨을 실측.\n- 딤플 투사체는 매끄러운 투사체 대비 체공 시간이 34% 증가하였으며, 궤적 분석 결과 후방 박리점이 약 25도 후방으로 이동함을 확인.",
+        summary: "1. 투사체의 백스핀 회전과 딤플 표면 구조가 궤적 곡률 및 체공 시간에 미치는 영향을 분석함.\n2. 딤플 표면 투사체는 경계층 난류 천이를 조기 유도하여 항력을 줄이고 체공 시간을 34% 연장함을 확인함.\n3. 회전체 주위의 압력차로 인한 마그누스 양력과 난류 경계층 박리 지연 현상을 실측으로 입증함.",
+        results: "• 한계점: 발사 순간의 초기 회전 각속도(RPM)를 디지털 회전계로 실시간 정밀 측정하지 못함.\n• 보완연구: 고속 카메라 영상의 마커 회전각을 프레임 단위로 추적(Tracker 활용)하여 각속도별 양력 계수 곡선을 산출할 필요가 있음.\n• 활용방안: 풍력 보조 추진 장치인 플레트너 로터(Flettner Rotor) 선박 및 구기 종목 장비의 공기역학 설계에 응용 가능함.",
+        extension: "• 레이놀즈 수와 항력 위기(Drag Crisis) 분석:\n\\(Re = \\frac{\\rho v D}{\\mu}\\)\n골프공의 딤플이 임계 레이놀즈 수(\\(Re_{crit} \\approx 10^5\\))를 낮춤으로써 항력 계수(\\(C_d\\))가 0.5에서 0.2 이하로 급감하는 구간을 인위적으로 전방 이동시키는 원리를 분석함.",
+        reflection: "1. 표면을 거칠게 만드는 가공이 오히려 공기 저항을 크게 줄인다는 유체역학적 사실을 실험 데이터로 검증함.\n2. 고속 영상 분석을 통해 육안으로 확인하기 어려운 유체 유동과 압력차를 추론하는 분석법을 익힘.\n3. 직관적인 예상과 상반되는 물리 현상을 수학적 이론과 데이터로 규명하는 탐구 자세를 기름.",
+        formula: "\\vec{F}_M = S (\\vec{\\omega} \\times \\vec{v}), \\quad Re = \\frac{\\rho v D}{\\mu}"
+      },
+      {
+        id: "exp-6",
+        num: "실험 5",
+        code: "6번",
+        name: "성좌조견판 제작 및 천문 관측",
+        category: "천문학 / 우주과학",
+        careers: "천문우주학과, 지구과학교육과, 우주항공공학과, 지리정보학과",
+        title: "북위 37.5° 기준 회전식 성좌조견판의 투영 보정과 지구 공전(약 3분 56초/일)에 따른 항성시 일주시차 기하학적 분석",
+        motivation: "지구의 자전과 공전으로 인해 매일 밤하늘 별자리의 관측 위치가 서쪽으로 이동하는 현상을 천구 좌표계 관점에서 분석하고자 함. 우리나라 관측 위도(북위 37.5°)에 맞는 성좌조견판을 직접 제작하여 계절별 별자리 위치와 항성시(Sidereal Time)의 기하학적 원리를 규명함.",
+        content1: "1. 천구 좌표계와 평사도법(Stereographic Projection):\n- 천구 중심 투영: 북극성을 중심축으로 적경(0h~24h)과 적위(-90°~+90°)를 평면에 투영함.\n- 지평선 타원창: 북위 37.5° 관측자의 지평선 경계는 남쪽 천구가 넓어지는 비대칭 타원형으로 구현됨.\n\n2. 태양시와 항성시의 차이:\n- 태양일: 24시간 (1,440분)\n- 항성일: 지구의 360도 자전 주기 = 23시간 56분 4초 (약 1,436분)\n- 일주시차: 지구의 1일 공전 각도(약 0.986도)로 인해 별은 태양보다 매일 약 3분 56초 일찍 남중함.",
+        content2: "3. 제작 및 관측 시뮬레이션:\n- 북극성 회전축 기준 날짜판(365일)과 시각판(24시간) 결합\n- OHP 필름에 방위각과 고도각(30°, 60°) 격자선을 배치하여 지평 좌표계와의 연계 확인\n- 날짜와 시각 눈금을 회전시켜 춘하추동 주요 별자리(오리온, 카시오페이아, 백조자리 등)의 출몰 시각 시뮬레이션\n\n4. 측정 및 분석 결과:\n- 1개월(30일) 경과 시 별자리가 서쪽으로 정확히 30도(시간 환산 2시간) 이동함을 눈금 일치로 검증함.\n- 평사도법 특성상 남쪽 지평선 부근 저고도 별자리는 면적이 약 1.4배 확대 왜곡됨을 기하학적으로 확인함.",
+        summary: "1. 북위 37.5° 천구 모델을 2차원 회전식 성좌조견판으로 제작하고 지구 공전에 따른 천체 좌표 이동을 분석함.\n2. 조견판 눈금 회전을 통해 1일당 약 3분 56초(약 1도), 1개월당 약 2시간씩 서쪽으로 이동하는 일주시차를 정량 검증함.\n3. 3차원 천구 좌표계를 2차원 평면에 투영하는 원리와 태양시-항성시 간 시간차를 실증함.",
+        results: "• 한계점: 평면 투영 특성상 남쪽 하늘 저적위 영역의 형태 왜곡이 발생하여 정밀한 각거리 측정이 제한됨.\n• 보완연구: 스텔라리움(Stellarium) 등 디지털 천문 시뮬레이션 소프트웨어와 3차원 반구 모델을 병행하여 왜곡 오차를 보정할 필요가 있음.\n• 활용방안: 망원경의 극축 정렬(Polar Alignment) 기준점 설정 및 인공위성 관측 지상국의 광학 추적 스케줄링에 기초 좌표로 활용 가능함.",
+        extension: "• 세차운동(Precession)에 따른 좌표계 장기 변동:\n지구 자전축의 25,772년 주기 세차운동으로 인해 춘분점이 황도를 따라 연간 약 50.3초(arcsec)씩 이동하는 현상을 분석함. 이로 인해 수천 년 단위로 북극성 위치가 변경되는 장주기 좌표 보정 수식을 정리함.",
+        reflection: "1. 밤하늘 별자리의 겉보기 운동이 지구의 자전축 경사와 공전 궤도라는 기하학적 요소로 설명됨을 확인함.\n2. 매일 3분 56초씩 누적되는 작은 시간 차이가 계절별 별자리 변화를 만든다는 규칙성을 계산으로 증명함.\n3. 3차원 구면 좌표를 평면 지도에 투영할 때 발생하는 왜곡과 그 보정 원리를 이해하는 계기가 됨.",
+        formula: "\\Delta t = 24\\text{h} - 23\\text{h} 56\\text{m} 4\\text{s} = 3\\text{m} 56\\text{s}, \\quad \\Delta \\theta = \\frac{360^\\circ}{365.25} \\approx 0.986^\\circ/\\text{day}"
+      },
+      {
+        id: "exp-7",
+        num: "실험 6",
+        code: "7번",
+        name: "시리우스 쌍성계 & 3체 중력 모델링",
+        category: "천체물리학 / 상대성역학",
+        careers: "물리학과, 천문우주학과, 항공우주공학과, 수리과학과",
+        title: "2차원 탄성막 시공간 모델을 이용한 시리우스 A/B 쌍성계(질량비 2:1) 공전 및 제3천체의 궤도 섭동 분석",
+        motivation: "아인슈타인 일반 상대성 이론의 시공간 곡률 개념을 2차원 탄성막으로 모형화하여 중력 퍼텐셜을 시각화하고자 함. 특히 백색왜성을 동반한 시리우스 A/B 쌍성계의 공통 질량중심 공전과, 제3천체(행성) 진입 시 나타나는 3체 카오스 섭동을 관찰하기 위해 실험을 설계함.",
+        content1: "1. 역학적 이론:\n- 질량 중심(Barycenter): \\(R_{cm} = \\frac{m_1 r_1 + m_2 r_2}{m_1 + m_2}\\). 두 천체의 궤도 반경비는 질량의 역비와 같음: \\(\\frac{r_A}{r_B} = \\frac{m_B}{m_A}\\)\n- 3체 문제(Three-body Problem): 뉴턴 역학에서 2체 문제는 닫힌 해석해를 가지지만, 3체 이상은 일반해를 구할 수 없는 비선형 비적분계임. 초기 조건에 따라 중력 포획, 충돌, 중력 도움(Slingshot)에 의한 탈출 궤적이 나타남.",
+        content2: "3. 실험 장치 및 절차:\n- 원형 프레임에 스판덱스 천을 고정하여 2차원 중력 퍼텐셜 우물 구축\n- 시리우스 A(200g 쇠구슬)와 시리우스 B(100g 쇠구슬)를 배치하여 공통 질량중심 회전 유도\n- 소형 구슬(3g)을 다양한 각도와 속도로 투입하며 상단 카메라로 궤적 추적\n\n4. 정량 분석 결과:\n- 시리우스 A와 B의 공전 궤도 반경 실측비는 약 1:1.96으로 측정되어 이론적 질량 역비(1:2)와 2% 이내로 일치함.\n- 제3구슬 투입 시 안장점(Saddle point) 부근을 지나며 속도가 급가속되어 계 외부로 사출되는 슬링샷 궤적을 확인.",
+        summary: "1. 탄성막 중력 우물을 구축하여 시리우스 A/B 쌍성계의 2:1 공전과 제3천체의 궤도 섭동을 분석함.\n2. 질량 중심 기준 궤도 반경비가 질량의 역비(1:2)를 만족함을 실측하고 케플러 법칙의 유효성을 검증함.\n3. 제3천체 투입 시 초기 입사 조건에 따라 중력 포획과 슬링샷 탈출 궤적이 민감하게 갈라지는 3체 섭동을 확인함.",
+        results: "• 한계점: 3차원 우주 공간의 무마찰 환경과 달리, 탄성막 표면의 구름 마찰로 인해 구슬의 운동 에너지가 시간에 따라 감쇠함.\n• 보완연구: 파이썬의 `scipy.integrate` 모듈을 이용해 4차 룬게-쿠타(RK4) 수치해석 3체 궤적을 계산하고 실험 영상과 오차를 비교할 필요가 있음.\n• 활용방안: 심우주 탐사선의 중력 도움(Swing-by) 궤적 설계 및 제임스 웹 우주망원경이 위치한 라그랑주 점(L₂) 궤도 안정성 분석에 응용 가능함.",
+        extension: "• 유효 퍼텐셜과 5개의 라그랑주 점(Lagrange Points):\n회전 좌표계에서 원심력과 두 별의 중력이 평형을 이루는 유효 퍼텐셜 \\(\\Phi_{eff} = -\\frac{Gm_1}{r_1} - \\frac{Gm_2}{r_2} - \\frac{1}{2}\\omega^2 r^2\\)의 안장점을 분석함. 특히 \\(L_4, L_5\\) 점이 코리올리 힘에 의해 안정 평형점이 되는 원리를 정리함.",
+        reflection: "1. 2체 문제의 규칙적인 주기성과 달리 천체가 하나만 추가되어도 예측 불가능한 궤적이 발생하는 3체 문제를 직접 확인하는 계기가 됨.\n2. 마찰로 인한 실험의 한계를 수치해석 시뮬레이션으로 보완하며 현대 천체물리학의 연구 방법론을 이해함.\n3. 천체의 중력을 활용하여 추진제 없이 가속하는 슬링샷 항법의 역학적 원리를 명확히 파악함.",
+        formula: "R_{cm} = \\frac{m_1 r_1 + m_2 r_2}{m_1 + m_2}, \\quad \\Phi_{eff} = -\\frac{Gm_1}{r_1} - \\frac{Gm_2}{r_2} - \\frac{1}{2}\\omega^2 r^2"
+      },
+      {
+        id: "exp-8a",
+        num: "실험 7",
+        code: "8번-A",
+        name: "행성 온실효과 및 복사평형 (금성)",
+        category: "대기과학 / 행성과학",
+        careers: "대기과학과, 지구환경과학과, 에너지공학과, 화학공학과",
+        title: "밀폐 챔버 내 CO₂ 농도 변화에 따른 적외선 열복사 흡수율 및 금성형 폭주 온실효과의 열역학적 모델링",
+        motivation: "금성이 태양-행성 거리에 비해 표면 온도가 약 470℃로 매우 높은 원인이 고농도 CO₂ 대기에 의한 온실효과 때문임을 학습함. 온실기체 농도 차이가 복사 가열 및 소등 후 냉각 지연 속도에 미치는 영향을 밀폐 챔버 모델을 통해 정량적으로 측정하고자 함.",
+        content1: "1. 복사 평형 및 온실효과 이론:\n- 슈테판-볼츠만 법칙: 흑체 복사 에너지 \\(E = \\sigma T^4\\)\n- 행성 평형 온도: 태양 입사 복사와 행성 적외선 방출의 평형: \\((1-A) \\frac{S_0}{4} = \\sigma T_{eq}^4\\)\n- 온실기체 메커니즘: 가시광선은 투과시키고 지표가 방출하는 장파 적외선(IR)을 흡수 및 재방출하여 지표면 온도를 상승시킴.\n\n2. 금성의 폭주 온실효과:\n- 고온으로 인한 해양 증발 및 탄산염 분해로 온실기체가 대기로 지속 방출되는 양의 피드백 루프 형성.",
+        content2: "3. 대조군 및 실험군 조건 통제:\n- 챔버 A (대조군): 일반 공기 충진 밀폐 아크릴 용기\n- 챔버 B (실험군): 탄산수소나트륨-구연산 반응으로 CO₂ 기체 포집 충진 용기\n- 열원: 40cm 거리에서 100W 할로겐 램프로 30분간 연속 가열 후 소등\n- 디지털 프로브 센서로 1분 간격 온도 기록 및 소등 후 15분간 냉각 속도 측정\n\n4. 측정 결과:\n- 30분 가열 후 최고 온도: 대조군 38.4℃ vs CO₂ 챔버 46.2℃ (온도차 +7.8℃)\n- 소등 후 10분 경과 시 온도 강하: 대조군은 9.5℃ 하강한 반면, CO₂ 챔버는 4.8℃만 하강하여 열 방출 지연 효과를 확인함.",
+        summary: "1. 밀폐 챔버 내 CO₂ 충진 유무에 따른 복사 가열 및 냉각 속도 곡선을 비교 분석함.\n2. 30분 가열 시 CO₂ 챔버가 대조군 대비 최고 온도가 7.8℃ 높았으며, 소등 후 냉각 지연이 뚜렷함을 확인함.\n3. 온실기체의 장파 적외선 흡수 및 재방출 메커니즘과 금성의 고온 형성 원리를 실험으로 검증함.",
+        results: "• 한계점: 아크릴 용기 벽면을 통한 전도 및 외기와의 대류 열손실을 완벽히 차단한 단열계를 구성하지 못함.\n• 보완연구: 이중 진공 단열벽 챔버를 적용하고 적외선 분광 센서로 파장대별 흡수 스펙트럼을 측정할 필요가 있음.\n• 활용방안: 탄소 포집 및 저장(CCUS) 기술의 필요성 근거 자료 및 제로에너지 건축 단열 소재 설계에 활용 가능함.",
+        extension: "• 행성 유효 복사평형 온도 수식 유도:\n\\(T_{eq} = \\left( \\frac{(1-A)S_0}{4\\sigma} \\right)^{1/4}\\)\n금성의 태양상수와 알베도를 대입한 이론적 무대기 온도는 약 -40℃(233K)이나, 실제 표면 온도가 470℃에 달하는 510℃의 격차가 온실효과에 기인함을 수식으로 증명함.",
+        reflection: "1. 대기 중 기체 조성의 차이가 행성의 열역학적 평형 온도를 크게 변화시킬 수 있음을 수치로 확인함.\n2. 단순 가열보다 소등 후 냉각 지연 곡선에서 온실기체의 단열 효과가 더욱 명확히 드러남을 관찰함.\n3. 대기 조성비와 복사 평형의 상관관계를 통해 기후 시스템의 열역학적 메커니즘을 이해하는 계기가 됨.",
+        formula: "E = \\sigma T^4, \\quad T_{eq} = \\left( \\frac{(1-A)S_0}{4\\sigma} \\right)^{1/4}"
+      },
+      {
+        id: "exp-8b",
+        num: "실험 8",
+        code: "8번-B",
+        name: "목성 대적점과 전단류 와류 모형",
+        category: "대기과학 / 유체역학",
+        careers: "대기과학과, 해양학과, 기계공학과, 지구시스템과학과",
+        title: "회전 원형 수조 내 전단류(Shear Flow) 형성을 통한 켈빈-헬름홀츠 불안정성 및 목성 대적점 와류 구조 모형화",
+        motivation: "목성 표면의 띠 구조와 거대 폭풍인 대적점(Great Red Spot)이 장기간 소멸하지 않고 유지되는 유체역학적 원리를 규명하고자 함. 회전계에서 위도별 제트기류의 속도 차이로 발생하는 전단 불안정성과 와류 병합 과정을 축소 수조 실험으로 재현함.",
+        content1: "1. 유체역학 이론:\n- 켈빈-헬름홀츠 불안정성: 속도가 다른 두 유체 층의 경계면에서 전단력으로 인해 파동이 증폭되며 와류가 형성됨.\n- 2차원 난류의 에너지 역수송(Inverse Cascade): 2차원 회전 유동에서는 작은 와류들이 병합하여 더 큰 단일 와류로 성장하며 점성 소산에 저항함.",
+        content2: "3. 실험 장치 및 절차:\n- 턴테이블 위에 투명 원형 수조를 올리고 점성 유체(물+글리세린) 및 유선 가시화 펄 안료 투입\n- 일정한 각속도로 회전시키며 서로 다른 반경에 스포이트로 반대 방향 잉크를 주입하여 위도별 속도차 형성\n- 경계면 파동 발생 및 와류 형성 과정을 고속 비디오로 기록\n\n4. 관찰 결과:\n- 전단 경계면에서 켈빈-헬름홀츠 파동이 발생한 후 4~6개의 미세 소용돌이가 형성됨.\n- 지속 회전 시 작은 와류들이 하나로 합체(Merging)되어 안정된 타원형 와류가 형성되고 2분 이상 지속됨을 확인.",
+        summary: "1. 회전 원형 수조에 전단류를 인가하여 목성의 줄무늬 띠와 대적점 와류 형성 과정을 모형화함.\n2. 속도 경계면에서 켈빈-헬름홀츠 파동 발생 후 작은 와류들이 병합하여 단일 타원형 와류로 유지됨을 확인함.\n3. 위도별 제트기류의 전단 에너지가 거대 폭풍의 에너지 공급원이자 지속 원인임을 확인함.",
+        results: "• 한계점: 평면 원형 수조로는 구면 위도에 따라 코리올리 효과가 달라지는 베타 평면 효과(\\(\\beta\\)-effect)를 완벽히 모사하지 못함.\n• 보완연구: 수심이 중심부로 갈수록 얕아지는 경사 바닥 수조를 도입하여 위도별 포텐셜 와도(Potential Vorticity) 보존 환경을 구성할 필요가 있음.\n• 활용방안: 지구 대기의 극소용돌이(Polar Vortex) 붕괴 메커니즘 분석 및 해양의 중규모 소용돌이(Eddy) 열 수송 연구에 응용 가능함.",
+        extension: "• 로스비 수(Rossby Number)와 지형풍 평형:\n\\(Ro = \\frac{U}{2\\Omega L}\\)\n대적점은 로스비 수가 작은 영역(\\(Ro \\ll 1\\))에 위치하여 코리올리 힘과 압력경도력이 평형을 이루는 지형풍 평형을 만족함으로써 장기간 와류가 붕괴하지 않음을 수치적으로 분석함.",
+        reflection: "1. 서로 부딪히는 두 흐름의 불안정성이 작은 와류들의 병합을 통해 안정된 구조를 형성하는 과정을 직접 관찰함.\n2. 목성의 줄무늬와 대적점이 행성의 자전과 유체역학 법칙이 만들어낸 물리적 결과임을 이해함.\n3. 대기와 해양의 거대 순환 시스템을 유체역학적 모델로 분석하는 연구의 유용성을 체감함.",
+        formula: "Ro = \\frac{U}{2\\Omega L}, \\quad 2\\vec{\\Omega} \\times \\vec{v} \\approx -\\frac{1}{\\rho}\\nabla p"
+      },
+      {
+        id: "exp-9",
+        num: "실험 9",
+        code: "9번",
+        name: "카오스 이론과 이중진자 운동",
+        category: "비선형물리학 / 복합계",
+        careers: "물리학과, 수리과학과, 컴퓨터공학과, 인공지능학과",
+        title: "정밀 베어링 기반 이중진자의 초기 조건 변화에 따른 비선형 운동 궤적 분석 및 초기 조건 민감성(나비효과) 실측",
+        motivation: "결정론적인 물리 법칙을 따르면서도 장기 예측이 불가능한 비선형 카오스(Chaos) 동역학의 특성을 검증하고자 함. 대표적인 2자유도 비선형 진동계인 이중진자를 제작하고, 초기 방출 각도의 미세한 차이가 궤적에 미치는 영향을 암실 장노출 촬영으로 분석함.",
+        content1: "1. 비선형 역학 이론:\n- 단진자는 단조로운 조화 진동(선형 근사)을 하지만, 이중진자는 제1진자의 운동이 제2진자의 지지점을 끊임없이 가속시키는 4차원 위상공간 결합계임.\n- 라그랑지안: \\(L = T - V\\). 오일러-라그랑주 미분방정식을 적용하면 두 각도 (\\(\\theta_1, \\theta_2\\))에 대한 2계 결합 비선형 미분방정식이 도출됨.\n\n2. 초기 조건 민감성:\n- 두 궤적 간의 거리: \\(|\\delta Z(t)| \\approx |\\delta Z_0| e^{\\lambda t}\\)\n- 양의 리아푸노프 지수(\\(\\lambda > 0\\))를 가지는 영역에서는 초기 측정 오차가 시간 경과에 따라 지수함수적으로 증폭되어 장기 궤적 예측이 불가능해짐.",
+        content2: "3. 실험 장치 및 측정 방법:\n- 마찰을 최소화한 608zz 볼베어링 2개와 아크릴 링크 바로 이중진자 제작\n- 제2진자 끝단에 고휘도 LED를 부착하고 암실에서 스마트폰 프로 모드(셔터스피드 8초, 삼각대 고정)로 장노출 촬영\n- 동일한 초기 각도(90도)에서 3회 반복 방출하여 궤적의 일치 여부 비교\n\n4. 정량 분석 결과:\n- 소진폭(15도 이내)에서는 3회 반복 시 궤적이 거의 일치하는 주기 진동을 보임.\n- 대진폭(90도 방출)에서는 초기 1.5초 이후 3회의 LED 궤적이 완전히 다른 방향으로 분기(Bifurcation)되어 발산함을 사진으로 확인함.",
+        summary: "1. 2자유도 이중진자의 진폭 조건에 따른 운동 궤적을 암실 LED 8초 장노출 사진으로 분석함.\n2. 소진폭에서는 주기적 조화 진동을 보였으나, 고에너지 방출 시 미세한 초기 오차가 급격히 증폭되어 궤적이 완전히 분기함을 확인함.\n3. 결정론적 뉴턴 역학계에서도 비선형 결합으로 인해 장기 예측이 불가능해지는 카오스 현상을 실측으로 입증함.",
+        results: "• 한계점: 베어링 축의 잔여 기계 마찰과 공기 저항으로 인해 완전한 에너지 보존계가 아닌 감쇠 진동계로 동작함.\n• 보완연구: 유도된 오일러-라그랑주 방정식을 파이썬 4차 룬게-쿠타(RK4) 코드로 수치해석하여 무마찰 위상공간 푸앵카레 단면을 시뮬레이션할 필요가 있음.\n• 활용방안: 기상 예측 모델의 한계선 분석(앙상블 예보 기법), 심장 박동 이상(부정맥) 동역학 분석, 비선형 금융 시계열 예측에 응용 가능함.",
+        extension: "• 오일러-라그랑주 미분방정식 유도:\n\\(\\frac{d}{dt}\\left(\\frac{\\partial L}{\\partial \\dot{\\theta}_i}\\right) - \\frac{\\partial L}{\\partial \\theta_i} = 0 \\quad (i=1, 2)\\)\n도출된 연립 미분방정식의 각속도 제곱항과 비선형 삼각함수 결합항(\\(\\cos(\\theta_1-\\theta_2)\\))이 궤적을 예측 불가능하게 만드는 동역학적 요인임을 확인함.",
+        reflection: "1. 물리 법칙 자체는 완벽히 결정론적임에도 불구하고 초기 조건의 미세 오차로 인해 미래를 예측할 수 없다는 비선형계의 특성을 확인함.\n2. 단순 진동과 카오스 진동의 분기점을 실험 궤적으로 비교하며 수학적 모델의 복잡성을 이해함.\n3. 복잡한 현실 문제를 단편적인 선형 접근 대신 다변인 동역학 시스템 관점에서 분석하는 시각을 갖추게 됨.",
+        formula: "L = T - V, \\quad |\\delta Z(t)| \\approx |\\delta Z_0| e^{\\lambda t}, \\quad \\lambda > 0"
+      }
+    ];
+
+    let currentExpIndex = 0;
+    let isPaperMode = true;
+
+    function init() {
+      renderNavList();
+      selectExperiment(0);
+      lucide.createIcons();
+    }
+
+    function renderNavList() {
+      const container = document.getElementById('expNavList');
+      container.innerHTML = experimentsData.map((exp, idx) => `
+        <button onclick="selectExperiment(${idx})" id="navBtn_${idx}" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between ${idx === 0 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'}">
+          <div class="flex items-center gap-2 truncate">
+            <span class="font-mono text-[11px] px-1.5 py-0.5 rounded ${idx === 0 ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-800 text-slate-400'}">${exp.code}</span>
+            <span class="truncate">${exp.name}</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-3.5 h-3.5 shrink-0 opacity-60"></i>
+        </button>
+      `).join('');
+    }
+
+    function selectExperiment(idx) {
+      currentExpIndex = idx;
+      const data = experimentsData[idx];
+
+      // Update Nav active style
+      experimentsData.forEach((_, i) => {
+        const btn = document.getElementById(`navBtn_${i}`);
+        if (btn) {
+          if (i === idx) {
+            btn.className = "w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between bg-indigo-600 text-white shadow-md shadow-indigo-600/30";
+            btn.querySelector('span:first-child').className = "font-mono text-[11px] px-1.5 py-0.5 rounded bg-indigo-700 text-indigo-100";
+          } else {
+            btn.className = "w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between text-slate-300 hover:bg-slate-800/80 hover:text-white";
+            btn.querySelector('span:first-child').className = "font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400";
+          }
+        }
+      });
+
+      // Update Top Banner
+      document.getElementById('currentTag').innerText = `${data.num} (${data.code})`;
+      document.getElementById('currentCategory').innerText = data.category;
+      document.getElementById('currentTitle').innerText = data.title;
+      document.getElementById('currentCareer').innerHTML = `<i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><span>추천 진로: ${data.careers}</span>`;
+
+      // Update Paper Form
+      document.getElementById('formCareerTarget').innerText = data.careers;
+      document.getElementById('formTopicTitle').innerText = data.title;
+      document.getElementById('formMotivation').innerText = data.motivation;
+      document.getElementById('formContentPart1').innerText = data.content1;
+      document.getElementById('formContentPart2').innerText = data.content2;
+      document.getElementById('formSummary').innerText = data.summary;
+      document.getElementById('formResults').innerText = data.results;
+      document.getElementById('formExtension').innerText = data.extension;
+      document.getElementById('formReflection').innerText = data.reflection;
+
+      // Update Breakdown Mode
+      document.getElementById('tipVariables').innerText = `독립변인: ${data.code} 핵심 조건 조작 | 종속변인: 궤적 및 정량 지표 | 통제변인: 동일 환경`;
+      document.getElementById('tipMathFormula').innerText = data.formula;
+      renderClipboardSections(data);
+
+      lucide.createIcons();
+      renderMath();
+    }
+
+    function renderClipboardSections(data) {
+      const sections = [
+        { label: "1. 탐구 주제", text: data.title },
+        { label: "2. 활동 동기", text: data.motivation },
+        { label: "3. 활동 내용 (전문)", text: `${data.content1}\n\n${data.content2}` },
+        { label: "4. 탐구 요약 (3줄 결론)", text: data.summary },
+        { label: "5. 활동 결과 (한계·보완·활용)", text: data.results },
+        { label: "6. 확장 탐구 (심화)", text: data.extension },
+        { label: "7. 느낀점 (3줄)", text: data.reflection }
+      ];
+
+      const container = document.getElementById('clipSectionList');
+      container.innerHTML = sections.map((sec, i) => `
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-start justify-between gap-3">
+          <div class="space-y-1 min-w-0">
+            <span class="text-xs font-bold text-indigo-400 block">${sec.label}</span>
+            <p class="text-[12px] text-slate-300 line-clamp-2">${sec.text}</p>
+          </div>
+          <button onclick="copyText(\`${sec.text.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`, '${sec.label}')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700 transition shrink-0 flex items-center gap-1">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            복사
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function toggleViewMode() {
+      isPaperMode = !isPaperMode;
+      const paperContainer = document.getElementById('paperReportContainer');
+      const breakdownContainer = document.getElementById('breakdownContainer');
+      const btnText = document.getElementById('viewModeText');
+
+      if (isPaperMode) {
+        paperContainer.classList.remove('hidden');
+        breakdownContainer.classList.add('hidden');
+        btnText.innerText = "상세 분석 모드 전환";
+      } else {
+        paperContainer.classList.add('hidden');
+        breakdownContainer.classList.remove('hidden');
+        btnText.innerText = "양식 미리보기 전환";
+      }
+      lucide.createIcons();
+    }
+
+    function copyText(text, label) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`[${label}] 항목이 복사되었습니다.`);
+      });
+    }
+
+    function copyCurrentFullReport() {
+      const data = experimentsData[currentExpIndex];
+      const fullText = `[2026학년도 동아리 활동 탐구 보고서]
+동아리명: 코스모스 (COSMOS)
+희망 진로 및 학과: ${data.careers}
+탐구 주제: ${data.title}
+팀에서 맡은 역할: 실험 장치 제작 및 정량 데이터 분석 총괄
+
+[활동(탐구) 동기]
+${data.motivation}
+
+[활동(탐구) 내용]
+${data.content1}
+
+${data.content2}
+
+[탐구 요약 (결론/3줄 이내)]
+${data.summary}
+
+[활동(탐구) 결과]
+${data.results}
+
+[확장 탐구 (선택사항)]
+${data.extension}
+
+[느낀점 (3줄 이내)]
+${data.reflection}
+`;
+      navigator.clipboard.writeText(fullText).then(() => {
+        showToast(`[${data.name}] 보고서 전문이 복사되었습니다!`);
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
+    }
+
+    function renderMath() {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

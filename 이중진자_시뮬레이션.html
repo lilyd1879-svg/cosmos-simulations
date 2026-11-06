@@ -1,0 +1,4841 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다중/이중진자 물리 시뮬레이터 | N-Pendulum Chaos Simulation</title>
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --panel-bg: rgba(18, 24, 38, 0.90);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --accent: #ec4899;
+      --green-dot: #22c55e;
+      --green-glow: rgba(34, 197, 94, 0.7);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --card-bg: rgba(30, 41, 59, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", "Noto Sans KR", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+    }
+
+    #canvas-container {
+      flex: 1;
+      height: 100vh;
+      position: relative;
+      background: radial-gradient(circle at center, #131b2e 0%, #080c14 100%);
+      cursor: default;
+    }
+
+    canvas#simCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 사이드바 제어 패널 */
+    #control-panel {
+      width: 400px;
+      height: 100vh;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border-left: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      box-shadow: -6px 0 25px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, margin-right 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    #control-panel.collapsed {
+      transform: translateX(100%);
+      margin-right: -400px;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .panel-header h1 {
+      font-size: 1.12rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #38bdf8, #a855f7, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    .panel-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    /* 카드 섹션 */
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 0.84rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 컨트롤 항목 */
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .value-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #38bdf8;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #334155;
+      outline: none;
+      transition: background 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+      transition: transform 0.1s, background 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #7dd3fc;
+    }
+
+    .num-input {
+      width: 58px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      color: #f1f5f9;
+      font-size: 0.8rem;
+      padding: 3px 6px;
+      text-align: right;
+      font-family: monospace;
+      outline: none;
+    }
+    .num-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* 버튼 그룹 */
+    .btn-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .btn-group-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .btn-group-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    button {
+      background: #1e293b;
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: #334155;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    button.primary-btn {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      color: white;
+      font-weight: 600;
+    }
+    button.primary-btn:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+    }
+
+    button.green-btn {
+      background: linear-gradient(135deg, #059669, #10b981);
+      border-color: #34d399;
+      color: white;
+      font-weight: 600;
+    }
+    button.green-btn:hover {
+      background: linear-gradient(135deg, #047857, #059669);
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.4);
+    }
+
+    button.danger-btn:hover {
+      background: #991b1b;
+      border-color: #f87171;
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 0.82rem;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider-switch {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #334155;
+      transition: .2s;
+      border-radius: 20px;
+    }
+    .slider-switch:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider-switch {
+      background-color: var(--primary);
+    }
+    input:checked + .slider-switch.green {
+      background-color: #22c55e;
+    }
+    input:checked + .slider-switch:before {
+      transform: translateX(18px);
+    }
+
+    /* Glassmorphism Common Style */
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      z-index: 25;
+      transition: all 0.2s ease;
+    }
+
+    /* Top Navigation Bar */
+    header#top-bar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      gap: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      z-index: 25;
+    }
+    header#top-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    header#top-bar * {
+      white-space: nowrap !important;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .brand-badge {
+      font-size: 9.5px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .controls-center {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: var(--text-main);
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.18s ease;
+      flex-shrink: 0 !important;
+      height: 34px;
+      box-sizing: border-box;
+      line-height: 1;
+    }
+
+    .btn:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+      border-color: #38bdf8 !important;
+      color: #fff !important;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8) !important;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.5) !important;
+    }
+
+    .btn-danger {
+      background: rgba(190, 18, 60, 0.3) !important;
+      border-color: rgba(244, 63, 94, 0.5) !important;
+      color: #fecdd3 !important;
+    }
+    .btn-danger:hover {
+      background: rgba(225, 29, 72, 0.5) !important;
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+    }
+
+    /* 헤더 내 모드 전환 탭 바 */
+    .header-mode-tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 2px 3px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      height: 34px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .mode-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 5px 11px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      height: 28px;
+      transition: all 0.2s ease;
+    }
+
+    .mode-tab-btn:hover {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .mode-tab-btn.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    .mode-tab-btn.active.blackburn-active {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: rgba(245, 158, 11, 0.7);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+    }
+
+    /* 반응형 헤더 (태블릿 & 노트북) */
+    @media (max-width: 1440px) {
+      .brand-badge {
+        display: none !important;
+      }
+    }
+    @media (max-width: 1200px) {
+      #btn-step {
+        display: none !important;
+      }
+    }
+
+    /* 힘 벡터 라벨 배지 */
+    .vector-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-size: 0.70rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .vector-tension { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24; }
+    .vector-gravity { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; }
+    .vector-net { background: rgba(236, 72, 153, 0.2); border: 1px solid #ec4899; color: #f472b6; }
+
+    /* 장력 프리셋 버튼 */
+    .tension-preset-btn {
+      background: #1e293b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #cbd5e1;
+      padding: 6px 4px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .tension-preset-btn:hover {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: #f59e0b;
+      color: #fbbf24;
+    }
+    .tension-preset-btn.active {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: #f59e0b;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    /* 블랙번 진자 조화비 프리셋 버튼 */
+    .ratio-preset-btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: #cbd5e1;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 7px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.15s ease;
+    }
+    .ratio-preset-btn:hover {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: #fbbf24;
+      color: #fde047;
+      transform: translateY(-1px);
+    }
+    .ratio-preset-btn.active {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: #f59e0b;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    /* 온스크린 HUD 정보창 */
+    #hud-overlay {
+      position: absolute;
+      top: 72px;
+      left: 14px;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hud-chip {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 190px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+
+    .hud-title {
+      font-weight: 700;
+      color: #94a3b8;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hud-value {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: #38bdf8;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .energy-bar-track {
+      width: 100%;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      margin-top: 2px;
+    }
+
+    .energy-bar-kinetic {
+      height: 100%;
+      background: #38bdf8;
+      transition: width 0.05s;
+    }
+
+    .energy-bar-potential {
+      height: 100%;
+      background: #ec4899;
+      transition: width 0.05s;
+    }
+
+    .energy-bar-loss {
+      height: 100%;
+      background: #f97316;
+      transition: width 0.05s;
+    }
+
+    .hud-chip.interactive {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    /* 드래그 힌트 툴팁 */
+    #drag-tip {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      color: #86efac;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: pulseTip 2.5s infinite;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+      z-index: 10;
+    }
+
+    @keyframes pulseTip {
+      0%, 100% { opacity: 0.95; transform: translateX(-50%) translateY(0); }
+      50% { opacity: 0.6; transform: translateX(-50%) translateY(-3px); }
+    }
+
+    /* 진자 개별 설정 아코디언 카드 */
+    .pendulum-item-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pendulum-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .dot-preview {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    /* 초록색 점 하이라이트 배지 */
+    .green-dot-badge {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid #22c55e;
+      color: #4ade80;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .green-dot-badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #22c55e;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 메인 시뮬레이션 영역 -->
+  <div id="canvas-container">
+    <canvas id="simCanvas"></canvas>
+
+    <!-- 상단 통합 네비게이션 헤더 바 -->
+    <header id="top-bar" class="glass-panel">
+      <div class="brand-group">
+        <div class="brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M3.6 9h16.8"></path>
+            <path d="M3.6 15h16.8"></path>
+            <path d="M12 3a15.3 15.3 0 0 1 4 18"></path>
+            <path d="M12 3a15.3 15.3 0 0 0-4 18"></path>
+          </svg>
+          COSMOS
+        </div>
+        <div class="brand-badge">CHAOS PENDULUM &amp; BLACKBURN</div>
+      </div>
+
+      <div class="controls-center">
+        <!-- 시뮬레이션 모드 전환 탭 -->
+        <div id="sim-mode-tabs" class="header-mode-tabs">
+          <button class="mode-tab-btn active" id="tab-mode-npendulum" data-mode="npendulum">
+            🌀 카오스 다중진자
+          </button>
+          <button class="mode-tab-btn" id="tab-mode-blackburn" data-mode="blackburn">
+            ⏳ 블랙번 진자 (리사주)
+          </button>
+        </div>
+
+        <button id="btn-play-pause" class="btn btn-primary" title="단축키: Space">
+          <span id="play-icon">⏸</span> <span id="play-text">일시정지</span>
+        </button>
+        <button id="btn-quick-reality" class="btn" title="현실 모드 (공기저항, 마찰력 감쇠) 켜기/끄기 (단축키: M)">
+          <span id="quick-reality-icon">⚡</span> <span id="quick-reality-text">현실 모드: OFF</span>
+        </button>
+        <button id="btn-step" class="btn" title="1프레임 전진">⏯ 1프레임</button>
+        <button id="btn-reset" class="btn btn-danger" title="초기화 (단축키: R)">↺ 초기화</button>
+        <button id="btn-clear-trace" class="btn" title="궤적 지우기 (단축키: C)">✨ 궤적 지우기</button>
+      </div>
+
+      <div class="header-right">
+        <a href="./gravity.html" class="btn" style="background: rgba(56, 189, 248, 0.18); border-color: rgba(56, 189, 248, 0.45); color: #bae6fd; text-decoration: none;" title="N-체 중력 시뮬레이터로 이동">
+          🪐 중력 시뮬레이터
+        </a>
+        <a href="./air.html" class="btn" style="background: rgba(34, 197, 94, 0.18); border-color: rgba(34, 197, 94, 0.45); color: #bbf7d0; text-decoration: none;" title="대기 시뮬레이터로 이동">
+          🌫️ 대기 시뮬레이터
+        </a>
+        <a href="./sky.html" class="btn" style="background: rgba(168, 85, 247, 0.18); border-color: rgba(168, 85, 247, 0.45); color: #e9d5ff; text-decoration: none;" title="별자리 지도로 이동">
+          ✨ 별자리 지도
+        </a>
+        <button id="btn-fullscreen" class="btn" style="background: rgba(255,255,255,0.06);" title="전체화면 전환">
+          ⛶ 전체화면
+        </button>
+        <button id="toggle-sidebar-btn" class="btn btn-primary" title="제어판 열기/닫기">
+          ⚙️ 제어판
+        </button>
+      </div>
+    </header>
+
+    <!-- 실시간 HUD 정보 -->
+    <div id="hud-overlay">
+      <!-- 1) 다중진자 전용 HUD 그룹 -->
+      <div id="hud-npendulum-group" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- 🌿 현실 모드 토글 칩 (사용자 요청 핵심 기능!) -->
+        <div class="hud-chip interactive" id="hud-reality-chip" title="클릭하여 현실 모드 (공기저항, 마찰력 감쇠) 켜기/끄기" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(15, 23, 42, 0.88);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="hud-reality-icon" style="font-size: 1.15rem;">⚡</span>
+              <div style="display: flex; flex-direction: column;">
+                <span id="hud-reality-title" style="font-size: 0.78rem; font-weight: 700; color: #f3f4f6;">이상적 보존계</span>
+                <span id="hud-reality-desc" style="font-size: 0.65rem; color: #94a3b8;">에너지 무손실 영구운동</span>
+              </div>
+            </div>
+            <label class="switch" style="transform: scale(0.85); margin: 0; pointer-events: none;">
+              <input type="checkbox" id="toggle-reality-hud">
+              <span class="slider-switch green"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="hud-chip">
+          <span class="hud-title">
+            <span>역학적 에너지 (Energy)</span>
+            <span id="hud-pendulum-type" style="color: #38bdf8; font-size: 0.7rem;">이중진자 (2)</span>
+          </span>
+          <div class="hud-value" id="hud-energy">E: 0.00 J</div>
+          <div style="font-size: 0.68rem; color: #94a3b8; display: flex; justify-content: space-between; gap: 4px;">
+            <span style="color: #38bdf8;">운동(T): <span id="hud-ke">0.0</span></span>
+            <span style="color: #ec4899;">위치(V): <span id="hud-pe">0.0</span></span>
+            <span id="hud-loss-container" style="color: #f97316; display: none;">손실열(Q): <span id="hud-loss">0.0</span></span>
+          </div>
+          <div class="energy-bar-track">
+            <div id="energy-bar-k" class="energy-bar-kinetic" style="width: 50%;"></div>
+            <div id="energy-bar-p" class="energy-bar-potential" style="width: 50%;"></div>
+            <div id="energy-bar-loss" class="energy-bar-loss" style="width: 0%; display: none;"></div>
+          </div>
+        </div>
+
+        <!-- 실시간 장력 및 탄성 모니터 칩 -->
+        <div class="hud-chip" id="hud-tension-chip" style="border-color: rgba(245, 158, 11, 0.45); min-width: 200px;">
+          <span class="hud-title" style="color: #fbbf24;">
+            <span>🔗 실시간 장력 (Tension)</span>
+            <span id="hud-break-status" style="font-size: 0.68rem; color: #4ade80; font-weight: 600;">연결 정상</span>
+          </span>
+          <div id="hud-tension-list" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; margin-top: 2px;">
+            <!-- JS 동적 렌더링 -->
+          </div>
+        </div>
+
+        <!-- 맨 끝 진자 실시간 추적 정보 -->
+        <div class="hud-chip" style="border-color: rgba(34, 197, 94, 0.35);">
+          <span class="hud-title" style="color: #4ade80;">
+            <span>🟢 맨 끝 진자 (End Bob) 추적</span>
+            <span id="hud-end-dot-status" class="green-dot-badge">초록색 점 활성</span>
+          </span>
+          <div style="font-size: 0.72rem; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+            <div>위치(X, Y): <span id="hud-end-pos" style="color: #4ade80; font-family: monospace;">0, 0</span></div>
+            <div>속력(Speed): <span id="hud-end-speed" style="color: #4ade80; font-family: monospace;">0.0</span> px/s</div>
+            <div>현재 각도: <span id="hud-end-angle" style="color: #38bdf8; font-family: monospace;">0.0°</span></div>
+            <div>각속도(ω): <span id="hud-end-omega" style="color: #ec4899; font-family: monospace;">0.00</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2) 블랙번 진자 & 리사주 전용 HUD 그룹 -->
+      <div id="hud-blackburn-group" style="display: none; flex-direction: column; gap: 8px;">
+        <div class="hud-chip" style="border-color: rgba(245, 158, 11, 0.5); min-width: 230px;">
+          <span class="hud-title" style="color: #fbbf24;">
+            <span>⏳ 리사주 곡선 (Lissajous)</span>
+            <span id="hud-bb-ratio-badge" style="background: rgba(245, 158, 11, 0.2); color: #fde047; padding: 1px 7px; border-radius: 10px; font-size: 0.72rem; font-family: monospace; font-weight: 700;">1.50 : 1 (3:2)</span>
+          </span>
+          <div class="hud-value" id="hud-bb-ratio-name" style="color: #fbbf24; font-size: 0.88rem; margin-top: 2px;">나비형 리사주 (3:2 Butterfly)</div>
+          <div style="font-size: 0.70rem; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;">
+            <div>X축 길이(Lx): <span id="hud-bb-lx" style="color: #38bdf8; font-family: monospace;">120 px</span></div>
+            <div>Y축 길이(Ly): <span id="hud-bb-ly" style="color: #ec4899; font-family: monospace;">270 px</span></div>
+            <div>진동수 fx: <span id="hud-bb-fx" style="color: #38bdf8; font-family: monospace;">1.44 Hz</span></div>
+            <div>진동수 fy: <span id="hud-bb-fy" style="color: #ec4899; font-family: monospace;">0.96 Hz</span></div>
+            <div>위상차(Δφ): <span id="hud-bb-phase" style="color: #a855f7; font-family: monospace;">90.0°</span></div>
+            <div>모래 입자수: <span id="hud-bb-sand-count" style="color: #fde047; font-family: monospace;">0 점</span></div>
+          </div>
+        </div>
+
+        <div class="hud-chip" style="border-color: rgba(56, 189, 248, 0.35);">
+          <span class="hud-title" style="color: #38bdf8;">
+            <span>📍 진자 추 실시간 좌표 (X, Y)</span>
+            <span id="hud-bb-view-badge" style="color: #38bdf8; font-size: 0.70rem; font-weight: 600;">3D 사투시 뷰</span>
+          </span>
+          <div style="font-size: 0.72rem; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+            <div>변위 X: <span id="hud-bb-posx" style="color: #38bdf8; font-family: monospace;">0.0 px</span></div>
+            <div>변위 Y: <span id="hud-bb-posy" style="color: #ec4899; font-family: monospace;">0.0 px</span></div>
+            <div>속도 vx: <span id="hud-bb-vx" style="color: #38bdf8; font-family: monospace;">0.0</span> px/s</div>
+            <div>속도 vy: <span id="hud-bb-vy" style="color: #ec4899; font-family: monospace;">0.0</span> px/s</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3) 공통 렌더링 성능 FPS 프레임 칩 -->
+      <div class="hud-chip" style="min-width: 130px; padding: 6px 12px; display: flex; flex-direction: row; justify-content: space-between; align-items: center; border-color: rgba(56, 189, 248, 0.25);">
+        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">⚡ 렌더링 성능</span>
+        <span id="hud-fps" style="color: #22c55e; font-family: monospace; font-weight: 700; font-size: 0.88rem;">60 FPS</span>
+      </div>
+    </div>
+
+    <!-- 하단 드래그 조작 힌트 -->
+    <div id="drag-tip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 16v-4M12 8h.01"></path>
+      </svg>
+      어떤 진자든 마우스/터치로 직접 드래그하여 시작 위치를 변경할 수 있습니다!
+    </div>
+  </div>
+
+  <!-- 사이드바 제어판 -->
+  <aside id="control-panel">
+    <div class="panel-header">
+      <h1 id="panel-main-title">🌀 다중진자 시뮬레이터</h1>
+      <span id="panel-sub-tag" style="font-size: 0.72rem; background: #334155; padding: 2px 6px; border-radius: 4px; color: #94a3b8;">N-Pendulum RK4</span>
+    </div>
+
+    <div class="panel-content">
+      <!-- 🌀 다중진자 전용 제어 패널 그룹 -->
+      <div id="panel-npendulum-content" style="display: flex; flex-direction: column; gap: 14px;">
+      
+      <!-- 0. 진자 추가 및 개수 제어 (신규 기능!) -->
+      <div class="section-card" style="border-color: rgba(56, 189, 248, 0.35);">
+        <div class="section-title">
+          <span>🔗 진자 개수 설정 (다중 진자)</span>
+          <span class="value-badge" id="val-pendulum-count">2개 (이중진자)</span>
+        </div>
+
+        <div class="btn-group">
+          <button id="btn-add-pendulum" class="primary-btn">➕ 진자 마디 추가</button>
+          <button id="btn-remove-pendulum" class="danger-btn">➖ 맨 끝 진자 삭제</button>
+        </div>
+
+        <div class="btn-group-4">
+          <button class="count-preset-btn" data-n="1">1 (단진자)</button>
+          <button class="count-preset-btn" data-n="2">2 (이중)</button>
+          <button class="count-preset-btn" data-n="3">3 (삼중)</button>
+          <button class="count-preset-btn" data-n="4">4 (사중)</button>
+        </div>
+
+        <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.4;">
+          진자를 원하는 만큼 추가하여 <b>삼중진자, 사중진자</b> 등 고차원 카오스 운동을 시뮬레이션할 수 있습니다. (최대 8개 권장)
+        </div>
+      </div>
+
+      <!-- 1. 맨 끝 진자 초록색 점 및 경로 시각화 (사용자 특별 요청!) -->
+      <div class="section-card" style="border: 1px solid rgba(34, 197, 94, 0.45); background: rgba(16, 35, 26, 0.4);">
+        <div class="section-title" style="color: #4ade80;">
+          <span>🟢 맨 끝 진자 초록색 점 & 경로</span>
+          <span class="green-dot-badge">핵심 기능</span>
+        </div>
+
+        <!-- 맨 끝 진자에 초록색 점 표시 토글 -->
+        <div class="toggle-row">
+          <span>맨 끝 진자 위치에 <b>초록색 발광 점</b> 표시</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-green-tip-dot" checked>
+            <span class="slider-switch green"></span>
+          </label>
+        </div>
+
+        <!-- 경로를 초록색 점들로 렌더링 -->
+        <div class="toggle-row">
+          <span>이동 경로에 <b>초록색 점(Dot) 궤적</b> 그리기</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-green-dots-trail" checked>
+            <span class="slider-switch green"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span>초록색 점 크기 (Dot Size)</span>
+            <span class="value-badge" id="val-green-dot-size" style="color: #4ade80; background: rgba(34, 197, 94, 0.1);">8 px</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-green-dot-size" min="4" max="22" step="1" value="8">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span>초록색 점 간격 (밀도)</span>
+            <span class="value-badge" id="val-green-dot-spacing" style="color: #4ade80; background: rgba(34, 197, 94, 0.1);">매 3프레임</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-green-dot-spacing" min="1" max="10" step="1" value="3">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span>궤적 선 스타일</span>
+          </div>
+          <select id="select-trace-style" style="background: #0f172a; border: 1px solid #334155; color: white; padding: 6px 10px; border-radius: 6px; outline: none;">
+            <option value="dots-and-line">🟢 초록색 점 + 부드러운 발광선</option>
+            <option value="only-dots">🟢 초록색 점들만 표시 (순수 점 궤적)</option>
+            <option value="only-line">연속 발광선만 표시</option>
+            <option value="rainbow-dots">무지개 점 + 초록색 팁</option>
+          </select>
+        </div>
+
+        <!-- 60 FPS 고성능 모드 토글 -->
+        <div class="toggle-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);">
+          <span style="color: #38bdf8; font-weight: 600;">🚀 60 FPS 고성능 모드 (랙 방지)</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-fast-mode" checked>
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 2. 각 진자별 파라미터 (거리, 시작 위치, 질량) 동적 리스트 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>⚙️ 각 진자 마디 상세 설정</span>
+          <button id="btn-auto-fit" style="padding: 3px 8px; font-size: 0.72rem; background: #0284c7;">길이 자동 맞춤</button>
+        </div>
+        
+        <div id="pendulum-controls-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- JS로 동적 렌더링 -->
+        </div>
+
+        <div class="btn-group">
+          <button id="btn-invert-angles">↕ 반대편 대칭</button>
+          <button id="btn-random-angles">🎲 랜덤 각도</button>
+        </div>
+      </div>
+
+      <!-- 3. 물리 환경 및 현실 모드 (공기저항, 마찰력) -->
+      <div class="section-card" id="card-reality-mode" style="border-color: rgba(56, 189, 248, 0.35);">
+        <div class="section-title">
+          <span>🌍 물리 환경 & 현실 모드</span>
+          <span class="value-badge" id="badge-reality-mode" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">이상계 (OFF)</span>
+        </div>
+
+        <!-- 현실 모드 메인 스위치 (사용자 요청 핵심 기능!) -->
+        <div class="toggle-row" id="row-toggle-reality" style="background: rgba(15, 23, 42, 0.65); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-weight: 700; color: #f3f4f6; font-size: 0.82rem;">🌿 현실 모드 (Reality Mode)</span>
+            <span style="font-size: 0.68rem; color: #94a3b8;">공기저항 & 회전축 마찰력 감쇠</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-reality-sidebar">
+            <span class="slider-switch green"></span>
+          </label>
+        </div>
+
+        <!-- 현실 모드 세부 파라미터 조절 영역 -->
+        <div id="reality-controls-area" style="display: flex; flex-direction: column; gap: 10px; opacity: 0.45; pointer-events: none; transition: opacity 0.2s;">
+          <div class="control-row">
+            <div class="label-row">
+              <span>💨 공기 저항 계수 (Air Drag)</span>
+              <span class="value-badge" id="val-air-drag" style="color: #4ade80;">0.0030 (보통 대기)</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-air-drag" min="0.0005" max="0.020" step="0.0005" value="0.0030">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="label-row">
+              <span>⚙️ 회전축 마찰력 (Bearing Friction)</span>
+              <span class="value-badge" id="val-friction" style="color: #4ade80;">0.0020 (볼베어링)</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-friction" min="0.0005" max="0.015" step="0.0005" value="0.0020">
+            </div>
+          </div>
+
+          <div class="btn-group-3">
+            <button class="env-preset-btn" data-env="air">🌿 일반 대기</button>
+            <button class="env-preset-btn" data-env="water">💧 물 속 (점성)</button>
+            <button class="env-preset-btn" data-env="heavy">🧱 고마찰</button>
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);">
+          <div class="label-row">
+            <span>중력 가속도 (g)</span>
+            <span class="value-badge" id="val-g">9.8 m/s²</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-g" min="0" max="30" step="0.1" value="9.8">
+            <input type="number" id="num-g" class="num-input" min="0" max="30" step="0.1" value="9.8">
+          </div>
+        </div>
+
+        <div class="btn-group-3">
+          <button class="gravity-btn" data-g="9.8">지구 (9.8)</button>
+          <button class="gravity-btn" data-g="1.6">달 (1.6)</button>
+          <button class="gravity-btn" data-g="0">무중력 (0)</button>
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span>재생 속도 (Speed)</span>
+            <span class="value-badge" id="val-speed">1.0×</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-speed" min="0.1" max="3.0" step="0.1" value="1.0">
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.5. 줄 탄성력 & 장력 한계 (끊어짐 역학) -->
+      <div class="section-card" id="card-elasticity-break" style="border: 1px solid rgba(245, 158, 11, 0.45); background: rgba(30, 25, 15, 0.4);">
+        <div class="section-title" style="color: #fbbf24;">
+          <span>💥 줄 탄성력 & 끊어짐 (Tension & Snap)</span>
+          <span class="value-badge" id="badge-break-status" style="background: rgba(34, 197, 94, 0.15); color: #4ade80;">연결 정상</span>
+        </div>
+
+        <!-- 줄 끊어짐 허용 스위치 -->
+        <div class="toggle-row" style="background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-weight: 700; color: #f3f4f6; font-size: 0.82rem;">⚡ 장력 초과 시 줄 끊어짐 허용</span>
+            <span style="font-size: 0.68rem; color: #94a3b8;">한계 장력 초과 시 줄이 끊어져 자유 낙하</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-enable-break" checked>
+            <span class="slider-switch" style="background-color: #f59e0b;"></span>
+          </label>
+        </div>
+
+        <!-- 장력 한계치 슬라이더 & 숫자 입력 (대폭 상향 및 정밀 조절) -->
+        <div class="control-row">
+          <div class="label-row">
+            <span>최대 허용 장력 (Breaking Tension)</span>
+            <span class="value-badge" id="val-max-tension" style="color: #f59e0b;">50 N</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-max-tension" min="2" max="500" step="1" value="50">
+            <input type="number" id="num-max-tension" class="num-input" min="2" max="1000" step="1" value="50" style="width: 65px;">
+          </div>
+          <div style="font-size: 0.68rem; color: #94a3b8;">
+            허용 장력이 높을수록 거센 스윙에도 줄이 잘 끊어지지 않습니다. (999N = 무제한/불멸)
+          </div>
+        </div>
+
+        <!-- 강도 프리셋 버튼 (6단계: 실 ~ 티타늄 ~ 무제한) -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+          <button class="tension-preset-btn" data-t="5">🧵 실 (5 N)</button>
+          <button class="tension-preset-btn" data-t="20">🪢 가는 줄 (20 N)</button>
+          <button class="tension-preset-btn active" data-t="50">🔗 와이어 (50 N)</button>
+          <button class="tension-preset-btn" data-t="120">⛓️ 강철 케이블 (120 N)</button>
+          <button class="tension-preset-btn" data-t="300">🛡️ 티타늄 (300 N)</button>
+          <button class="tension-preset-btn" data-t="999">♾️ 무제한 (999 N)</button>
+        </div>
+
+        <!-- 줄 탄성 계수 슬라이더 (Hooke's Law) -->
+        <div class="control-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);">
+          <div class="label-row">
+            <span>줄 탄성 계수 (Stiffness k)</span>
+            <span class="value-badge" id="val-elastic-k" style="color: #38bdf8;">150 (약간 탄성)</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-elastic-k" min="30" max="1000" step="10" value="150">
+          </div>
+          <div style="font-size: 0.68rem; color: #94a3b8;">
+            장력이 커질 때 훅의 법칙($\Delta L = T / k$)에 따라 줄이 미세하게 신장됩니다.
+          </div>
+        </div>
+
+        <!-- 힘 벡터 화살표 시각화 (장력, 중력, 합력) - 사용자 요청 핵심 구현 -->
+        <div style="margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 8px;">
+          <div class="toggle-row" style="background: rgba(15, 23, 42, 0.65); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.3);">
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-weight: 700; color: #fbbf24; font-size: 0.82rem;">📐 힘 벡터 화살표 실시간 표시</span>
+              <span style="font-size: 0.68rem; color: #94a3b8;">장력(T) · 중력(Fg) · 합력(Fnet) 벡터 & 수치</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-force-vectors" checked>
+              <span class="slider-switch" style="background-color: #f59e0b;"></span>
+            </label>
+          </div>
+
+          <div id="force-vectors-sub-options" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 6px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: #cbd5e1; cursor: pointer;">
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="vector-pill vector-tension">T</span>
+                <span>줄의 장력 벡터 (Tension)</span>
+              </span>
+              <input type="checkbox" id="chk-show-tension-vec" checked style="accent-color: #f59e0b; width: 14px; height: 14px; cursor: pointer;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: #cbd5e1; cursor: pointer;">
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="vector-pill vector-gravity">Fg</span>
+                <span>지구 중력 벡터 (Gravity)</span>
+              </span>
+              <input type="checkbox" id="chk-show-gravity-vec" checked style="accent-color: #38bdf8; width: 14px; height: 14px; cursor: pointer;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; color: #cbd5e1; cursor: pointer;">
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="vector-pill vector-net">Fnet</span>
+                <span>알짜 가속 합력 벡터 (Net Force)</span>
+              </span>
+              <input type="checkbox" id="chk-show-net-vec" checked style="accent-color: #ec4899; width: 14px; height: 14px; cursor: pointer;">
+            </label>
+
+            <div class="control-row" style="margin-top: 4px;">
+              <div class="label-row">
+                <span style="font-size: 0.72rem;">화살표 크기 배율 (Vector Scale)</span>
+                <span class="value-badge" id="val-force-scale" style="font-size: 0.7rem; color: #fbbf24;">25 px/N</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" id="slider-force-scale" min="8" max="60" step="2" value="25">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 끊어진 줄 즉시 재연결 복구 버튼 -->
+        <button id="btn-reconnect-ropes" class="primary-btn" style="margin-top: 4px; background: linear-gradient(135deg, #d97706, #b45309); border-color: #f59e0b;">
+          🔗 끊어진 줄 즉시 재연결 (복구)
+        </button>
+      </div>
+
+      <!-- 4. 궤적 & 나비효과 비교 모드 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>🦋 카오스 나비효과 & 잔상</span>
+        </div>
+
+        <div class="toggle-row">
+          <span>쌍둥이 진자 비교 (나비효과)</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-twin">
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span>궤적 길이 (Trail Points)</span>
+            <span class="value-badge" id="val-trace-len">1200 점</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-trace-len" min="100" max="5000" step="100" value="1200">
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <span>무한 궤적 누적 모드</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-inf-trace">
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span>모든 중간 진자 궤적도 표시</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-all-traces">
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 5. 카오스 프리셋 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>⭐ 추천 다중진자 프리셋</span>
+        </div>
+        <div class="btn-group">
+          <button class="preset-btn" data-p="double-classic">이중진자 수평 (90°, 90°)</button>
+          <button class="preset-btn" data-p="triple-chaos">삼중진자 카오스 (N=3)</button>
+          <button class="preset-btn" data-p="quad-whip">사중진자 채찍 (N=4)</button>
+          <button class="preset-btn" data-p="penta-snake">오중진자 스네이크 (N=5)</button>
+        </div>
+      </div>
+
+      <!-- 6. 캡처 및 단축키 안내 -->
+      <div class="section-card">
+        <div class="btn-group">
+          <button id="btn-screenshot">📷 스크린샷 저장</button>
+          <button id="btn-fullscreen-sidebar">⛶ 전체화면</button>
+        </div>
+        <div style="font-size: 0.72rem; color: #64748b; line-height: 1.5; margin-top: 4px;">
+          ⌨ <b>단축키 안내</b><br>
+          • <b>스페이스바</b>: 재생 / 일시정지<br>
+          • <b>R</b>: 현재 설정으로 리셋<br>
+          • <b>C</b>: 궤적 선/점 지우기<br>
+          • <b>+ / -</b>: 진자 추가 / 삭제
+        </div>
+      </div>
+      <!-- 다중진자 전용 제어 패널 끝 -->
+
+      <!-- ⏳ 블랙번 진자 & 리사주 전용 사이드바 제어 패널 -->
+      <div id="panel-blackburn-content" style="display: none; flex-direction: column; gap: 14px;">
+        
+        <!-- BB-1: V자 현수선 및 길이 조절 (Lx, Ly 기하 구조) -->
+        <div class="section-card" style="border-color: rgba(245, 158, 11, 0.45); background: rgba(30, 25, 15, 0.4);">
+          <div class="section-title" style="color: #fbbf24;">
+            <span>📐 V자 현수 구조 & 유효 길이</span>
+            <span class="value-badge" id="val-bb-ratio" style="color: #fde047; background: rgba(245, 158, 11, 0.15);">1.50 : 1 (3:2)</span>
+          </div>
+
+          <!-- h1: 상단 V자 높이 -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>상단 V줄 높이 (h₁)</span>
+              <span class="value-badge" id="val-bb-h1" style="color: #ec4899;">150 px</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-bb-h1" min="0" max="300" step="5" value="150">
+            </div>
+            <div style="font-size: 0.68rem; color: #94a3b8;">
+              상단 고정축에서 Y자 매듭(Knot C)까지의 수직 거리입니다.
+            </div>
+          </div>
+
+          <!-- h2: 하단 줄 길이 -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>하단 단일줄 길이 (h₂ = L_x)</span>
+              <span class="value-badge" id="val-bb-h2" style="color: #38bdf8;">120 px</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-bb-h2" min="30" max="300" step="5" value="120">
+            </div>
+            <div style="font-size: 0.68rem; color: #94a3b8;">
+              매듭(C)에서 진자 추까지의 길이로, <b>X축 진동의 유효 진자 길이</b>가 됩니다.
+            </div>
+          </div>
+
+          <!-- d: 상단 지지대 간격 -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>상단 지지점 간격 (Hook Span d)</span>
+              <span class="value-badge" id="val-bb-d" style="color: #cbd5e1;">220 px</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-bb-d" min="80" max="380" step="10" value="220">
+            </div>
+          </div>
+
+          <!-- 진동수 및 고유주기 분석 배지 표 -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px 10px; font-size: 0.72rem; line-height: 1.5; color: #cbd5e1;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px; margin-bottom: 4px;">
+              <span>• X축 유효길이 <b style="color:#38bdf8;">L_x = h₂</b>:</span>
+              <span id="txt-bb-lx" style="font-family: monospace; color:#38bdf8; font-weight: 700;">120 px</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px; margin-bottom: 4px;">
+              <span>• Y축 유효길이 <b style="color:#ec4899;">L_y = h₁+h₂</b>:</span>
+              <span id="txt-bb-ly" style="font-family: monospace; color:#ec4899; font-weight: 700;">270 px</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>• 진동수 비 <b style="color:#fde047;">f_x / f_y = √(L_y / L_x)</b>:</span>
+              <span id="txt-bb-ratio-calc" style="font-family: monospace; color:#fde047; font-weight: 700;">1.500 (3:2)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BB-2: 리사주 조화비 원클릭 프리셋 -->
+        <div class="section-card" style="border-color: rgba(245, 158, 11, 0.35);">
+          <div class="section-title" style="color: #fbbf24;">
+            <span>⭐ 리사주 조화비 (Harmonic Presets)</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+            <button class="ratio-preset-btn" data-ratio="1-1">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8;">1 : 1</span>
+              <span style="font-size: 0.65rem; color: #94a3b8;">원·타원·선</span>
+            </button>
+            <button class="ratio-preset-btn" data-ratio="2-1">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #f59e0b;">2 : 1</span>
+              <span style="font-size: 0.65rem; color: #94a3b8;">8자·포물선</span>
+            </button>
+            <button class="ratio-preset-btn active" data-ratio="3-2">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #ec4899;">3 : 2</span>
+              <span style="font-size: 0.65rem; color: #94a3b8;">나비형 곡선</span>
+            </button>
+            <button class="ratio-preset-btn" data-ratio="4-3">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #a855f7;">4 : 3</span>
+              <span style="font-size: 0.65rem; color: #94a3b8;">4엽 클로버</span>
+            </button>
+            <button class="ratio-preset-btn" data-ratio="5-4">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #10b981;">5 : 4</span>
+              <span style="font-size: 0.65rem; color: #94a3b8;">정밀 격자망</span>
+            </button>
+            <button class="ratio-preset-btn" data-ratio="3-1">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #06b6d4;">3 : 1</span>
+              <span style="font-size: 0.65rem; color: #94a3b8;">3봉 대칭</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- BB-3: 위상차(Δφ) 및 진폭 설정 -->
+        <div class="section-card">
+          <div class="section-title">
+            <span>〰️ 위상차(Δφ) & 진폭 제어</span>
+            <span class="value-badge" id="val-bb-phase" style="color: #a855f7;">90° (π/2)</span>
+          </div>
+
+          <!-- 위상차 슬라이더 -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>초기 위상차 (Phase Difference Δφ)</span>
+              <span class="value-badge" id="val-bb-phase-deg">90°</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-bb-phase" min="0" max="360" step="5" value="90">
+            </div>
+          </div>
+
+          <!-- 위상차 원클릭 버튼 -->
+          <div class="btn-group-4" style="margin-bottom: 4px;">
+            <button class="bb-phase-btn" data-deg="0">0° (직선)</button>
+            <button class="bb-phase-btn" data-deg="45">45°</button>
+            <button class="bb-phase-btn active" data-deg="90">90° (대칭)</button>
+            <button class="bb-phase-btn" data-deg="180">180°</button>
+          </div>
+
+          <!-- X축 진폭 -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>X축 진폭 (Amp X)</span>
+              <span class="value-badge" id="val-bb-ampx">90 px</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-bb-ampx" min="20" max="220" step="5" value="90">
+            </div>
+          </div>
+
+          <!-- Y축 진폭 -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>Y축 진폭 (Amp Y)</span>
+              <span class="value-badge" id="val-bb-ampy">90 px</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-bb-ampy" min="20" max="220" step="5" value="90">
+            </div>
+          </div>
+
+          <!-- 공기 감쇠 / 마찰력 -->
+          <div class="control-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div class="label-row">
+              <span>감쇠 계수 (Damping / 하모노그래프 나선)</span>
+              <span class="value-badge" id="val-bb-damping">0.0012</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-bb-damping" min="0.0000" max="0.0050" step="0.0002" value="0.0012">
+            </div>
+            <div style="font-size: 0.68rem; color: #94a3b8;">
+              감쇠가 있으면 모래 곡선이 서서히 내부로 수렴하며 환상적인 하모노그래프를 완성합니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- BB-4: 모래 분출 (Sand Drop) & 뷰 모드 설정 -->
+        <div class="section-card" style="border: 1px solid rgba(245, 158, 11, 0.45); background: rgba(30, 25, 15, 0.35);">
+          <div class="section-title" style="color: #fbbf24;">
+            <span>⏳ 모래 분출 (Sand Drop) & 뷰 모드</span>
+          </div>
+
+          <!-- 모래 분출 켜기/끄기 -->
+          <div class="toggle-row" style="background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-weight: 700; color: #fde047; font-size: 0.82rem;">⏳ 추 노즐에서 모래 분출 (Sand Drop)</span>
+              <span style="font-size: 0.68rem; color: #94a3b8;">진자 바닥 슬레이트 판에 모래 입자 누적</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-bb-sand" checked>
+              <span class="slider-switch" style="background-color: #f59e0b;"></span>
+            </label>
+          </div>
+
+          <!-- 뷰 모드 선택 (3D 사투시 vs 2D 탑뷰) -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>관측 시점 (View Mode)</span>
+            </div>
+            <div class="btn-group">
+              <button id="btn-bb-view-3d" class="primary-btn" style="background: linear-gradient(135deg, #d97706, #b45309); border-color: #f59e0b;">
+                🧊 3D 사투시 뷰
+              </button>
+              <button id="btn-bb-view-2d" style="background: #1e293b; border-color: #334155;">
+                🎯 2D 모래판 탑뷰
+              </button>
+            </div>
+            <button id="btn-bb-reset-cam" style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; font-size: 0.72rem; padding: 6px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 6px; transition: all 0.2s ease;">
+              🎥 3D 카메라 뷰 초기화 (드래그: 회전 | 휠: 줌)
+            </button>
+          </div>
+
+          <!-- 모래 색상 & 궤적 스타일 -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>모래 분출 스타일</span>
+            </div>
+            <select id="select-bb-trail-style" style="background: #0f172a; border: 1px solid #334155; color: white; padding: 6px 10px; border-radius: 6px; outline: none; width: 100%;">
+              <option value="sand">🪙 황금 모래 (Golden Sand Harmonograph)</option>
+              <option value="laser">💠 네온 사이언 레이저 (Cyan Laser)</option>
+              <option value="rainbow">🌈 크로마 무지개 스펙트럼 (Chroma Spectrum)</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button id="btn-bb-clear-sand" style="background: #1e293b; border-color: #475569;">
+              ✨ 모래판 비우기
+            </button>
+            <button id="btn-bb-restart" class="primary-btn" style="background: linear-gradient(135deg, #0284c7, #2563eb);">
+              ↺ 시작 위치에서 다시 떨구기
+            </button>
+          </div>
+        </div>
+
+        <!-- BB-5: 원리 해설 카드 -->
+        <div class="section-card" style="background: rgba(15, 23, 42, 0.6);">
+          <div class="section-title" style="color: #94a3b8;">
+            <span>📖 블랙번 진자(Blackburn's Pendulum) 원리</span>
+          </div>
+          <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.55;">
+            <b>휴 블랙번(Hugh Blackburn, 1844)</b> 교수가 고안한 진자로, Y자 형태의 줄 현수 구조 덕분에<br>
+            • <b>X축(면내 진동)</b>: 매듭점 C에서 꺾여 길이 <b style="color:#38bdf8;">h₂</b>로 진동<br>
+            • <b>Y축(수직 진동)</b>: 상단 축 전체가 흔들려 길이 <b style="color:#ec4899;">h₁+h₂</b>로 진동<br>
+            두 축의 유효 길이가 달라 독립적인 고유진동수 $f_x, f_y$를 가집니다. 두 직교 조화 진동이 합성되면서 모래판 위에 신비로운 <b>리사주 곡선(Lissajous Curve)</b>이 아름답게 그려집니다.
+          </div>
+        </div>
+
+      </div>
+      <!-- 블랙번 진자 패널 끝 -->
+
+    </div>
+  </aside>
+
+  <script>
+    // ==========================================
+    // 1. 다중진자 상태 정의 및 팔레트
+    // ==========================================
+    const BOB_COLORS = [
+      '#38bdf8', // 1: Cyan
+      '#ec4899', // 2: Pink
+      '#a855f7', // 3: Purple
+      '#f59e0b', // 4: Amber
+      '#06b6d4', // 5: Light Teal
+      '#e11d48', // 6: Rose
+      '#8b5cf6', // 7: Indigo
+      '#f97316'  // 8: Orange
+    ];
+
+    // 각 진자 세그먼트 배열 (질량 단위: g)
+    let pendulums = [
+      { l: 150, m: 100, theta: Math.PI / 2, omega: 0, initTheta: Math.PI / 2 },
+      { l: 150, m: 100, theta: Math.PI / 2, omega: 0, initTheta: Math.PI / 2 }
+    ];
+
+    // 환경 및 시각화 설정
+    const config = {
+      g: 9.8,
+      damping: 0.0,
+      simSpeed: 1.0,
+      isRunning: true,
+      time: 0,
+      fastMode: true, // 60 FPS 고성능 랙 방지 모드
+
+      // 🌿 현실 모드 (공기저항, 마찰력, 열에너지 손실)
+      realityMode: false,
+      airDrag: 0.0030,        // 공기 점성 저항 계수
+      airDragQuad: 0.0010,    // 고속 난류 저항 계수
+      friction: 0.0020,       // 회전축 점성 베어링 마찰
+      coulombFriction: 0.0015,// 회전축 쿨롱 정지/미끄럼 마찰
+      lossEnergy: 0.0,        // 마찰 및 공기저항으로 누적 손실된 열에너지 (J)
+      initialEnergy: 0.0,
+
+      // 💥 줄 탄성력 & 장력 한계(끊어짐) 설정
+      enableElasticity: true,
+      elasticK: 150,           // 줄 탄성 계수 (Hooke's Law: dL = T / k)
+      enableBreak: true,       // 장력 초과 시 줄 끊어짐 허용 여부
+      maxTension: 50.0,        // 최대 허용 장력 (N)
+
+      // 📐 힘 벡터 화살표 실시간 표시 (장력 T, 중력 Fg, 합력 Fnet)
+      showForceVectors: true,
+      showTensionVector: true,
+      showGravityVector: true,
+      showNetForceVector: true,
+      forceVectorScale: 25.0,  // px per Newton
+
+      // 맨 끝 진자 초록색 점 & 경로 옵션 (사용자 요청 사항)
+      showGreenTipDot: true,
+      showGreenDotsTrail: true,
+      greenDotSize: 8,
+      greenDotSpacing: 3, // 매 N번째 프레임마다 점 기록
+      traceStyle: 'dots-and-line', // 'dots-and-line', 'only-dots', 'only-line', 'rainbow-dots'
+
+      // 궤적 설정 (랙 방지 최적화: 기본 450개)
+      traceLength: 450,
+      infiniteTrace: false,
+      traceAllBobs: false,
+
+      // 나비효과 쌍둥이 진자
+      enableTwin: false,
+      twinDelta: 0.0001,
+      twinPendulums: []
+    };
+
+    // 시뮬레이션 모드 플래그 ('npendulum' | 'blackburn')
+    let simMode = 'npendulum';
+
+    // ⏳ 블랙번 진자 (Blackburn's Pendulum & Lissajous) 상태
+    const blackburn = {
+      // V자 현수 기하 파라미터 (px)
+      h1: 150,        // 상단 V줄 높이 (y 방향 스윙 회전축 AB ~ 매듭 C)
+      h2: 120,        // 하단 단일줄 길이 (x 방향 스윙 피벗 매듭 C ~ 추) -> Lx = h2
+      d: 220,         // 상단 후크 A, B 간격
+      m: 100,         // 추 질량 (g)
+
+      // 직교 진동 동역학 변수 (평형점 기준 변위 px)
+      x: 90,          // X축 변위 (Lx 진동)
+      vx: 0,          // X축 속도
+      y: 0,           // Y축 변위 (Ly 진동, 3D Z축 및 모래판 세로)
+      vy: 0,          // Y축 속도
+
+      // 초기 조건 및 리셋
+      initAmpX: 90,
+      initAmpY: 90,
+      phaseDiff: Math.PI / 2, // 90도 위상차
+      damping: 0.0012,        // 감쇠율 (하모노그래프 나선 효과)
+
+      // 모래 분출 & 하모노그래프 궤적
+      sandDrop: true,
+      sandCanvas: null,
+      sandCtx: null,
+      sandCount: 0,
+      sandParticles: [],      // 3D/2D 바닥 모래알 입자 배열 { x, z, c } (카메라 회전 시 100% 동기화)
+      maxSandParticles: 10000,
+      trailStyle: 'sand',     // 'sand', 'laser', 'rainbow'
+      trailPoints: [],
+      maxTrail: 4000,
+
+      // 3D 및 2D 뷰 제어
+      viewMode: '3d',         // '3d' or '2d'
+      camPitch: 0.46,         // 약 26도 Pitch
+      camYaw: -0.32,          // 약 -18도 Yaw
+      camZoom: 1.0,
+      isDraggingBob: false,
+      isRotatingCam: false,
+      dragStart: { x: 0, y: 0 },
+
+      time: 0
+    };
+
+    // 드래그 상태
+    let draggingBobIdx = null;
+    let dragWasRunning = false;
+
+    // 궤적 데이터
+    let endBobTrail = []; // { x, y, speed, time, isDot }
+    let intermediateTrails = []; // 각 마디별 궤적
+    let twinEndTrail = [];
+    let frameCounter = 0;
+
+    // 💥 장력 및 끊어짐 역학 글로벌 상태
+    let currentTensions = [];
+    let flyingBobs = []; // 끊어져 자유 비행 중인 공들 { x, y, vx, vy, radius, color, label, m, trail }
+    let snapParticles = []; // 끊어지는 순간의 스파크 파티클
+    let backupFullPendulums = null; // 재연결 복원용 백업
+    let isStringBroken = false;
+
+    // ==========================================
+    // 2. 캔버스 초기화
+    // ==========================================
+    const container = document.getElementById('canvas-container');
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let pivot = { x: 0, y: 0 };
+    let dpr = 1;
+
+    function resizeCanvas() {
+      // 고해상도 모바일/레티나 화면에서 픽셀 렌더링 부하 방지를 위해 DPR을 최대 2로 제한
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = container.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+
+      // 피벗 중심 위치 (진자 개수가 많을수록 조금 더 위로 배치)
+      pivot.x = rect.width / 2;
+      const ratio = pendulums.length >= 4 ? 0.22 : 0.32;
+      pivot.y = rect.height * ratio;
+
+      if (typeof initSandCanvas === 'function') initSandCanvas();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ==========================================
+    // 3. 임의의 N-진자 일반화 라그랑지안 미분방정식 (RK4)
+    // ==========================================
+    // A * alpha = B 선형 시스템 구축 및 가우스 소거법 풀이 (공기저항 & 회전축 마찰력 지원)
+    function getDerivativesN(pList, g, damping, realityOpts = null) {
+      const n = pList.length;
+      if (n === 0) {
+        return { omegas: new Float64Array(0), alphas: new Float64Array(0), torquesLoss: new Float64Array(0) };
+      }
+      // 질량은 g에서 물리 스케일(kg, 1000g = 1kg)로 환산
+      const masses = pList.map(p => p.m * 0.001);
+      // 길이는 화면 px에서 물리 스케일(미터, 100px = 1m)로 환산
+      const scale = 0.01;
+      const lengths = pList.map(p => p.l * scale);
+      const angles = pList.map(p => p.theta);
+      const omegas = pList.map(p => p.omega);
+
+      // M_pk = sum_{i=max(p, k)}^{n-1} masses[i]
+      const M = [];
+      for (let p = 0; p < n; p++) {
+        M[p] = [];
+        for (let k = 0; k < n; k++) {
+          let sum = 0;
+          const start = Math.max(p, k);
+          for (let i = start; i < n; i++) sum += masses[i];
+          M[p][k] = sum;
+        }
+      }
+
+      // 첨가 행렬 [A | B] 구축
+      // A_pk = M_pk * lengths[k] * cos(theta_p - theta_k)
+      // B_p = - sum_{k} [ M_pk * lengths[k] * omega_k^2 * sin(theta_p - theta_k) ] - g * M_pp * sin(theta_p)
+      const aug = [];
+      const torquesLoss = new Float64Array(n);
+
+      const isReality = realityOpts && realityOpts.realityMode;
+      const airB = isReality ? (realityOpts.airDrag || 0.0030) : 0;
+      const airQuad = isReality ? (realityOpts.airDragQuad || 0.0010) : 0;
+      const fricVisc = isReality ? (realityOpts.friction || 0.0020) : 0;
+      const fricCoulomb = isReality ? (realityOpts.coulombFriction || 0.0015) : 0;
+
+      for (let p = 0; p < n; p++) {
+        aug[p] = new Float64Array(n + 1);
+        for (let k = 0; k < n; k++) {
+          aug[p][k] = M[p][k] * lengths[k] * Math.cos(angles[p] - angles[k]);
+        }
+
+        let sumTerms = 0;
+        for (let k = 0; k < n; k++) {
+          sumTerms += M[p][k] * lengths[k] * (omegas[k] * omegas[k]) * Math.sin(angles[p] - angles[k]);
+        }
+        let bVal = -sumTerms - g * M[p][p] * Math.sin(angles[p]);
+
+        if (isReality) {
+          // 1) 공기 저항 (선형 점성 저항 + 고속 영역 v^2 난류 항력)
+          const tauAir = (airB * omegas[p]) + (airQuad * Math.abs(omegas[p]) * omegas[p] * lengths[p]);
+          bVal -= tauAir;
+
+          // 2) 회전축 베어링 마찰력 (상대 각속도에 저항하는 점성 마찰 + 쿨롱 마찰)
+          const prevOmega = (p > 0) ? omegas[p - 1] : 0;
+          const relOmega = omegas[p] - prevOmega;
+          const tauFric = (fricVisc * relOmega) + (fricCoulomb * Math.tanh(15 * relOmega));
+          bVal -= tauFric;
+
+          // 다음 마디(p+1)의 반작용 마찰력
+          if (p < n - 1) {
+            const nextRelOmega = omegas[p + 1] - omegas[p];
+            const tauNextFric = (fricVisc * nextRelOmega) + (fricCoulomb * Math.tanh(15 * nextRelOmega));
+            bVal += tauNextFric;
+          }
+
+          torquesLoss[p] = Math.abs(tauAir * omegas[p]) + Math.abs(tauFric * relOmega);
+        } else if (damping > 0) {
+          bVal -= damping * omegas[p];
+        }
+
+        aug[p][n] = bVal;
+      }
+
+      // 부분 피벗팅 가우스-요르단 소거법
+      for (let i = 0; i < n; i++) {
+        let maxRow = i;
+        let maxVal = Math.abs(aug[i][i]);
+        for (let r = i + 1; r < n; r++) {
+          const val = Math.abs(aug[r][i]);
+          if (val > maxVal) {
+            maxVal = val;
+            maxRow = r;
+          }
+        }
+        if (maxRow !== i) {
+          const tmp = aug[i];
+          aug[i] = aug[maxRow];
+          aug[maxRow] = tmp;
+        }
+
+        const pivotVal = aug[i][i];
+        if (Math.abs(pivotVal) < 1e-12) continue; // 특이점 방어
+
+        for (let c = i; c <= n; c++) {
+          aug[i][c] /= pivotVal;
+        }
+        for (let r = 0; r < n; r++) {
+          if (r !== i) {
+            const factor = aug[r][i];
+            for (let c = i; c <= n; c++) {
+              aug[r][c] -= factor * aug[i][c];
+            }
+          }
+        }
+      }
+
+      const alphas = new Float64Array(n);
+      for (let i = 0; i < n; i++) {
+        alphas[i] = aug[i][n];
+      }
+
+      return { omegas, alphas, torquesLoss };
+    }
+
+    // 4차 룽게-쿠타 적분기 (N-진자 및 현실 감쇠 모드 완벽 지원)
+    function rk4StepN(pList, dt, g, damping, realityOpts = null) {
+      const n = pList.length;
+      if (n === 0) return;
+
+      // k1
+      const d1 = getDerivativesN(pList, g, damping, realityOpts);
+
+      // k2
+      const s1 = pList.map((p, i) => ({
+        ...p,
+        theta: p.theta + 0.5 * dt * d1.omegas[i],
+        omega: p.omega + 0.5 * dt * d1.alphas[i]
+      }));
+      const d2 = getDerivativesN(s1, g, damping, realityOpts);
+
+      // k3
+      const s2 = pList.map((p, i) => ({
+        ...p,
+        theta: p.theta + 0.5 * dt * d2.omegas[i],
+        omega: p.omega + 0.5 * dt * d2.alphas[i]
+      }));
+      const d3 = getDerivativesN(s2, g, damping, realityOpts);
+
+      // k4
+      const s3 = pList.map((p, i) => ({
+        ...p,
+        theta: p.theta + dt * d3.omegas[i],
+        omega: p.omega + dt * d3.alphas[i]
+      }));
+      const d4 = getDerivativesN(s3, g, damping, realityOpts);
+
+      // 합산 갱신
+      for (let i = 0; i < n; i++) {
+        pList[i].theta += (dt / 6) * (d1.omegas[i] + 2 * d2.omegas[i] + 2 * d3.omegas[i] + d4.omegas[i]);
+        pList[i].omega += (dt / 6) * (d1.alphas[i] + 2 * d2.alphas[i] + 2 * d3.alphas[i] + d4.alphas[i]);
+      }
+
+      // 현실 모드 에너지 손실(열에너지 Dissipation) 실시간 적산
+      if (realityOpts && realityOpts.realityMode && d1.torquesLoss) {
+        let stepLossPower = 0;
+        for (let i = 0; i < n; i++) {
+          stepLossPower += (d1.torquesLoss[i] + 2 * d2.torquesLoss[i] + 2 * d3.torquesLoss[i] + d4.torquesLoss[i]) / 6;
+        }
+        realityOpts.lossEnergy = (realityOpts.lossEnergy || 0) + stepLossPower * dt;
+      }
+
+      // 쿨롱 마찰 및 정지 마찰: 진폭이 바닥 근처에서 극히 미세해졌을 때 완전 정지 안착
+      if (realityOpts && realityOpts.realityMode) {
+        let allSlow = true;
+        let allBottom = true;
+        for (let i = 0; i < n; i++) {
+          if (Math.abs(pList[i].omega) > 0.008) allSlow = false;
+          let normAng = Math.abs(((pList[i].theta + Math.PI) % (Math.PI * 2)) - Math.PI);
+          if (normAng > 0.02) allBottom = false;
+        }
+        if (allSlow && allBottom) {
+          for (let i = 0; i < n; i++) {
+            pList[i].omega *= 0.88;
+            if (Math.abs(pList[i].omega) < 0.0005) {
+              pList[i].omega = 0;
+              pList[i].theta = Math.round(pList[i].theta / (Math.PI * 2)) * Math.PI * 2;
+            }
+          }
+        }
+      }
+    }
+
+    // N-진자 역학적 총에너지 계산 (최하단 정지 상태 V = 0 정규화)
+    function calcEnergyN(pList, g) {
+      const n = pList.length;
+      const masses = pList.map(p => p.m * 0.001); // g -> kg
+      const scale = 0.01;
+      const lengths = pList.map(p => p.l * scale);
+      const angles = pList.map(p => p.theta);
+      const omegas = pList.map(p => p.omega);
+
+      let T = 0;
+      let V = 0;
+      let V_min = 0;
+      for (let p = 0; p < n; p++) {
+        let sumMass = 0;
+        for (let i = p; i < n; i++) sumMass += masses[i];
+        V -= g * sumMass * lengths[p] * Math.cos(angles[p]);
+        V_min -= g * sumMass * lengths[p]; // 최하단 바닥 기준점
+
+        for (let k = 0; k < n; k++) {
+          let M_pk = 0;
+          for (let i = Math.max(p, k); i < n; i++) M_pk += masses[i];
+          T += 0.5 * M_pk * lengths[p] * lengths[k] * omegas[p] * omegas[k] * Math.cos(angles[p] - angles[k]);
+        }
+      }
+      const V_norm = Math.max(0, V - V_min);
+      return { T: Math.max(0, T), V: V_norm, rawV: V, total: Math.max(0, T) + V_norm };
+    }
+
+    // 실시간 각 마디별 장력(Tension) 정밀 계산 (중력 + 원운동 구심 가속도 결합)
+    function computeLinkTensions(pList, g) {
+      const n = pList.length;
+      const tensions = new Float64Array(n);
+      if (n === 0) return tensions;
+
+      const scale = 0.01; // 100px = 1m
+      const masses = pList.map(p => p.m * 0.001); // g -> kg
+      const lengths = pList.map(p => p.l * scale);
+      const angles = pList.map(p => p.theta);
+      const omegas = pList.map(p => p.omega);
+
+      for (let i = 0; i < n; i++) {
+        let tVal = 0;
+        // 하단에 매달린 모든 진자 j (j >= i)에 의한 장력 기여분 적산
+        for (let j = i; j < n; j++) {
+          const gravTerm = g * Math.cos(angles[i]);
+          let centripetalTerm = lengths[i] * (omegas[i] * omegas[i]);
+          for (let k = 0; k <= j; k++) {
+            if (k !== i) {
+              centripetalTerm += lengths[k] * (omegas[k] * omegas[k]) * Math.cos(angles[k] - angles[i]);
+            }
+          }
+          tVal += masses[j] * (gravTerm + centripetalTerm);
+        }
+        // 줄은 압축 하중을 지지할 수 없으므로(Slack) 최소 0 N
+        tensions[i] = Math.max(0, tVal);
+      }
+      return tensions;
+    }
+
+    // 모든 진자의 데카르트 좌표 (x, y) 계산 (탄성 신장 Hooke's Law 반영)
+    function computeBobPositions(pList, basePivot, useElasticity = true) {
+      const positions = [];
+      let curX = basePivot.x;
+      let curY = basePivot.y;
+      for (let i = 0; i < pList.length; i++) {
+        const stretch = (useElasticity && config.enableElasticity)
+          ? Math.min(0.35, ((currentTensions && currentTensions[i]) || 0) / config.elasticK)
+          : 0;
+        const effL = pList[i].l * (1 + stretch);
+        curX += effL * Math.sin(pList[i].theta);
+        curY += effL * Math.cos(pList[i].theta);
+        positions.push({ x: curX, y: curY });
+      }
+      return positions;
+    }
+
+    // 💥 줄 끊어짐 발생 처리 (장력 한계 초과 시 진자 절단 및 자유 포물선 비행체 변환)
+    function triggerStringBreak(breakIdx, breakTension) {
+      if (!backupFullPendulums && pendulums.length > 0) {
+        backupFullPendulums = JSON.parse(JSON.stringify(pendulums));
+      }
+
+      const n = pendulums.length;
+      const positions = computeBobPositions(pendulums, pivot);
+
+      // 스파크 파티클 발생 지점: 끊어진 마디 중간 지점
+      const pPrev = (breakIdx === 0) ? pivot : positions[breakIdx - 1];
+      const pCur = positions[breakIdx];
+      const snapX = (pPrev.x + pCur.x) * 0.5;
+      const snapY = (pPrev.y + pCur.y) * 0.5;
+      createSnapParticles(snapX, snapY, '#f59e0b');
+
+      // 분리된 하위 진자들을 자유 비행체(flyingBobs)로 변환하여 포물선 발사
+      for (let k = breakIdx; k < n; k++) {
+        let vx = 0, vy = 0;
+        for (let m = 0; m <= k; m++) {
+          vx += pendulums[m].l * pendulums[m].omega * Math.cos(pendulums[m].theta);
+          vy -= pendulums[m].l * pendulums[m].omega * Math.sin(pendulums[m].theta);
+        }
+
+        flyingBobs.push({
+          x: positions[k].x,
+          y: positions[k].y,
+          vx: vx,
+          vy: vy,
+          radius: Math.max(7, Math.min(24, Math.sqrt(pendulums[k].m / 10) * 3.6)),
+          color: BOB_COLORS[k % BOB_COLORS.length],
+          label: `M${k + 1}`,
+          m: pendulums[k].m,
+          isEndBob: (k === n - 1),
+          trail: [{ x: positions[k].x, y: positions[k].y }]
+        });
+      }
+
+      const detachedCount = n - breakIdx;
+      pendulums = pendulums.slice(0, breakIdx);
+      isStringBroken = true;
+
+      if (config.enableTwin) {
+        config.twinPendulums = config.twinPendulums.slice(0, breakIdx);
+      }
+
+      currentTensions = computeLinkTensions(pendulums, config.g);
+      updateBreakStatusUI(true, detachedCount, breakIdx);
+      buildPendulumControlsUI();
+
+      const nodeName = breakIdx === 0 ? '피벗 연결부' : `제 ${breakIdx + 1} 진자 줄`;
+      showMiniToast(`💥 [${nodeName} 끊어짐!] 장력 ${breakTension.toFixed(0)}N (한계 ${config.maxTension}N 초과)로 ${detachedCount}개의 진자가 분리되어 자유 포물선 운동합니다.`);
+    }
+
+    // 끊어진 자유 진자들의 포물선 운동 및 충돌 물리 적분
+    function updateFlyingBobs(dt) {
+      if (flyingBobs.length === 0) return;
+      const simDt = dt * config.simSpeed;
+      const gAccel = config.g * 85; // Canvas 상의 중력 가속도 (px/s^2)
+      const rect = container.getBoundingClientRect();
+      const width = rect.width || 800;
+      const height = rect.height || 600;
+
+      for (let i = 0; i < flyingBobs.length; i++) {
+        const bob = flyingBobs[i];
+
+        // 1) 중력 가속도 적용
+        bob.vy += gAccel * simDt;
+
+        // 2) 현실 모드 공기저항 적용
+        if (config.realityMode) {
+          const spd = Math.hypot(bob.vx, bob.vy);
+          if (spd > 0.001) {
+            const dragFactor = (config.airDrag * 25 + config.airDragQuad * 0.05 * spd);
+            const dragAccel = dragFactor * spd;
+            bob.vx -= (bob.vx / spd) * dragAccel * simDt;
+            bob.vy -= (bob.vy / spd) * dragAccel * simDt;
+          }
+        }
+
+        // 3) 위치 업데이트
+        bob.x += bob.vx * simDt;
+        bob.y += bob.vy * simDt;
+
+        // 4) 바닥 및 벽면 비탄성 반발 충돌
+        if (bob.y + bob.radius > height) {
+          bob.y = height - bob.radius;
+          bob.vy = -bob.vy * 0.65;
+          bob.vx = bob.vx * 0.88;
+          if (Math.abs(bob.vy) < 15) bob.vy = 0;
+        }
+        if (bob.x - bob.radius < 0) {
+          bob.x = bob.radius;
+          bob.vx = -bob.vx * 0.70;
+        } else if (bob.x + bob.radius > width) {
+          bob.x = width - bob.radius;
+          bob.vx = -bob.vx * 0.70;
+        }
+
+        // 5) 포물선 궤적 저장
+        if (frameCounter % 2 === 0) {
+          bob.trail.push({ x: bob.x, y: bob.y });
+          if (bob.trail.length > 120) bob.trail.shift();
+        }
+      }
+    }
+
+    // 자유 비행 중인 공들 렌더링
+    function drawFlyingBobs() {
+      if (flyingBobs.length === 0) return;
+      ctx.save();
+      for (let i = 0; i < flyingBobs.length; i++) {
+        const bob = flyingBobs[i];
+
+        // 날아가는 궤적 (점선 포물선)
+        if (bob.trail && bob.trail.length > 1) {
+          ctx.save();
+          ctx.strokeStyle = bob.color;
+          ctx.lineWidth = 1.8;
+          ctx.setLineDash([4, 4]);
+          ctx.globalAlpha = 0.55;
+          ctx.beginPath();
+          ctx.moveTo(bob.trail[0].x, bob.trail[0].y);
+          for (let t = 1; t < bob.trail.length; t++) {
+            ctx.lineTo(bob.trail[t].x, bob.trail[t].y);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 날아가는 공 렌더링
+        drawBob(bob.x, bob.y, bob.radius, bob.color, bob.label, false, bob.isEndBob);
+
+        // 끝 진자였던 경우 초록색 점 표시 유지
+        if (bob.isEndBob && config.showGreenTipDot) {
+          drawGreenTipDot(bob.x, bob.y);
+        }
+
+        // 분리 상태 텍스트
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('FREE', bob.x, bob.y - bob.radius - 4);
+      }
+      ctx.restore();
+    }
+
+    // 스파크 파티클 생성 및 애니메이션
+    function createSnapParticles(x, y, color) {
+      const count = 32;
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 50 + Math.random() * 240;
+        snapParticles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: Math.random() > 0.3 ? color : '#fef08a',
+          size: 2 + Math.random() * 3,
+          alpha: 1.0,
+          decay: 1.0 + Math.random() * 1.2
+        });
+      }
+    }
+
+    function updateSnapParticles(dt) {
+      if (snapParticles.length === 0) return;
+      const simDt = dt * config.simSpeed;
+      for (let i = snapParticles.length - 1; i >= 0; i--) {
+        const p = snapParticles[i];
+        p.x += p.vx * simDt;
+        p.y += p.vy * simDt;
+        p.alpha -= p.decay * simDt;
+        if (p.alpha <= 0) {
+          snapParticles.splice(i, 1);
+        }
+      }
+    }
+
+    function drawSnapParticles() {
+      if (snapParticles.length === 0) return;
+      ctx.save();
+      for (let i = 0; i < snapParticles.length; i++) {
+        const p = snapParticles[i];
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // 끊어진 줄 즉시 재연결 복원 함수
+    function reconnectRopes() {
+      if (backupFullPendulums && backupFullPendulums.length > 0) {
+        pendulums = JSON.parse(JSON.stringify(backupFullPendulums));
+      } else if (pendulums.length < 2) {
+        pendulums = [
+          { l: 140, m: 100, theta: Math.PI * 0.5, omega: 0, initTheta: Math.PI * 0.5 },
+          { l: 140, m: 100, theta: Math.PI * 0.5, omega: 0, initTheta: Math.PI * 0.5 }
+        ];
+      }
+      flyingBobs = [];
+      snapParticles = [];
+      isStringBroken = false;
+      backupFullPendulums = null;
+      currentTensions = computeLinkTensions(pendulums, config.g);
+      clearTrails();
+      updateBreakStatusUI(false);
+      buildPendulumControlsUI();
+      syncTwinPendulums();
+      showMiniToast('🔗 끊어진 줄이 모두 재연결되었습니다! (진자 정상 복구)');
+    }
+
+    // 상태 뱃지 UI 갱신 (HUD 및 사이드바 카드)
+    function updateBreakStatusUI(broken, detachedCount = 0, breakIdx = 0) {
+      const badgeCard = document.getElementById('badge-break-status');
+      const badgeHud = document.getElementById('hud-break-status');
+      if (broken) {
+        const text = `💥 끊어짐 (${detachedCount}개 분리)`;
+        if (badgeCard) {
+          badgeCard.innerText = text;
+          badgeCard.style.background = 'rgba(239, 68, 68, 0.2)';
+          badgeCard.style.color = '#ef4444';
+        }
+        if (badgeHud) {
+          badgeHud.innerText = text;
+          badgeHud.style.color = '#ef4444';
+        }
+      } else {
+        if (badgeCard) {
+          badgeCard.innerText = '연결 정상';
+          badgeCard.style.background = 'rgba(34, 197, 94, 0.15)';
+          badgeCard.style.color = '#4ade80';
+        }
+        if (badgeHud) {
+          badgeHud.innerText = '연결 정상';
+          badgeHud.style.color = '#4ade80';
+        }
+      }
+    }
+
+    // ==========================================
+    // 3.8. 힘 벡터 화살표 시각화 (장력 T, 중력 Fg, 합력 Fnet)
+    // ==========================================
+    function drawArrow(x0, y0, x1, y1, color, width, label, valueText) {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const len = Math.hypot(dx, dy);
+      if (len < 3) return;
+
+      const angle = Math.atan2(dy, dx);
+      const headLen = Math.min(11, Math.max(6, len * 0.28));
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+
+      // 화살표 선분
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+
+      // 화살표 촉 (삼각형)
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - headLen * Math.cos(angle - Math.PI / 6), y1 - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x1 - headLen * Math.cos(angle + Math.PI / 6), y1 - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+
+      // 실시간 수치 라벨 배지
+      if (label || valueText) {
+        const text = valueText ? `${label} ${valueText}` : label;
+        ctx.font = 'bold 9px monospace';
+        const metrics = ctx.measureText(text);
+        const tw = metrics.width;
+        const bx = x1 + Math.cos(angle) * 7;
+        const by = y1 + Math.sin(angle) * 7;
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(bx - 3, by - 6, tw + 6, 12);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx - 3, by - 6, tw + 6, 12);
+
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, bx, by);
+      }
+      ctx.restore();
+    }
+
+    function drawForceVectors(positions) {
+      if (!config.showForceVectors) return;
+      const n = pendulums.length;
+      if (n === 0) return;
+
+      const scale = config.forceVectorScale || 25.0; // px/N
+
+      for (let i = 0; i < n; i++) {
+        const cur = positions[i];
+        const prev = (i === 0) ? pivot : positions[i - 1];
+
+        // 1) 상향 줄 방향 단위 벡터 (진자 추 -> 부모/피벗)
+        const dxUp = prev.x - cur.x;
+        const dyUp = prev.y - cur.y;
+        const distUp = Math.hypot(dxUp, dyUp) || 1;
+        const uxUp = dxUp / distUp;
+        const uyUp = dyUp / distUp;
+
+        // 줄 i의 상향 장력
+        const tVal = (currentTensions && currentTensions[i] !== undefined) ? currentTensions[i] : 0;
+        const txUp = uxUp * tVal;
+        const tyUp = uyUp * tVal;
+
+        // 2) 하위 줄 i+1이 존재하는 경우 하향 장력
+        let txDown = 0, tyDown = 0;
+        if (i < n - 1 && positions[i + 1]) {
+          const next = positions[i + 1];
+          const dxDn = next.x - cur.x;
+          const dyDn = next.y - cur.y;
+          const distDn = Math.hypot(dxDn, dyDn) || 1;
+          const tNext = (currentTensions && currentTensions[i + 1] !== undefined) ? currentTensions[i + 1] : 0;
+          txDown = (dxDn / distDn) * tNext;
+          tyDown = (dyDn / distDn) * tNext;
+        }
+
+        // 진자 추에 가해지는 순수 줄 장력 합 벡터
+        const txTotal = txUp + txDown;
+        const tyTotal = tyUp + tyDown;
+
+        // 3) 중력 벡터 (아래 방향: 0, m*g)
+        const massKg = pendulums[i].m * 0.001;
+        const fgVal = massKg * config.g;
+        const fgx = 0;
+        const fgy = fgVal;
+
+        // 4) 알짜 가속 합력 벡터 (Fnet = T_net + Fg)
+        const fnetX = txTotal + fgx;
+        const fnetY = tyTotal + fgy;
+        const fnetVal = Math.hypot(fnetX, fnetY);
+
+        // A) 장력 화살표 (Tension, 황금색 #fbbf24)
+        if (config.showTensionVector && tVal > 0.05) {
+          const arrowLen = Math.min(130, Math.max(14, tVal * scale));
+          const tArrowX = cur.x + uxUp * arrowLen;
+          const tArrowY = cur.y + uyUp * arrowLen;
+          drawArrow(cur.x, cur.y, tArrowX, tArrowY, '#fbbf24', 2.2, `T${i+1}`, `${tVal.toFixed(1)}N`);
+        }
+
+        // B) 중력 화살표 (Gravity, 청록색 #38bdf8)
+        if (config.showGravityVector && fgVal > 0.01) {
+          const arrowLen = Math.min(110, Math.max(12, fgVal * scale));
+          const fgArrowX = cur.x;
+          const fgArrowY = cur.y + arrowLen;
+          drawArrow(cur.x, cur.y, fgArrowX, fgArrowY, '#38bdf8', 2.0, 'Fg', `${fgVal.toFixed(2)}N`);
+        }
+
+        // C) 알짜 합력 화살표 (Net Force, 자홍색 #ec4899)
+        if (config.showNetForceVector && fnetVal > 0.05) {
+          const arrowLen = Math.min(140, Math.max(14, fnetVal * scale));
+          const fnUx = fnetX / fnetVal;
+          const fnUy = fnetY / fnetVal;
+          const fnArrowX = cur.x + fnUx * arrowLen;
+          const fnArrowY = cur.y + fnUy * arrowLen;
+          drawArrow(cur.x, cur.y, fnArrowX, fnArrowY, '#ec4899', 2.5, 'Fnet', `${fnetVal.toFixed(1)}N`);
+        }
+      }
+    }
+
+    // ==========================================
+    // 3.9. 블랙번 진자 (Blackburn's Pendulum) & 리사주 엔진
+    // ==========================================
+    function project3D(x, y, z, originX, originY) {
+      const cosYaw = Math.cos(blackburn.camYaw);
+      const sinYaw = Math.sin(blackburn.camYaw);
+      const cosPitch = Math.cos(blackburn.camPitch);
+      const sinPitch = Math.sin(blackburn.camPitch);
+
+      // Y축 중심 회전 (Yaw)
+      const rx = x * cosYaw - z * sinYaw;
+      const rz = x * sinYaw + z * cosYaw;
+
+      // Pitch 기울임 투영
+      const sx = originX + rx * blackburn.camZoom;
+      const sy = originY + (y * cosPitch + rz * sinPitch) * blackburn.camZoom;
+      return { x: sx, y: sy, depth: rz };
+    }
+
+    function initSandCanvas() {
+      if (!blackburn.sandCanvas) {
+        blackburn.sandCanvas = document.createElement('canvas');
+      }
+      const rect = container.getBoundingClientRect();
+      const w = Math.max(100, Math.floor(rect.width * (dpr || 1)));
+      const h = Math.max(100, Math.floor(rect.height * (dpr || 1)));
+      if (!blackburn.sandCtx || blackburn.sandCanvas.width !== w || blackburn.sandCanvas.height !== h) {
+        blackburn.sandCanvas.width = w;
+        blackburn.sandCanvas.height = h;
+        blackburn.sandCtx = blackburn.sandCanvas.getContext('2d');
+        blackburn.sandCtx.scale(dpr || 1, dpr || 1);
+      }
+    }
+
+    function resetBlackburnBob() {
+      blackburn.x = blackburn.initAmpX * Math.cos(blackburn.phaseDiff);
+      blackburn.y = blackburn.initAmpY;
+      blackburn.vx = 0;
+      blackburn.vy = 0;
+      blackburn.trailPoints = [];
+      blackburn.sandParticles = [];
+      blackburn.sandCount = 0;
+      blackburn.time = 0;
+      if (blackburn.sandCtx) {
+        const rect = container.getBoundingClientRect();
+        blackburn.sandCtx.clearRect(0, 0, rect.width, rect.height);
+      }
+      updateBlackburnHUD();
+    }
+
+    function updateBlackburnPhysics(dt) {
+      if (!config.isRunning || blackburn.isDraggingBob) return;
+
+      const subSteps = 6;
+      const subDt = (dt * config.simSpeed) / subSteps;
+      const g = config.g;
+      const scale = 0.0025; // 100px = 0.25m
+
+      const Lx = Math.max(20, blackburn.h2);
+      const Ly = Math.max(30, blackburn.h1 + blackburn.h2);
+
+      const omegaX2 = g / (Lx * scale);
+      const omegaY2 = g / (Ly * scale);
+
+      const dampLinear = blackburn.damping * 28;
+      const dampQuad = blackburn.damping * 0.04;
+
+      for (let s = 0; s < subSteps; s++) {
+        function getDerivs(x, vx, y, vy) {
+          const sinThetaX = Math.sin(Math.min(1.4, Math.max(-1.4, x / Lx)));
+          const sinThetaY = Math.sin(Math.min(1.4, Math.max(-1.4, y / Ly)));
+
+          const spdX = Math.abs(vx);
+          const spdY = Math.abs(vy);
+
+          const ax = -omegaX2 * sinThetaX * Lx - (dampLinear + dampQuad * spdX) * vx;
+          const ay = -omegaY2 * sinThetaY * Ly - (dampLinear + dampQuad * spdY) * vy;
+
+          return [vx, ax, vy, ay];
+        }
+
+        const [dx1, dvx1, dy1, dvy1] = getDerivs(blackburn.x, blackburn.vx, blackburn.y, blackburn.vy);
+
+        const x2 = blackburn.x + dx1 * subDt * 0.5;
+        const vx2 = blackburn.vx + dvx1 * subDt * 0.5;
+        const y2 = blackburn.y + dy1 * subDt * 0.5;
+        const vy2 = blackburn.vy + dvy1 * subDt * 0.5;
+        const [dx2, dvx2, dy2, dvy2] = getDerivs(x2, vx2, y2, vy2);
+
+        const x3 = blackburn.x + dx2 * subDt * 0.5;
+        const vx3 = blackburn.vx + dvx2 * subDt * 0.5;
+        const y3 = blackburn.y + dy2 * subDt * 0.5;
+        const vy3 = blackburn.vy + dvy2 * subDt * 0.5;
+        const [dx3, dvx3, dy3, dvy3] = getDerivs(x3, vx3, y3, vy3);
+
+        const x4 = blackburn.x + dx3 * subDt;
+        const vx4 = blackburn.vx + dvx3 * subDt;
+        const y4 = blackburn.y + dy3 * subDt;
+        const vy4 = blackburn.vy + dvy3 * subDt;
+        const [dx4, dvx4, dy4, dvy4] = getDerivs(x4, vx4, y4, vy4);
+
+        blackburn.x += (dx1 + 2 * dx2 + 2 * dx3 + dx4) * (subDt / 6);
+        blackburn.vx += (dvx1 + 2 * dvx2 + 2 * dvx3 + dvx4) * (subDt / 6);
+        blackburn.y += (dy1 + 2 * dy2 + 2 * dy3 + dy4) * (subDt / 6);
+        blackburn.vy += (dvy1 + 2 * dvy2 + 2 * dvy3 + dvy4) * (subDt / 6);
+      }
+
+      blackburn.time += dt * config.simSpeed;
+
+      blackburn.trailPoints.push({ x: blackburn.x, y: blackburn.y, t: blackburn.time });
+      if (blackburn.trailPoints.length > blackburn.maxTrail) {
+        blackburn.trailPoints.shift();
+      }
+
+      if (blackburn.sandDrop) {
+        dropSandParticle();
+      }
+
+      updateBlackburnHUD();
+    }
+
+    function dropSandParticle() {
+      const style = blackburn.trailStyle;
+      for (let k = 0; k < 3; k++) {
+        const jx = (Math.random() - 0.5) * 2.4;
+        const jz = (Math.random() - 0.5) * 2.4;
+        let col;
+        if (style === 'sand') {
+          col = Math.random() > 0.45 ? 0 : 1;
+        } else if (style === 'laser') {
+          col = 'laser';
+        } else {
+          col = ((blackburn.time * 55) % 360).toFixed(0);
+        }
+
+        blackburn.sandParticles.push({
+          x: blackburn.x + jx,
+          z: blackburn.y + jz,
+          c: col
+        });
+      }
+      blackburn.sandCount += 3;
+
+      // 최대 개수 초과 시 오래된 입자 일괄 청소 (60 FPS 보장)
+      if (blackburn.sandParticles.length > blackburn.maxSandParticles) {
+        blackburn.sandParticles.splice(0, 500);
+      }
+    }
+
+    function drawBlackburn() {
+      const rect = container.getBoundingClientRect();
+      const originX = rect.width / 2;
+      const originY = rect.height * 0.22;
+      const tableY = blackburn.h1 + blackburn.h2 + 35;
+
+      if (blackburn.viewMode === '3d') {
+        // 1) 3D 물리 바닥 테이블 (입체 슬레이트 판 & 원근 동심원)
+        drawBlackburn3DTable(originX, originY, tableY);
+
+        // 2) 누적 모래알/입자 3D 실시간 투영 렌더링 (카메라 회전/각도/줌에 100% 동기화)
+        const particles = blackburn.sandParticles;
+        const pCount = particles.length;
+        if (pCount > 0) {
+          const cosYaw = Math.cos(blackburn.camYaw);
+          const sinYaw = Math.sin(blackburn.camYaw);
+          const cosPitch = Math.cos(blackburn.camPitch);
+          const sinPitch = Math.sin(blackburn.camPitch);
+          const zoom = blackburn.camZoom || 1.0;
+          const tyCos = tableY * cosPitch;
+
+          ctx.save();
+          if (blackburn.trailStyle === 'sand') {
+            // 밝은 황금 모래 (c === 0)
+            ctx.fillStyle = 'rgba(253, 224, 71, 0.82)';
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              if (p.c === 0) {
+                const rx = p.x * cosYaw - p.z * sinYaw;
+                const rz = p.x * sinYaw + p.z * cosYaw;
+                const sx = originX + rx * zoom;
+                const sy = originY + (tyCos + rz * sinPitch) * zoom;
+                ctx.fillRect(sx - 1, sy - 1, 2, 2);
+              }
+            }
+            // 앰버 황금 모래 (c === 1)
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              if (p.c === 1) {
+                const rx = p.x * cosYaw - p.z * sinYaw;
+                const rz = p.x * sinYaw + p.z * cosYaw;
+                const sx = originX + rx * zoom;
+                const sy = originY + (tyCos + rz * sinPitch) * zoom;
+                ctx.fillRect(sx - 1, sy - 1, 2, 2);
+              }
+            }
+          } else if (blackburn.trailStyle === 'laser') {
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.9)';
+            ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
+            ctx.shadowBlur = 3;
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              const rx = p.x * cosYaw - p.z * sinYaw;
+              const rz = p.x * sinYaw + p.z * cosYaw;
+              const sx = originX + rx * zoom;
+              const sy = originY + (tyCos + rz * sinPitch) * zoom;
+              ctx.fillRect(sx - 1.2, sy - 1.2, 2.4, 2.4);
+            }
+          } else {
+            // rainbow
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              const rx = p.x * cosYaw - p.z * sinYaw;
+              const rz = p.x * sinYaw + p.z * cosYaw;
+              const sx = originX + rx * zoom;
+              const sy = originY + (tyCos + rz * sinPitch) * zoom;
+              ctx.fillStyle = `hsla(${p.c}, 100%, 65%, 0.85)`;
+              ctx.fillRect(sx - 1, sy - 1, 2, 2);
+            }
+          }
+          ctx.restore();
+        }
+
+        // 3) 연속 궤적 선 (레이저/레인보우 스타일)
+        if (blackburn.trailStyle !== 'sand' && blackburn.trailPoints.length > 2) {
+          ctx.save();
+          ctx.beginPath();
+          const pts = blackburn.trailPoints;
+          const p0 = project3D(pts[0].x, tableY, pts[0].y, originX, originY);
+          ctx.moveTo(p0.x, p0.y);
+          for (let i = 1; i < pts.length; i++) {
+            const pi = project3D(pts[i].x, tableY, pts[i].y, originX, originY);
+            ctx.lineTo(pi.x, pi.y);
+          }
+          ctx.strokeStyle = blackburn.trailStyle === 'laser' ? 'rgba(56, 189, 248, 0.8)' : 'rgba(236, 72, 153, 0.8)';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 4) 상단 지지대 빔 및 후크 A, B
+        const span = blackburn.d / 2;
+        const hookA = project3D(-span, 0, 0, originX, originY);
+        const hookB = project3D(span, 0, 0, originX, originY);
+        const beamL = project3D(-span - 40, 0, 0, originX, originY);
+        const beamR = project3D(span + 40, 0, 0, originX, originY);
+
+        ctx.save();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(beamL.x, beamL.y);
+        ctx.lineTo(beamR.x, beamR.y);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fbbf24';
+        [hookA, hookB].forEach(h => {
+          ctx.beginPath();
+          ctx.arc(h.x, h.y, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+
+        // 5) 매듭 Knot C 좌표 계산 (Y 진동 시 Knot C는 Y-Z 평면에서 회전)
+        const thetaY = Math.min(1.4, Math.max(-1.4, blackburn.y / (blackburn.h1 + blackburn.h2)));
+        const knotY = blackburn.h1 * Math.cos(thetaY);
+        const knotZ = blackburn.h1 * Math.sin(thetaY);
+        const knotC = project3D(0, knotY, knotZ, originX, originY);
+
+        // 6) 상단 V줄 (A -> C, B -> C)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.85)';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(hookA.x, hookA.y);
+        ctx.lineTo(knotC.x, knotC.y);
+        ctx.lineTo(hookB.x, hookB.y);
+        ctx.stroke();
+
+        // 매듭 링 C
+        ctx.fillStyle = '#f59e0b';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(knotC.x, knotC.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // 7) 추 Bob 좌표 (X=x, Y=knotY + h2*cos(thetaX), Z=y)
+        const thetaX = Math.min(1.4, Math.max(-1.4, blackburn.x / blackburn.h2));
+        const bobY = knotY + blackburn.h2 * Math.cos(thetaX);
+        const bob3D = project3D(blackburn.x, bobY, blackburn.y, originX, originY);
+
+        // 하단 단일줄 (C -> Bob)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(knotC.x, knotC.y);
+        ctx.lineTo(bob3D.x, bob3D.y);
+        ctx.stroke();
+
+        // 8) 노즐 모래 스트림 (Bob 노즐 -> 바닥 모래판 타격점 수직 낙하선)
+        const sandImpact = project3D(blackburn.x, tableY, blackburn.y, originX, originY);
+        if (blackburn.sandDrop) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(253, 224, 71, 0.6)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(bob3D.x, bob3D.y + 12);
+          ctx.lineTo(sandImpact.x, sandImpact.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        drawBrassBob(bob3D.x, bob3D.y);
+
+        // 모래판 타격점 조준 표시기 (바닥 테이블 위)
+        ctx.save();
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(sandImpact.x, sandImpact.y, 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.5)';
+        ctx.beginPath();
+        ctx.arc(sandImpact.x, sandImpact.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+      } else {
+        // 2D 하모노그래프 모래판 탑뷰
+        drawBlackburn2DTable(rect);
+
+        // 누적 모래 입자 2D 렌더링 (동일 데이터 공유)
+        const particles = blackburn.sandParticles;
+        const pCount = particles.length;
+        if (pCount > 0) {
+          ctx.save();
+          const topOriginX = originX;
+          const topOriginY = rect.height * 0.52;
+          const topScale = 1.5;
+
+          if (blackburn.trailStyle === 'sand') {
+            ctx.fillStyle = 'rgba(253, 224, 71, 0.82)';
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              if (p.c === 0) {
+                ctx.fillRect(topOriginX + p.x * topScale - 1, topOriginY + p.z * topScale - 1, 2, 2);
+              }
+            }
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              if (p.c === 1) {
+                ctx.fillRect(topOriginX + p.x * topScale - 1, topOriginY + p.z * topScale - 1, 2, 2);
+              }
+            }
+          } else if (blackburn.trailStyle === 'laser') {
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.9)';
+            ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
+            ctx.shadowBlur = 3;
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              ctx.fillRect(topOriginX + p.x * topScale - 1.2, topOriginY + p.z * topScale - 1.2, 2.4, 2.4);
+            }
+          } else {
+            for (let i = 0; i < pCount; i++) {
+              const p = particles[i];
+              ctx.fillStyle = `hsla(${p.c}, 100%, 65%, 0.85)`;
+              ctx.fillRect(topOriginX + p.x * topScale - 1, topOriginY + p.z * topScale - 1, 2, 2);
+            }
+          }
+          ctx.restore();
+        }
+
+        const cx = originX + blackburn.x * 1.5;
+        const cy = rect.height * 0.52 + blackburn.y * 1.5;
+
+        // 연속 궤적 선
+        if (blackburn.trailStyle !== 'sand' && blackburn.trailPoints.length > 2) {
+          ctx.save();
+          ctx.beginPath();
+          const pts = blackburn.trailPoints;
+          ctx.moveTo(originX + pts[0].x * 1.5, rect.height * 0.52 + pts[0].y * 1.5);
+          for (let i = 1; i < pts.length; i++) {
+            ctx.lineTo(originX + pts[i].x * 1.5, rect.height * 0.52 + pts[i].y * 1.5);
+          }
+          ctx.strokeStyle = blackburn.trailStyle === 'laser' ? 'rgba(56, 189, 248, 0.8)' : 'rgba(236, 72, 153, 0.8)';
+          ctx.lineWidth = 2.0;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 현재 모래 분출 노즐 조준선 (십자선 & 발광 링)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+        ctx.moveTo(cx - 14, cy);
+        ctx.lineTo(cx + 14, cy);
+        ctx.moveTo(cx, cy - 14);
+        ctx.lineTo(cx, cy + 14);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawBlackburn3DTable(originX, originY, tableY) {
+      const tw = 250;
+      const th = 220;
+      const tDepth = 14;
+
+      // 하부 베벨/두께 점들
+      const b1 = project3D(-tw, tableY + tDepth, -th, originX, originY);
+      const b2 = project3D(tw, tableY + tDepth, -th, originX, originY);
+      const b3 = project3D(tw, tableY + tDepth, th, originX, originY);
+      const b4 = project3D(-tw, tableY + tDepth, th, originX, originY);
+
+      // 상부 표면 모서리 점들
+      const c1 = project3D(-tw, tableY, -th, originX, originY);
+      const c2 = project3D(tw, tableY, -th, originX, originY);
+      const c3 = project3D(tw, tableY, th, originX, originY);
+      const c4 = project3D(-tw, tableY, th, originX, originY);
+
+      ctx.save();
+
+      // 1) 테이블 앞면/옆면 두께 (3D Slab Volume)
+      ctx.fillStyle = '#090d16';
+      ctx.beginPath();
+      ctx.moveTo(c4.x, c4.y);
+      ctx.lineTo(c3.x, c3.y);
+      ctx.lineTo(b3.x, b3.y);
+      ctx.lineTo(b4.x, b4.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#060a12';
+      ctx.beginPath();
+      ctx.moveTo(c3.x, c3.y);
+      ctx.lineTo(c2.x, c2.y);
+      ctx.lineTo(b2.x, b2.y);
+      ctx.lineTo(b3.x, b3.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 2) 테이블 상단 모래판 슬레이트 표면
+      ctx.fillStyle = 'rgba(11, 17, 32, 0.96)';
+      ctx.beginPath();
+      ctx.moveTo(c1.x, c1.y);
+      ctx.lineTo(c2.x, c2.y);
+      ctx.lineTo(c3.x, c3.y);
+      ctx.lineTo(c4.x, c4.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // 금속/황동 테두리 림
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // 3) 모래판 표면의 원근 동심원 가이드 (Concentric Depth Circles)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+      ctx.lineWidth = 1;
+      const guideRadii = [60, 120, 180];
+      const segments = 36;
+      guideRadii.forEach(r => {
+        ctx.beginPath();
+        for (let s = 0; s <= segments; s++) {
+          const angle = (s / segments) * Math.PI * 2;
+          const gx = r * Math.cos(angle);
+          const gz = r * Math.sin(angle);
+          const gp = project3D(gx, tableY, gz, originX, originY);
+          if (s === 0) ctx.moveTo(gp.x, gp.y);
+          else ctx.lineTo(gp.x, gp.y);
+        }
+        ctx.stroke();
+      });
+
+      // 4) 중심 십자 기준선 (X축 및 Z축)
+      const midX1 = project3D(0, tableY, -th, originX, originY);
+      const midX2 = project3D(0, tableY, th, originX, originY);
+      const midZ1 = project3D(-tw, tableY, 0, originX, originY);
+      const midZ2 = project3D(tw, tableY, 0, originX, originY);
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
+      ctx.beginPath();
+      ctx.moveTo(midZ1.x, midZ1.y);
+      ctx.lineTo(midZ2.x, midZ2.y);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.15)';
+      ctx.beginPath();
+      ctx.moveTo(midX1.x, midX1.y);
+      ctx.lineTo(midX2.x, midX2.y);
+      ctx.stroke();
+
+      // 중앙 원점 마크
+      const centerPt = project3D(0, tableY, 0, originX, originY);
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.7)';
+      ctx.beginPath();
+      ctx.arc(centerPt.x, centerPt.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawBlackburn2DTable(rect) {
+      const cx = rect.width / 2;
+      const cy = rect.height * 0.52;
+      const r = Math.min(rect.width * 0.38, rect.height * 0.38);
+
+      ctx.save();
+      const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, r);
+      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(0.85, '#090d16');
+      grad.addColorStop(1, '#020617');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+      ctx.lineWidth = 1;
+      for (let cr = 40; cr < r; cr += 40) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.beginPath();
+      ctx.moveTo(cx - r, cy);
+      ctx.lineTo(cx + r, cy);
+      ctx.moveTo(cx, cy - r);
+      ctx.lineTo(cx, cy + r);
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText('+X (Lx)', cx + r - 8, cy - 6);
+      ctx.fillStyle = '#ec4899';
+      ctx.textAlign = 'center';
+      ctx.fillText('+Y (Ly)', cx, cy - r + 14);
+
+      ctx.restore();
+    }
+
+    function drawBrassBob(x, y) {
+      ctx.save();
+      const r = 12;
+
+      const grad = ctx.createRadialGradient(x - 3, y - 4, 1, x, y, r);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.4, '#eab308');
+      grad.addColorStop(0.85, '#a16207');
+      grad.addColorStop(1, '#713f12');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ca8a04';
+      ctx.beginPath();
+      ctx.moveTo(x - 6, y + 6);
+      ctx.lineTo(x + 6, y + 6);
+      ctx.lineTo(x, y + 15);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(x, y + 15, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function updateBlackburnHUD() {
+      const Lx = Math.max(20, blackburn.h2);
+      const Ly = Math.max(30, blackburn.h1 + blackburn.h2);
+      const scale = 0.0025;
+      const fx = Math.sqrt(config.g / (Lx * scale)) / (2 * Math.PI);
+      const fy = Math.sqrt(config.g / (Ly * scale)) / (2 * Math.PI);
+      const ratioVal = fx / fy;
+
+      const badge = document.getElementById('hud-bb-ratio-badge');
+      if (badge) badge.innerText = `${ratioVal.toFixed(2)} : 1`;
+
+      const lxElem = document.getElementById('hud-bb-lx');
+      if (lxElem) lxElem.innerText = `${Lx} px`;
+      const lyElem = document.getElementById('hud-bb-ly');
+      if (lyElem) lyElem.innerText = `${Ly} px`;
+      const fxElem = document.getElementById('hud-bb-fx');
+      if (fxElem) fxElem.innerText = `${fx.toFixed(2)} Hz`;
+      const fyElem = document.getElementById('hud-bb-fy');
+      if (fyElem) fyElem.innerText = `${fy.toFixed(2)} Hz`;
+
+      const phaseDeg = ((blackburn.phaseDiff * 180 / Math.PI) % 360).toFixed(1);
+      const phaseElem = document.getElementById('hud-bb-phase');
+      if (phaseElem) phaseElem.innerText = `${phaseDeg}°`;
+
+      const sandElem = document.getElementById('hud-bb-sand-count');
+      if (sandElem) sandElem.innerText = `${blackburn.sandCount.toLocaleString()} 점`;
+
+      const posXElem = document.getElementById('hud-bb-posx');
+      if (posXElem) posXElem.innerText = `${blackburn.x.toFixed(1)} px`;
+      const posYElem = document.getElementById('hud-bb-posy');
+      if (posYElem) posYElem.innerText = `${blackburn.y.toFixed(1)} px`;
+      const vxElem = document.getElementById('hud-bb-vx');
+      if (vxElem) vxElem.innerText = blackburn.vx.toFixed(1);
+      const vyElem = document.getElementById('hud-bb-vy');
+      if (vyElem) vyElem.innerText = blackburn.vy.toFixed(1);
+
+      const viewBadge = document.getElementById('hud-bb-view-badge');
+      if (viewBadge) viewBadge.innerText = blackburn.viewMode === '3d' ? '3D 사투시 뷰' : '2D 모래판 탑뷰';
+
+      const nameElem = document.getElementById('hud-bb-ratio-name');
+      if (nameElem) {
+        if (Math.abs(ratioVal - 1.0) < 0.08) nameElem.innerText = '원 · 타원 · 선 (1:1)';
+        else if (Math.abs(ratioVal - 2.0) < 0.08) nameElem.innerText = '8자 곡선 · 포물선 (2:1)';
+        else if (Math.abs(ratioVal - 1.5) < 0.08) nameElem.innerText = '나비형 리사주 (3:2 Butterfly)';
+        else if (Math.abs(ratioVal - 1.333) < 0.08) nameElem.innerText = '4엽 클로버 곡선 (4:3)';
+        else if (Math.abs(ratioVal - 1.25) < 0.08) nameElem.innerText = '정밀 격자망 패턴 (5:4)';
+        else if (Math.abs(ratioVal - 3.0) < 0.08) nameElem.innerText = '3봉 대칭 곡선 (3:1)';
+        else nameElem.innerText = `리사주 복합비 (${ratioVal.toFixed(2)} : 1)`;
+      }
+
+      // 사이드바 분석 텍스트 갱신
+      const txtLx = document.getElementById('txt-bb-lx');
+      if (txtLx) txtLx.innerText = `${Lx} px`;
+      const txtLy = document.getElementById('txt-bb-ly');
+      if (txtLy) txtLy.innerText = `${Ly} px`;
+      const txtRatio = document.getElementById('txt-bb-ratio-calc');
+      if (txtRatio) txtRatio.innerText = `${ratioVal.toFixed(3)} (${nameElem ? nameElem.innerText.split(' ')[0] : ''})`;
+      const valRatio = document.getElementById('val-bb-ratio');
+      if (valRatio) valRatio.innerText = `${ratioVal.toFixed(2)} : 1`;
+    }
+
+    // ==========================================
+    // 시뮬레이션 모드 전환 함수
+    // ==========================================
+    function setSimMode(mode) {
+      simMode = mode;
+      const tabN = document.getElementById('tab-mode-npendulum');
+      const tabB = document.getElementById('tab-mode-blackburn');
+      const hudN = document.getElementById('hud-npendulum-group');
+      const hudB = document.getElementById('hud-blackburn-group');
+      const panelN = document.getElementById('panel-npendulum-content');
+      const panelB = document.getElementById('panel-blackburn-content');
+      const title = document.getElementById('panel-main-title');
+      const subTag = document.getElementById('panel-sub-tag');
+      const dragTip = document.getElementById('drag-tip');
+
+      if (mode === 'blackburn') {
+        tabN.classList.remove('active');
+        tabB.classList.add('active', 'blackburn-active');
+        if (hudN) hudN.style.display = 'none';
+        if (hudB) hudB.style.display = 'flex';
+        if (panelN) panelN.style.display = 'none';
+        if (panelB) panelB.style.display = 'flex';
+        if (title) title.innerText = '⏳ 블랙번 진자 시뮬레이터';
+        if (subTag) {
+          subTag.innerText = 'Blackburn & Lissajous';
+          subTag.style.background = '#d97706';
+          subTag.style.color = '#ffffff';
+        }
+        if (dragTip) {
+          dragTip.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4M12 8h.01"></path>
+            </svg>
+            마우스 좌클릭 드래그로 진자 추를 당겨 진폭을 조절하거나, 3D 화면을 회전할 수 있습니다!
+          `;
+        }
+        initSandCanvas();
+        updateBlackburnHUD();
+        showMiniToast('⏳ 블랙번 진자 모드 활성화: 두 직교 진동 주파수 비에 따른 리사주 하모노그래프를 관측합니다.');
+      } else {
+        tabB.classList.remove('active', 'blackburn-active');
+        tabN.classList.add('active');
+        if (hudB) hudB.style.display = 'none';
+        if (hudN) hudN.style.display = 'flex';
+        if (panelB) panelB.style.display = 'none';
+        if (panelN) panelN.style.display = 'flex';
+        if (title) title.innerText = '🌀 다중진자 시뮬레이터';
+        if (subTag) {
+          subTag.innerText = 'N-Pendulum RK4';
+          subTag.style.background = '#334155';
+          subTag.style.color = '#94a3b8';
+        }
+        if (dragTip) {
+          dragTip.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4M12 8h.01"></path>
+            </svg>
+            어떤 진자든 마우스/터치로 직접 드래그하여 시작 위치를 변경할 수 있습니다!
+          `;
+        }
+      }
+    }
+
+    // ==========================================
+    // 4. 물리 시뮬레이션 업데이트
+    // ==========================================
+    function updatePhysics(dt) {
+      if (simMode === 'blackburn') {
+        updateBlackburnPhysics(dt);
+        return;
+      }
+
+      // 비행 중인 자유 진자 및 파티클 업데이트는 시뮬레이션 동작 시 항상 실행
+      if (config.isRunning && draggingBobIdx === null) {
+        updateFlyingBobs(dt);
+        updateSnapParticles(dt);
+      }
+
+      if (!config.isRunning || draggingBobIdx !== null) return;
+
+      // 6회 서브스텝으로 CPU 부하를 40% 절감하면서도 4차 룽게-쿠타 정밀도 완전 유지
+      const subSteps = 6;
+      const subDt = (dt * config.simSpeed) / subSteps;
+
+      if (pendulums.length > 0) {
+        for (let s = 0; s < subSteps; s++) {
+          rk4StepN(pendulums, subDt, config.g, config.damping, config);
+          if (config.enableTwin && config.twinPendulums.length === pendulums.length) {
+            rk4StepN(config.twinPendulums, subDt, config.g, config.damping, config);
+          }
+        }
+      }
+
+      // 실시간 장력 계산
+      currentTensions = computeLinkTensions(pendulums, config.g);
+
+      // 장력 초과 검사 및 줄 끊어짐 발생 판정
+      if (config.enableBreak && pendulums.length > 0) {
+        let breakIdx = -1;
+        let maxRatio = 0;
+        for (let i = 0; i < pendulums.length; i++) {
+          const ratio = currentTensions[i] / config.maxTension;
+          if (ratio >= 1.0 && ratio > maxRatio) {
+            maxRatio = ratio;
+            breakIdx = i;
+          }
+        }
+        if (breakIdx !== -1) {
+          triggerStringBreak(breakIdx, currentTensions[breakIdx]);
+        }
+      }
+
+      // 현재 좌표 계산
+      const positions = computeBobPositions(pendulums, pivot);
+      const n = pendulums.length;
+      const endPos = n > 0 ? positions[n - 1] : null;
+
+      // 맨 끝 진자의 속도 계산
+      let speed = 0;
+      if (n > 0) {
+        let vx = 0, vy = 0;
+        for (let i = 0; i < n; i++) {
+          vx += pendulums[i].l * pendulums[i].omega * Math.cos(pendulums[i].theta);
+          vy -= pendulums[i].l * pendulums[i].omega * Math.sin(pendulums[i].theta);
+        }
+        speed = Math.hypot(vx, vy);
+      }
+
+      frameCounter++;
+      const isDotStep = (frameCounter % config.greenDotSpacing === 0);
+
+      // 맨 끝 진자 궤적 추가
+      if (endPos) {
+        endBobTrail.push({
+          x: endPos.x,
+          y: endPos.y,
+          speed: speed,
+          time: config.time,
+          isDot: isDotStep // 초록색 점 찍을 프레임 플래그
+        });
+      }
+
+      // 중간 진자 궤적 기록
+      if (config.traceAllBobs && n > 1) {
+        for (let i = 0; i < n - 1; i++) {
+          if (!intermediateTrails[i]) intermediateTrails[i] = [];
+          intermediateTrails[i].push({ x: positions[i].x, y: positions[i].y });
+          if (!config.infiniteTrace && intermediateTrails[i].length > config.traceLength) {
+            intermediateTrails[i].shift();
+          }
+        }
+      }
+
+      // 쌍둥이 진자 궤적
+      if (config.enableTwin && config.twinPendulums.length === n && n > 0) {
+        const twinPositions = computeBobPositions(config.twinPendulums, pivot);
+        twinEndTrail.push({ x: twinPositions[n - 1].x, y: twinPositions[n - 1].y });
+        if (!config.infiniteTrace && twinEndTrail.length > config.traceLength) {
+          twinEndTrail.shift();
+        }
+      }
+
+      // 궤적 길이 제한
+      if (!config.infiniteTrace) {
+        while (endBobTrail.length > config.traceLength) {
+          endBobTrail.shift();
+        }
+      }
+
+      config.time += dt * config.simSpeed;
+    }
+
+    // ==========================================
+    // 5. 렌더링 루프 (Canvas 그리기)
+    // ==========================================
+    function draw() {
+      const rect = container.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      // ⏳ 블랙번 진자 모드인 경우 전용 렌더러 호출
+      if (simMode === 'blackburn') {
+        drawBlackburn();
+        return;
+      }
+
+      const positions = computeBobPositions(pendulums, pivot);
+      const n = pendulums.length;
+      const endPos = n > 0 ? positions[n - 1] : null;
+
+      // 1) 궤적 그리기 (초록색 점 궤적 및 발광선)
+      drawTrails();
+
+      // 2) 나비효과 쌍둥이 진자 렌더링
+      if (config.enableTwin && config.twinPendulums.length === n && n > 0) {
+        drawTwinPendulum();
+      }
+
+      // 3) 피벗 마운트
+      ctx.save();
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath();
+      ctx.arc(pivot.x, pivot.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pivot.x - 20, pivot.y - 12);
+      ctx.lineTo(pivot.x + 20, pivot.y - 12);
+      ctx.moveTo(pivot.x, pivot.y - 12);
+      ctx.lineTo(pivot.x, pivot.y);
+      ctx.stroke();
+      ctx.restore();
+
+      // 4) 막대 (Rods) 그리기 (실시간 장력 수준에 따른 시각적 경고 색상)
+      ctx.save();
+      ctx.lineCap = 'round';
+      let prevX = pivot.x, prevY = pivot.y;
+      for (let i = 0; i < n; i++) {
+        const cur = positions[i];
+        const tVal = (currentTensions && currentTensions[i] !== undefined) ? currentTensions[i] : 0;
+        const ratio = Math.min(1.0, tVal / config.maxTension);
+
+        let strokeCol = 'rgba(56, 189, 248, 0.85)';
+        if (ratio >= 0.85) {
+          strokeCol = 'rgba(239, 68, 68, 0.95)';
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = 8;
+        } else if (ratio >= 0.6) {
+          strokeCol = 'rgba(245, 158, 11, 0.9)';
+          ctx.shadowColor = '#f59e0b';
+          ctx.shadowBlur = 4;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        ctx.strokeStyle = strokeCol;
+        ctx.lineWidth = Math.max(1.8, 4 - i * 0.4);
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(cur.x, cur.y);
+        ctx.stroke();
+        prevX = cur.x;
+        prevY = cur.y;
+      }
+      ctx.restore();
+
+      // 5) 각 진자 Bob (원) 그리기
+      for (let i = 0; i < n; i++) {
+        const cur = positions[i];
+        const isEndBob = (i === n - 1);
+        const radius = Math.max(7, Math.min(24, Math.sqrt(pendulums[i].m / 10) * 3.6));
+        const color = BOB_COLORS[i % BOB_COLORS.length];
+        const isDragging = (draggingBobIdx === i);
+
+        drawBob(cur.x, cur.y, radius, color, `M${i+1}`, isDragging, isEndBob);
+      }
+
+      // 5.5) ★ 힘 벡터 화살표 실시간 표시 (장력 T, 중력 Fg, 합력 Fnet)
+      if (config.showForceVectors && n > 0) {
+        drawForceVectors(positions);
+      }
+
+      // 6) ★ 핵심: 맨 끝 진자 끝부분에 뚜렷한 "초록색 발광 점(Green Dot)" 강조 렌더링!
+      if (config.showGreenTipDot && endPos) {
+        drawGreenTipDot(endPos.x, endPos.y);
+      }
+
+      // 7) 분리되어 날아가는 자유 진자 및 스파크 파티클 렌더링
+      drawFlyingBobs();
+      drawSnapParticles();
+
+      // 8) 드래그 가이드라인
+      if (draggingBobIdx !== null) {
+        drawDragGuidelines(positions);
+      }
+
+      // 9) HUD 갱신
+      updateHUD(positions);
+    }
+
+    // 진자 Bob 그리기 (성능 최적화: 정적 그라디언트 및 블러 제거)
+    function drawBob(x, y, radius, color, label, isDragging, isEndBob) {
+      ctx.save();
+      if (isDragging) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, radius * 0.1, x, y, radius);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.35, color);
+      grad.addColorStop(1, '#0f172a');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 맨 끝 진자 외곽에 선명한 녹색 링 표시
+      if (isEndBob) {
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y);
+
+      ctx.restore();
+    }
+
+    // ★ 맨 끝 진자 끝부분에 위치하는 밝은 초록색 점 렌더링 (초경량 펄스 링)
+    function drawGreenTipDot(x, y) {
+      ctx.save();
+      const dotR = config.greenDotSize;
+      const pulse = Math.sin(Date.now() * 0.008) * 2.5;
+
+      // 외부 펄스 링
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, dotR + 3 + pulse * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 중심부 발광 초록색 점 본체
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, dotR);
+      grad.addColorStop(0, '#f0fdf4');
+      grad.addColorStop(0.3, '#4ade80');
+      grad.addColorStop(0.8, '#22c55e');
+      grad.addColorStop(1, '#15803d');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, dotR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // "초록 점" 라벨 안내
+      ctx.fillStyle = '#86efac';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('🟢 이동 경로 추적점', x + dotR + 8, y - 4);
+
+      ctx.restore();
+    }
+
+    // ★ 궤적 렌더링: 1,600번의 draw call & blur를 단 9번의 배치 draw call로 170배 압축 최적화!
+    function drawTrails() {
+      // 1) 중간 마디 궤적 (옵션)
+      if (config.traceAllBobs) {
+        for (let b = 0; b < intermediateTrails.length; b++) {
+          const tr = intermediateTrails[b];
+          const trLen = tr ? tr.length : 0;
+          if (trLen > 1) {
+            ctx.save();
+            ctx.strokeStyle = `${BOB_COLORS[b % BOB_COLORS.length]}44`;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(tr[0].x, tr[0].y);
+            for (let i = 1; i < trLen; i++) ctx.lineTo(tr[i].x, tr[i].y);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+
+      // 2) 맨 끝 진자 주 궤적
+      const len = endBobTrail.length;
+      if (len < 2) return;
+
+      const style = config.traceStyle;
+      const drawLine = (style === 'dots-and-line' || style === 'only-line');
+      const drawDots = (style === 'dots-and-line' || style === 'only-dots' || style === 'rainbow-dots');
+
+      // A) 초고속 배치 선(Line) 그리기 - 5개 투명도 구간으로 일괄 렌더링 (단 5회 draw call)
+      if (drawLine) {
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const SEGS = 5;
+        const segSize = Math.ceil(len / SEGS);
+
+        for (let s = 0; s < SEGS; s++) {
+          const startIdx = s * segSize;
+          const endIdx = Math.min(len - 1, (s + 1) * segSize);
+          if (startIdx >= endIdx) break;
+
+          const progress = (s + 1) / SEGS;
+          ctx.strokeStyle = `rgba(34, 197, 94, ${(0.15 + progress * 0.8).toFixed(2)})`;
+          ctx.lineWidth = 1.0 + progress * 1.8;
+
+          ctx.beginPath();
+          ctx.moveTo(endBobTrail[startIdx].x, endBobTrail[startIdx].y);
+          for (let i = startIdx + 1; i <= endIdx; i++) {
+            ctx.lineTo(endBobTrail[i].x, endBobTrail[i].y);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // B) ★ 초고속 배치 점(Dots) 그리기 - 4개 투명도 밴드로 일괄 렌더링 (단 4회 fill call)
+      if (drawDots && config.showGreenDotsTrail) {
+        ctx.save();
+        const baseDotSize = Math.max(2, config.greenDotSize * 0.55);
+
+        const BANDS = 4;
+        for (let b = 0; b < BANDS; b++) {
+          const start = Math.floor(len * (b / BANDS));
+          const end = Math.floor(len * ((b + 1) / BANDS));
+          const alpha = (0.25 + 0.75 * (b / (BANDS - 1))).toFixed(2);
+
+          ctx.fillStyle = (style === 'rainbow-dots')
+            ? `hsla(${((config.time * 60 + b * 60) % 360).toFixed(0)}, 100%, 55%, ${alpha})`
+            : `rgba(34, 197, 94, ${alpha})`;
+
+          ctx.beginPath();
+          let hasDots = false;
+          for (let i = start; i < end; i++) {
+            const pt = endBobTrail[i];
+            if (!pt.isDot) continue;
+            hasDots = true;
+            const progress = i / len;
+            const r = baseDotSize * (0.5 + progress * 0.5);
+            ctx.moveTo(pt.x + r, pt.y);
+            ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+          }
+          if (hasDots) ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // 나비효과 쌍둥이 진자 렌더링
+    function drawTwinPendulum() {
+      const twinPositions = computeBobPositions(config.twinPendulums, pivot);
+      const n = config.twinPendulums.length;
+
+      // 궤적
+      if (twinEndTrail.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.75)';
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(twinEndTrail[0].x, twinEndTrail[0].y);
+        for (let i = 1; i < twinEndTrail.length; i++) {
+          ctx.lineTo(twinEndTrail[i].x, twinEndTrail[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 막대 및 끝 공
+      ctx.save();
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let prevX = pivot.x, prevY = pivot.y;
+      for (let i = 0; i < n; i++) {
+        const cur = twinPositions[i];
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(cur.x, cur.y);
+        prevX = cur.x;
+        prevY = cur.y;
+      }
+      ctx.stroke();
+
+      const last = twinPositions[n - 1];
+      ctx.fillStyle = 'rgba(168, 85, 247, 0.9)';
+      ctx.beginPath();
+      ctx.arc(last.x, last.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 드래그 가이드라인
+    function drawDragGuidelines(positions) {
+      ctx.save();
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1;
+
+      let prev = pivot;
+      for (let i = 0; i < positions.length; i++) {
+        if (i === draggingBobIdx) {
+          ctx.beginPath();
+          ctx.moveTo(prev.x, prev.y);
+          ctx.lineTo(prev.x, prev.y + pendulums[i].l * 0.85);
+          ctx.stroke();
+        }
+        prev = positions[i];
+      }
+      ctx.restore();
+    }
+
+    // ==========================================
+    // 6. 실시간 HUD 정보 갱신
+    // ==========================================
+    function updateHUD(positions) {
+      const energy = calcEnergyN(pendulums, config.g);
+      const n = pendulums.length;
+      const endPos = n > 0 ? positions[n - 1] : null;
+      const endP = n > 0 ? pendulums[n - 1] : null;
+
+      // 에너지 계산 및 실시간 현실 모드 반영
+      const loss = config.realityMode ? (config.lossEnergy || 0) : 0;
+      const totalSystemEnergy = energy.total + loss;
+
+      if (config.realityMode) {
+        document.getElementById('hud-energy').innerHTML = `역학적 E: <span style="color:#38bdf8">${energy.total.toFixed(2)} J</span> <span style="font-size:0.7rem; color:#94a3b8; font-weight:normal;">(보존총계: ${totalSystemEnergy.toFixed(2)} J)</span>`;
+        const lossCont = document.getElementById('hud-loss-container');
+        if (lossCont) {
+          lossCont.style.display = 'inline';
+          document.getElementById('hud-loss').innerText = loss.toFixed(1);
+        }
+      } else {
+        document.getElementById('hud-energy').innerText = `총 에너지 E: ${energy.total.toFixed(2)} J`;
+        const lossCont = document.getElementById('hud-loss-container');
+        if (lossCont) lossCont.style.display = 'none';
+      }
+
+      document.getElementById('hud-ke').innerText = Math.max(0, energy.T).toFixed(1);
+      document.getElementById('hud-pe').innerText = Math.max(0, energy.V).toFixed(1);
+
+      // 에너지 바 비율 계산 (운동 T / 위치 V / 마찰·공기저항 손실열 Q)
+      const sumE = Math.max(0.01, energy.T + energy.V + loss);
+      const kPercent = Math.min(100, Math.max(0, (energy.T / sumE) * 100));
+      const pPercent = Math.min(100, Math.max(0, (energy.V / sumE) * 100));
+      const lossPercent = Math.min(100, Math.max(0, 100 - kPercent - pPercent));
+
+      document.getElementById('energy-bar-k').style.width = kPercent + '%';
+      document.getElementById('energy-bar-p').style.width = pPercent + '%';
+      const barLoss = document.getElementById('energy-bar-loss');
+      if (barLoss) {
+        if (config.realityMode && loss > 0.05) {
+          barLoss.style.display = 'block';
+          barLoss.style.width = lossPercent + '%';
+        } else {
+          barLoss.style.display = 'none';
+          barLoss.style.width = '0%';
+        }
+      }
+
+      // 💥 실시간 장력 게이지 갱신 (HUD)
+      const tensList = document.getElementById('hud-tension-list');
+      if (tensList) {
+        if (n === 0) {
+          tensList.innerHTML = `<div style="color:#ef4444; font-weight:700; text-align:center; padding:3px 0;">💥 모든 줄 끊어짐 (자유 낙하 중)</div>`;
+        } else {
+          let html = '';
+          for (let i = 0; i < n; i++) {
+            const tVal = (currentTensions && currentTensions[i] !== undefined) ? currentTensions[i] : 0;
+            const ratio = Math.min(1.0, tVal / config.maxTension);
+            const pct = Math.min(100, Math.round(ratio * 100));
+            let col = '#38bdf8';
+            let statusText = '안전';
+            if (ratio >= 0.85) {
+              col = '#ef4444';
+              statusText = '위험!';
+            } else if (ratio >= 0.6) {
+              col = '#f59e0b';
+              statusText = '주의';
+            }
+            html += `
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                <span style="color:#94a3b8; font-family:monospace; min-width:42px;">줄 ${i+1}:</span>
+                <div style="flex:1; height:5px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
+                  <div style="width:${pct}%; height:100%; background:${col}; transition:width 0.05s ease;"></div>
+                </div>
+                <span style="color:${col}; font-family:monospace; font-weight:700; min-width:52px; text-align:right;">${tVal.toFixed(1)} N</span>
+                <span style="color:${col}; font-size:0.65rem; min-width:26px;">${statusText}</span>
+              </div>
+            `;
+          }
+          tensList.innerHTML = html;
+        }
+      }
+
+      // 진자 명칭
+      const typeNames = ['단진자 (1)', '이중진자 (2)', '삼중진자 (3)', '사중진자 (4)', '오중진자 (5)', '육중진자 (6)', '칠중진자 (7)', '팔중진자 (8)'];
+      const typeStr = n === 0 ? '줄 끊어짐 (0)' : (typeNames[n - 1] || `${n}중진자 (${n})`);
+      document.getElementById('hud-pendulum-type').innerText = typeStr;
+
+      // 맨 끝 진자 추적 정보
+      if (endPos && endP) {
+        document.getElementById('hud-end-pos').innerText = `${Math.round(endPos.x)}, ${Math.round(endPos.y)}`;
+        const endDeg = ((endP.theta * 180 / Math.PI) % 360).toFixed(1);
+        document.getElementById('hud-end-angle').innerText = `${endDeg}°`;
+        document.getElementById('hud-end-omega').innerText = endP.omega.toFixed(2);
+
+        // 마지막 기록된 속도
+        const lastTr = endBobTrail[endBobTrail.length - 1];
+        const spd = lastTr ? lastTr.speed.toFixed(1) : '0.0';
+        document.getElementById('hud-end-speed').innerText = spd;
+      } else if (flyingBobs.length > 0) {
+        const lastBob = flyingBobs[flyingBobs.length - 1];
+        document.getElementById('hud-end-pos').innerText = `${Math.round(lastBob.x)}, ${Math.round(lastBob.y)}`;
+        const spd = Math.hypot(lastBob.vx, lastBob.vy).toFixed(1);
+        document.getElementById('hud-end-speed').innerText = `${spd} (자유비행)`;
+      }
+    }
+
+    // ==========================================
+    // 7. 마우스 / 터치 직접 드래그 인터랙션
+    // ==========================================
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function checkHit(pos) {
+      const positions = computeBobPositions(pendulums, pivot);
+      // 끝 진자부터 역순으로 검사 (클릭 편의성)
+      for (let i = positions.length - 1; i >= 0; i--) {
+        const d = Math.hypot(pos.x - positions[i].x, pos.y - positions[i].y);
+        if (d <= 32) return i;
+      }
+      return null;
+    }
+
+    function onPointerDown(e) {
+      const pos = getPointerPos(e);
+
+      if (simMode === 'blackburn') {
+        const rect = container.getBoundingClientRect();
+        const originX = rect.width / 2;
+        const originY = rect.height * 0.22;
+
+        let bobScreen = { x: 0, y: 0 };
+        if (blackburn.viewMode === '3d') {
+          const thetaY = Math.min(1.4, Math.max(-1.4, blackburn.y / (blackburn.h1 + blackburn.h2)));
+          const knotY = blackburn.h1 * Math.cos(thetaY);
+          const thetaX = Math.min(1.4, Math.max(-1.4, blackburn.x / blackburn.h2));
+          const bobY = knotY + blackburn.h2 * Math.cos(thetaX);
+          bobScreen = project3D(blackburn.x, bobY, blackburn.y, originX, originY);
+        } else {
+          bobScreen = {
+            x: originX + blackburn.x * 1.5,
+            y: rect.height * 0.52 + blackburn.y * 1.5
+          };
+        }
+
+        const dist = Math.hypot(pos.x - bobScreen.x, pos.y - bobScreen.y);
+        if (dist <= 36) {
+          blackburn.isDraggingBob = true;
+          dragWasRunning = config.isRunning;
+          config.isRunning = false;
+        } else if (blackburn.viewMode === '3d') {
+          blackburn.isRotatingCam = true;
+          blackburn.dragStart = {
+            x: e.touches ? e.touches[0].clientX : e.clientX,
+            y: e.touches ? e.touches[0].clientY : e.clientY
+          };
+        }
+        return;
+      }
+
+      const hit = checkHit(pos);
+      if (hit !== null) {
+        draggingBobIdx = hit;
+        dragWasRunning = config.isRunning;
+        config.isRunning = false;
+        onPointerMove(e);
+      }
+    }
+
+    function onPointerMove(e) {
+      const pos = getPointerPos(e);
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (simMode === 'blackburn') {
+        const rect = container.getBoundingClientRect();
+        const originX = rect.width / 2;
+
+        if (blackburn.isDraggingBob) {
+          canvas.style.cursor = 'grabbing';
+          if (blackburn.viewMode === '3d') {
+            const zoom = blackburn.camZoom || 1.0;
+            const cosYaw = Math.cos(blackburn.camYaw);
+            const sinYaw = Math.sin(blackburn.camYaw);
+            const cosPitch = Math.cos(blackburn.camPitch);
+            const sinPitch = Math.sin(blackburn.camPitch);
+
+            const rx = (pos.x - originX) / zoom;
+            const nomY = blackburn.h1 + blackburn.h2;
+            const rz = ((pos.y - (rect.height * 0.22)) / zoom - nomY * cosPitch) / Math.max(0.18, sinPitch);
+
+            const wx = rx * cosYaw + rz * sinYaw;
+            const wz = -rx * sinYaw + rz * cosYaw;
+
+            blackburn.x = Math.max(-200, Math.min(200, wx));
+            blackburn.y = Math.max(-200, Math.min(200, wz));
+          } else {
+            blackburn.x = Math.max(-200, Math.min(200, (pos.x - originX) / 1.5));
+            blackburn.y = Math.max(-200, Math.min(200, (pos.y - rect.height * 0.52) / 1.5));
+          }
+          blackburn.vx = 0;
+          blackburn.vy = 0;
+          blackburn.initAmpX = Math.max(20, Math.abs(blackburn.x));
+          blackburn.initAmpY = Math.max(20, Math.abs(blackburn.y));
+          updateBlackburnHUD();
+        } else if (blackburn.isRotatingCam) {
+          canvas.style.cursor = 'move';
+          const dx = clientX - blackburn.dragStart.x;
+          const dy = clientY - blackburn.dragStart.y;
+          blackburn.camYaw += dx * 0.007;
+          blackburn.camPitch = Math.max(0.08, Math.min(1.25, blackburn.camPitch + dy * 0.007));
+          blackburn.dragStart = { x: clientX, y: clientY };
+        } else {
+          // 마우스 오버 시 커서 모양 갱신
+          let bobScreen = { x: 0, y: 0 };
+          const originY = rect.height * 0.22;
+          if (blackburn.viewMode === '3d') {
+            const thetaY = Math.min(1.4, Math.max(-1.4, blackburn.y / (blackburn.h1 + blackburn.h2)));
+            const knotY = blackburn.h1 * Math.cos(thetaY);
+            const thetaX = Math.min(1.4, Math.max(-1.4, blackburn.x / blackburn.h2));
+            const bobY = knotY + blackburn.h2 * Math.cos(thetaX);
+            bobScreen = project3D(blackburn.x, bobY, blackburn.y, originX, originY);
+          } else {
+            bobScreen = {
+              x: originX + blackburn.x * 1.5,
+              y: rect.height * 0.52 + blackburn.y * 1.5
+            };
+          }
+          const dist = Math.hypot(pos.x - bobScreen.x, pos.y - bobScreen.y);
+          canvas.style.cursor = (dist <= 36) ? 'grab' : (blackburn.viewMode === '3d' ? 'default' : 'default');
+        }
+        return;
+      }
+
+      if (draggingBobIdx === null) {
+        const hit = checkHit(pos);
+        canvas.style.cursor = (hit !== null) ? 'grab' : 'default';
+        return;
+      }
+
+      canvas.style.cursor = 'grabbing';
+
+      const positions = computeBobPositions(pendulums, pivot);
+      // 부모 마디 좌표 계산
+      const parentPos = (draggingBobIdx === 0) 
+        ? pivot 
+        : positions[draggingBobIdx - 1];
+
+      const dx = pos.x - parentPos.x;
+      const dy = pos.y - parentPos.y;
+
+      // 수직 아래 0도 기준 각도 산출
+      pendulums[draggingBobIdx].theta = Math.atan2(dx, dy);
+      pendulums[draggingBobIdx].omega = 0;
+      pendulums[draggingBobIdx].initTheta = pendulums[draggingBobIdx].theta;
+
+      // 슬라이더 UI 동기화
+      updateIndividualUI(draggingBobIdx);
+
+      // 쌍둥이 진자 동기화
+      syncTwinPendulums();
+      clearTrails();
+    }
+
+    function onPointerUp() {
+      if (simMode === 'blackburn') {
+        if (blackburn.isDraggingBob) {
+          blackburn.isDraggingBob = false;
+          if (dragWasRunning) {
+            config.isRunning = true;
+            updatePlayBtnUI();
+          }
+        }
+        blackburn.isRotatingCam = false;
+        canvas.style.cursor = 'default';
+        return;
+      }
+
+      if (draggingBobIdx !== null) {
+        draggingBobIdx = null;
+        canvas.style.cursor = 'default';
+        if (dragWasRunning) {
+          config.isRunning = true;
+          updatePlayBtnUI();
+        }
+      }
+    }
+
+    canvas.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+
+    canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
+
+    // 3D 블랙번 진자 휠 줌 및 더블클릭 카메라 초기화
+    canvas.addEventListener('wheel', (e) => {
+      if (simMode === 'blackburn' && blackburn.viewMode === '3d') {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.08 : 0.92;
+        blackburn.camZoom = Math.max(0.4, Math.min(2.8, (blackburn.camZoom || 1.0) * factor));
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('dblclick', () => {
+      if (simMode === 'blackburn' && blackburn.viewMode === '3d') {
+        blackburn.camYaw = -0.32;
+        blackburn.camPitch = 0.46;
+        blackburn.camZoom = 1.0;
+      }
+    });
+
+    // ==========================================
+    // 8. 동적 진자 추가 및 제거 로직
+    // ==========================================
+    function addPendulumSegment() {
+      if (pendulums.length >= 8) {
+        alert('최적의 성능과 가시성을 위해 진자는 최대 8개까지 권장됩니다.');
+        return;
+      }
+
+      const n = pendulums.length;
+      // 이전 진자의 길이를 참조하여 적절한 길이(100~140)로 생성
+      const newL = Math.max(60, Math.round(300 / (n + 1)));
+      pendulums.push({
+        l: newL,
+        m: 100,
+        theta: Math.PI / 2,
+        omega: 0,
+        initTheta: Math.PI / 2
+      });
+
+      flyingBobs = [];
+      snapParticles = [];
+      isStringBroken = false;
+      backupFullPendulums = null;
+      updateBreakStatusUI(false);
+      currentTensions = computeLinkTensions(pendulums, config.g);
+      autoFitLengths();
+      buildPendulumControlsUI();
+      syncTwinPendulums();
+      clearTrails();
+      resizeCanvas();
+    }
+
+    function removePendulumSegment() {
+      if (pendulums.length <= 1) {
+        alert('최소 1개의 진자가 필요합니다.');
+        return;
+      }
+      pendulums.pop();
+      flyingBobs = [];
+      snapParticles = [];
+      isStringBroken = false;
+      backupFullPendulums = null;
+      updateBreakStatusUI(false);
+      currentTensions = computeLinkTensions(pendulums, config.g);
+      autoFitLengths();
+      buildPendulumControlsUI();
+      syncTwinPendulums();
+      clearTrails();
+      resizeCanvas();
+    }
+
+    function setPendulumCount(targetCount) {
+      targetCount = Math.max(1, Math.min(8, targetCount));
+      while (pendulums.length < targetCount) {
+        pendulums.push({ l: 120, m: 100, theta: Math.PI / 2, omega: 0, initTheta: Math.PI / 2 });
+      }
+      while (pendulums.length > targetCount) {
+        pendulums.pop();
+      }
+      flyingBobs = [];
+      snapParticles = [];
+      isStringBroken = false;
+      backupFullPendulums = null;
+      updateBreakStatusUI(false);
+      currentTensions = computeLinkTensions(pendulums, config.g);
+      autoFitLengths();
+      buildPendulumControlsUI();
+      syncTwinPendulums();
+      clearTrails();
+      resizeCanvas();
+    }
+
+    // 진자가 많아져 화면 밖으로 벗어나는 것을 방지하는 전체 길이 자동 맞춤
+    function autoFitLengths() {
+      const rect = container.getBoundingClientRect();
+      const availableHeight = rect.height * 0.65;
+      const n = pendulums.length;
+      const idealL = Math.max(45, Math.min(180, Math.floor(availableHeight / n)));
+
+      for (let i = 0; i < n; i++) {
+        pendulums[i].l = idealL;
+      }
+      buildPendulumControlsUI();
+    }
+
+    function syncTwinPendulums() {
+      if (!config.enableTwin) return;
+      const n = pendulums.length;
+      config.twinPendulums = pendulums.map((p, i) => ({
+        ...p,
+        theta: (i === n - 1) ? p.theta + config.twinDelta : p.theta,
+        omega: 0
+      }));
+      twinEndTrail = [];
+    }
+
+    // ==========================================
+    // 9. 동적 UI 빌드 및 이벤트 연동
+    // ==========================================
+    const controlsListElem = document.getElementById('pendulum-controls-list');
+
+    function buildPendulumControlsUI() {
+      controlsListElem.innerHTML = '';
+      const n = pendulums.length;
+
+      const typeNames = ['단진자 (1)', '이중진자 (2)', '삼중진자 (3)', '사중진자 (4)', '오중진자 (5)', '육중진자 (6)', '칠중진자 (7)', '팔중진자 (8)'];
+      document.getElementById('val-pendulum-count').innerText = `${n}개 (${typeNames[n - 1] || '다중'})`;
+
+      pendulums.forEach((p, idx) => {
+        const color = BOB_COLORS[idx % BOB_COLORS.length];
+        const isLast = (idx === n - 1);
+        const card = document.createElement('div');
+        card.className = 'pendulum-item-card';
+
+        const deg = ((p.theta * 180 / Math.PI) % 360).toFixed(1);
+
+        card.innerHTML = `
+          <div class="pendulum-item-header">
+            <span style="display: flex; align-items: center;">
+              <span class="dot-preview" style="background: ${color};"></span>
+              <b>제 ${idx + 1} 진자</b>
+              ${isLast ? '<span class="green-dot-badge" style="margin-left: 6px;">🟢 끝 진자</span>' : ''}
+            </span>
+            <span class="value-badge" id="val-item-deg-${idx}">${deg}°</span>
+          </div>
+
+          <!-- 길이 L -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>길이 (L${idx + 1})</span>
+              <span id="val-item-l-${idx}" style="font-family: monospace; color: #38bdf8;">${p.l} px</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-item-l-${idx}" min="30" max="260" step="1" value="${p.l}">
+              <input type="number" id="num-item-l-${idx}" class="num-input" min="30" max="260" value="${p.l}">
+            </div>
+          </div>
+
+          <!-- 시작 각도 Theta -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>시작 각도 (θ${idx + 1})</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-item-th-${idx}" min="-180" max="180" step="0.5" value="${deg}">
+              <input type="number" id="num-item-th-${idx}" class="num-input" min="-180" max="180" step="1" value="${Math.round(deg)}">
+            </div>
+          </div>
+
+          <!-- 질량 M (g 단위) -->
+          <div class="control-row">
+            <div class="label-row">
+              <span>질량 (M${idx + 1})</span>
+              <span id="val-item-m-${idx}" style="font-family: monospace; color: #94a3b8;">${Math.round(p.m)} g</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="slider-item-m-${idx}" min="10" max="1000" step="5" value="${p.m}">
+              <input type="number" id="num-item-m-${idx}" class="num-input" min="5" max="2000" value="${Math.round(p.m)}">
+            </div>
+          </div>
+        `;
+
+        controlsListElem.appendChild(card);
+
+        // 이벤트 바인딩
+        const sL = card.querySelector(`#slider-item-l-${idx}`);
+        const nL = card.querySelector(`#num-item-l-${idx}`);
+        const sTh = card.querySelector(`#slider-item-th-${idx}`);
+        const nTh = card.querySelector(`#num-item-th-${idx}`);
+        const sM = card.querySelector(`#slider-item-m-${idx}`);
+        const nM = card.querySelector(`#num-item-m-${idx}`);
+
+        sL.addEventListener('input', () => {
+          p.l = parseFloat(sL.value);
+          nL.value = p.l;
+          card.querySelector(`#val-item-l-${idx}`).innerText = `${p.l} px`;
+          clearTrails();
+        });
+        nL.addEventListener('input', () => {
+          let val = parseFloat(nL.value);
+          if (isNaN(val)) return;
+          p.l = val;
+          sL.value = val;
+          card.querySelector(`#val-item-l-${idx}`).innerText = `${p.l} px`;
+          clearTrails();
+        });
+
+        sTh.addEventListener('input', () => {
+          const degVal = parseFloat(sTh.value);
+          p.theta = degVal * Math.PI / 180;
+          p.initTheta = p.theta;
+          p.omega = 0;
+          nTh.value = Math.round(degVal);
+          card.querySelector(`#val-item-deg-${idx}`).innerText = `${degVal.toFixed(1)}°`;
+          syncTwinPendulums();
+          clearTrails();
+        });
+        nTh.addEventListener('input', () => {
+          let degVal = parseFloat(nTh.value);
+          if (isNaN(degVal)) return;
+          p.theta = degVal * Math.PI / 180;
+          p.initTheta = p.theta;
+          p.omega = 0;
+          sTh.value = degVal;
+          card.querySelector(`#val-item-deg-${idx}`).innerText = `${degVal.toFixed(1)}°`;
+          syncTwinPendulums();
+          clearTrails();
+        });
+
+        sM.addEventListener('input', () => {
+          p.m = parseFloat(sM.value);
+          if (nM) nM.value = Math.round(p.m);
+          card.querySelector(`#val-item-m-${idx}`).innerText = `${Math.round(p.m)} g`;
+        });
+        if (nM) {
+          nM.addEventListener('input', () => {
+            let val = parseFloat(nM.value);
+            if (isNaN(val) || val <= 0) return;
+            p.m = val;
+            sM.value = val;
+            card.querySelector(`#val-item-m-${idx}`).innerText = `${Math.round(p.m)} g`;
+          });
+        }
+      });
+    }
+
+    function updateIndividualUI(idx) {
+      const p = pendulums[idx];
+      const deg = ((p.theta * 180 / Math.PI) % 360);
+      let norm = ((deg + 180) % 360) - 180;
+
+      const degBadge = document.getElementById(`val-item-deg-${idx}`);
+      const sTh = document.getElementById(`slider-item-th-${idx}`);
+      const nTh = document.getElementById(`num-item-th-${idx}`);
+
+      if (degBadge) degBadge.innerText = `${norm.toFixed(1)}°`;
+      if (sTh) sTh.value = norm;
+      if (nTh) nTh.value = Math.round(norm);
+    }
+
+    // 버튼 연동
+    document.getElementById('btn-add-pendulum').addEventListener('click', addPendulumSegment);
+    document.getElementById('btn-remove-pendulum').addEventListener('click', removePendulumSegment);
+    document.getElementById('btn-auto-fit').addEventListener('click', autoFitLengths);
+
+    document.querySelectorAll('.count-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setPendulumCount(parseInt(btn.dataset.n, 10));
+      });
+    });
+
+    // 맨 끝 진자 초록색 점 & 궤적 토글들 (사용자 요청 사항)
+    document.getElementById('toggle-green-tip-dot').addEventListener('change', (e) => {
+      config.showGreenTipDot = e.target.checked;
+      document.getElementById('hud-end-dot-status').style.display = config.showGreenTipDot ? 'inline-flex' : 'none';
+    });
+
+    document.getElementById('toggle-green-dots-trail').addEventListener('change', (e) => {
+      config.showGreenDotsTrail = e.target.checked;
+    });
+
+    document.getElementById('slider-green-dot-size').addEventListener('input', (e) => {
+      config.greenDotSize = parseInt(e.target.value, 10);
+      document.getElementById('val-green-dot-size').innerText = `${config.greenDotSize} px`;
+    });
+
+    document.getElementById('slider-green-dot-spacing').addEventListener('input', (e) => {
+      config.greenDotSpacing = parseInt(e.target.value, 10);
+      document.getElementById('val-green-dot-spacing').innerText = `매 ${config.greenDotSpacing}프레임`;
+    });
+
+    document.getElementById('select-trace-style').addEventListener('change', (e) => {
+      config.traceStyle = e.target.value;
+    });
+
+    document.getElementById('toggle-fast-mode').addEventListener('change', (e) => {
+      config.fastMode = e.target.checked;
+    });
+
+    // 환경 슬라이더들
+    document.getElementById('slider-g').addEventListener('input', (e) => {
+      config.g = parseFloat(e.target.value);
+      document.getElementById('num-g').value = config.g;
+      document.getElementById('val-g').innerText = `${config.g.toFixed(1)} m/s²`;
+    });
+    document.getElementById('num-g').addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      if (isNaN(val)) return;
+      config.g = val;
+      document.getElementById('slider-g').value = val;
+      document.getElementById('val-g').innerText = `${config.g.toFixed(1)} m/s²`;
+    });
+
+    document.querySelectorAll('.gravity-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        config.g = parseFloat(btn.dataset.g);
+        document.getElementById('slider-g').value = config.g;
+        document.getElementById('num-g').value = config.g;
+        document.getElementById('val-g').innerText = `${config.g.toFixed(1)} m/s²`;
+      });
+    });
+
+    // ==========================================
+    // 🌿 현실 모드 (Reality Mode) 제어 함수 및 이벤트
+    // ==========================================
+    function setRealityMode(enable, airVal, fricVal, showToastMsg = true) {
+      config.realityMode = !!enable;
+
+      if (airVal !== undefined) config.airDrag = parseFloat(airVal);
+      if (fricVal !== undefined) config.friction = parseFloat(fricVal);
+
+      // 에너지 손실 리셋
+      config.lossEnergy = 0;
+      const energy = calcEnergyN(pendulums, config.g);
+      config.initialEnergy = energy.total;
+
+      // 1) HUD 스위치 및 표시 동기화
+      const togHud = document.getElementById('toggle-reality-hud');
+      if (togHud) togHud.checked = config.realityMode;
+      const hudChip = document.getElementById('hud-reality-chip');
+      const hudIcon = document.getElementById('hud-reality-icon');
+      const hudTitle = document.getElementById('hud-reality-title');
+      const hudDesc = document.getElementById('hud-reality-desc');
+
+      // 2) 사이드바 스위치 동기화
+      const togSidebar = document.getElementById('toggle-reality-sidebar');
+      if (togSidebar) togSidebar.checked = config.realityMode;
+      const badgeSidebar = document.getElementById('badge-reality-mode');
+      const controlsArea = document.getElementById('reality-controls-area');
+
+      // 3) 하단 빠른 액션 바 버튼 동기화
+      const btnQuick = document.getElementById('btn-quick-reality');
+      const quickIcon = document.getElementById('quick-reality-icon');
+      const quickText = document.getElementById('quick-reality-text');
+
+      if (config.realityMode) {
+        if (hudChip) {
+          hudChip.style.borderColor = 'rgba(34, 197, 94, 0.65)';
+          hudChip.style.boxShadow = '0 0 14px rgba(34, 197, 94, 0.3)';
+        }
+        if (hudIcon) hudIcon.innerText = '🌿';
+        if (hudTitle) hudTitle.innerText = '현실 모드 (ON)';
+        if (hudDesc) hudDesc.innerText = '공기저항 & 베어링 마찰 감쇠';
+
+        if (badgeSidebar) {
+          badgeSidebar.innerText = '현실 모드 (ON)';
+          badgeSidebar.style.background = 'rgba(34, 197, 94, 0.2)';
+          badgeSidebar.style.color = '#4ade80';
+        }
+        if (controlsArea) {
+          controlsArea.style.opacity = '1';
+          controlsArea.style.pointerEvents = 'auto';
+        }
+
+        if (btnQuick) {
+          btnQuick.style.borderColor = 'rgba(34, 197, 94, 0.6)';
+          btnQuick.style.color = '#4ade80';
+          btnQuick.style.background = 'rgba(16, 35, 26, 0.85)';
+        }
+        if (quickIcon) quickIcon.innerText = '🌿';
+        if (quickText) quickText.innerText = '현실 모드: ON';
+
+        // 슬라이더 값 UI 동기화
+        const sAir = document.getElementById('slider-air-drag');
+        const vAir = document.getElementById('val-air-drag');
+        if (sAir) sAir.value = config.airDrag;
+        if (vAir) vAir.innerText = `${config.airDrag.toFixed(4)}`;
+
+        const sFric = document.getElementById('slider-friction');
+        const vFric = document.getElementById('val-friction');
+        if (sFric) sFric.value = config.friction;
+        if (vFric) vFric.innerText = `${config.friction.toFixed(4)}`;
+
+        if (showToastMsg) {
+          showMiniToast('🌿 현실 모드 활성화: 공기 저항과 베어링 마찰력으로 실제처럼 감쇠합니다.');
+        }
+      } else {
+        if (hudChip) {
+          hudChip.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+          hudChip.style.boxShadow = 'none';
+        }
+        if (hudIcon) hudIcon.innerText = '⚡';
+        if (hudTitle) hudTitle.innerText = '이상적 보존계';
+        if (hudDesc) hudDesc.innerText = '에너지 무손실 영구운동';
+
+        if (badgeSidebar) {
+          badgeSidebar.innerText = '이상계 (OFF)';
+          badgeSidebar.style.background = 'rgba(56, 189, 248, 0.15)';
+          badgeSidebar.style.color = '#38bdf8';
+        }
+        if (controlsArea) {
+          controlsArea.style.opacity = '0.45';
+          controlsArea.style.pointerEvents = 'none';
+        }
+
+        if (btnQuick) {
+          btnQuick.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+          btnQuick.style.color = '#cbd5e1';
+          btnQuick.style.background = 'rgba(30, 41, 59, 0.9)';
+        }
+        if (quickIcon) quickIcon.innerText = '⚡';
+        if (quickText) quickText.innerText = '현실 모드: OFF';
+
+        if (showToastMsg) {
+          showMiniToast('⚡ 이상적 보존계: 공기저항과 마찰력 없이 에너지가 영구 보존됩니다.');
+        }
+      }
+    }
+
+    function showMiniToast(msg) {
+      let t = document.getElementById('pendulum-mini-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'pendulum-mini-toast';
+        t.style.cssText = 'position:fixed; top:24px; left:50%; transform:translateX(-50%); z-index:999; background:rgba(15,23,42,0.92); color:#f3f4f6; border:1px solid rgba(56,189,248,0.4); padding:8px 18px; border-radius:24px; font-size:0.82rem; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,0.5); backdrop-filter:blur(8px); transition:opacity 0.3s, transform 0.3s; pointer-events:none;';
+        document.body.appendChild(t);
+      }
+      t.innerText = msg;
+      t.style.opacity = '1';
+      t.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(-10px)';
+      }, 2500);
+    }
+
+    // 현실 모드 스위치 이벤트 리스너들
+    const hudRealityChip = document.getElementById('hud-reality-chip');
+    if (hudRealityChip) {
+      hudRealityChip.addEventListener('click', () => {
+        setRealityMode(!config.realityMode);
+      });
+    }
+
+    const togRealitySidebar = document.getElementById('toggle-reality-sidebar');
+    if (togRealitySidebar) {
+      togRealitySidebar.addEventListener('change', (e) => {
+        setRealityMode(e.target.checked);
+      });
+    }
+
+    const btnQuickReality = document.getElementById('btn-quick-reality');
+    if (btnQuickReality) {
+      btnQuickReality.addEventListener('click', () => {
+        setRealityMode(!config.realityMode);
+      });
+    }
+
+    // 현실 모드 세부 슬라이더들
+    const sAirDrag = document.getElementById('slider-air-drag');
+    if (sAirDrag) {
+      sAirDrag.addEventListener('input', (e) => {
+        config.airDrag = parseFloat(e.target.value);
+        document.getElementById('val-air-drag').innerText = `${config.airDrag.toFixed(4)}`;
+      });
+    }
+
+    const sFric = document.getElementById('slider-friction');
+    if (sFric) {
+      sFric.addEventListener('input', (e) => {
+        config.friction = parseFloat(e.target.value);
+        document.getElementById('val-friction').innerText = `${config.friction.toFixed(4)}`;
+      });
+    }
+
+    // 환경 프리셋 버튼들
+    document.querySelectorAll('.env-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const env = btn.dataset.env;
+        if (env === 'air') {
+          setRealityMode(true, 0.0030, 0.0020, false);
+          showMiniToast('🌿 일반 대기 환경: 표준 공기 저항(0.003)과 볼베어링 마찰(0.002) 적용');
+        } else if (env === 'water') {
+          setRealityMode(true, 0.0120, 0.0040, false);
+          showMiniToast('💧 물 속 환경: 강력한 유체 점성 저항(0.012)으로 급격히 감쇠');
+        } else if (env === 'heavy') {
+          setRealityMode(true, 0.0050, 0.0080, false);
+          showMiniToast('🧱 고마찰 환경: 회전축 마찰(0.008)이 매우 커 빠르게 멈춤');
+        }
+      });
+    });
+
+    // 💥 줄 탄성력 & 장력 한계(끊어짐) 컨트롤 이벤트
+    const togEnableBreak = document.getElementById('toggle-enable-break');
+    if (togEnableBreak) {
+      togEnableBreak.addEventListener('change', (e) => {
+        config.enableBreak = e.target.checked;
+        showMiniToast(config.enableBreak ? '💥 줄 끊어짐 허용 활성화 (장력 한계 초과 시 끊어짐)' : '🛡️ 줄 끊어짐 비활성화 (무한 강도 유지)');
+      });
+    }
+
+    const sliderMaxTension = document.getElementById('slider-max-tension');
+    const numMaxTension = document.getElementById('num-max-tension');
+    const valMaxTension = document.getElementById('val-max-tension');
+
+    function updateTensionDisplay(val) {
+      config.maxTension = val;
+      if (sliderMaxTension) sliderMaxTension.value = Math.min(500, val);
+      if (numMaxTension) numMaxTension.value = val;
+      if (valMaxTension) {
+        valMaxTension.innerText = (val >= 999) ? '999 N (무제한/불멸)' : `${val} N`;
+      }
+      document.querySelectorAll('.tension-preset-btn').forEach(b => {
+        b.classList.toggle('active', parseFloat(b.dataset.t) === val);
+      });
+    }
+
+    if (sliderMaxTension) {
+      sliderMaxTension.addEventListener('input', (e) => {
+        updateTensionDisplay(parseFloat(e.target.value));
+      });
+    }
+
+    if (numMaxTension) {
+      numMaxTension.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (!isNaN(val) && val > 0) {
+          updateTensionDisplay(val);
+        }
+      });
+    }
+
+    document.querySelectorAll('.tension-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = parseFloat(btn.dataset.t);
+        updateTensionDisplay(t);
+        showMiniToast(`⚡ 허용 장력 한계: ${t >= 999 ? '무제한 (999 N)' : t + ' N'} (${btn.innerText.trim()})`);
+      });
+    });
+
+    const sliderElasticK = document.getElementById('slider-elastic-k');
+    const valElasticK = document.getElementById('val-elastic-k');
+    if (sliderElasticK) {
+      sliderElasticK.addEventListener('input', (e) => {
+        config.elasticK = parseFloat(e.target.value);
+        let desc = '약간 탄성';
+        if (config.elasticK <= 60) desc = '고무줄 탄성';
+        else if (config.elasticK >= 350) desc = '단단한 와이어';
+        if (valElasticK) valElasticK.innerText = `${config.elasticK} (${desc})`;
+      });
+    }
+
+    const btnReconnect = document.getElementById('btn-reconnect-ropes');
+    if (btnReconnect) {
+      btnReconnect.addEventListener('click', reconnectRopes);
+    }
+
+    document.getElementById('slider-speed').addEventListener('input', (e) => {
+      config.simSpeed = parseFloat(e.target.value);
+      document.getElementById('val-speed').innerText = `${config.simSpeed.toFixed(1)}×`;
+    });
+
+    document.getElementById('slider-trace-len').addEventListener('input', (e) => {
+      config.traceLength = parseInt(e.target.value, 10);
+      document.getElementById('val-trace-len').innerText = `${config.traceLength} 점`;
+    });
+
+    document.getElementById('toggle-inf-trace').addEventListener('change', (e) => {
+      config.infiniteTrace = e.target.checked;
+    });
+
+    document.getElementById('toggle-all-traces').addEventListener('change', (e) => {
+      config.traceAllBobs = e.target.checked;
+      if (!config.traceAllBobs) intermediateTrails = [];
+    });
+
+    document.getElementById('toggle-twin').addEventListener('change', (e) => {
+      config.enableTwin = e.target.checked;
+      syncTwinPendulums();
+    });
+
+    // 각도 대칭 & 랜덤
+    document.getElementById('btn-invert-angles').addEventListener('click', () => {
+      pendulums.forEach(p => {
+        p.theta = -p.theta;
+        p.omega = 0;
+        p.initTheta = p.theta;
+      });
+      buildPendulumControlsUI();
+      syncTwinPendulums();
+      clearTrails();
+    });
+
+    document.getElementById('btn-random-angles').addEventListener('click', () => {
+      pendulums.forEach(p => {
+        p.theta = (Math.random() * 360 - 180) * Math.PI / 180;
+        p.omega = 0;
+        p.initTheta = p.theta;
+      });
+      buildPendulumControlsUI();
+      syncTwinPendulums();
+      clearTrails();
+    });
+
+    // 다중진자 추천 프리셋
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = btn.dataset.p;
+        if (p === 'double-classic') {
+          setPendulumCount(2);
+          pendulums[0].l = 150; pendulums[0].theta = Math.PI / 2; pendulums[0].m = 100;
+          pendulums[1].l = 150; pendulums[1].theta = Math.PI / 2; pendulums[1].m = 100;
+        } else if (p === 'triple-chaos') {
+          setPendulumCount(3);
+          pendulums[0].l = 110; pendulums[0].theta = Math.PI / 2; pendulums[0].m = 100;
+          pendulums[1].l = 110; pendulums[1].theta = Math.PI / 2; pendulums[1].m = 100;
+          pendulums[2].l = 110; pendulums[2].theta = Math.PI / 2; pendulums[2].m = 100;
+        } else if (p === 'quad-whip') {
+          setPendulumCount(4);
+          pendulums[0].l = 120; pendulums[0].theta = 120 * Math.PI / 180; pendulums[0].m = 250;
+          pendulums[1].l = 90;  pendulums[1].theta = 90 * Math.PI / 180;  pendulums[1].m = 150;
+          pendulums[2].l = 70;  pendulums[2].theta = 60 * Math.PI / 180;  pendulums[2].m = 80;
+          pendulums[3].l = 50;  pendulums[3].theta = 45 * Math.PI / 180;  pendulums[3].m = 30;
+        } else if (p === 'penta-snake') {
+          setPendulumCount(5);
+          for (let i = 0; i < 5; i++) {
+            pendulums[i].l = 65;
+            pendulums[i].theta = (70 + i * 15) * Math.PI / 180;
+            pendulums[i].m = 80;
+          }
+        }
+        pendulums.forEach(item => { item.initTheta = item.theta; item.omega = 0; });
+        flyingBobs = [];
+        snapParticles = [];
+        isStringBroken = false;
+        backupFullPendulums = null;
+        updateBreakStatusUI(false);
+        currentTensions = computeLinkTensions(pendulums, config.g);
+        buildPendulumControlsUI();
+        syncTwinPendulums();
+        clearTrails();
+      });
+    });
+
+    // 재생 / 일시정지 / 리셋
+    const playBtn = document.getElementById('btn-play-pause');
+    const playIcon = document.getElementById('play-icon');
+    const playText = document.getElementById('play-text');
+
+    function togglePlay() {
+      config.isRunning = !config.isRunning;
+      updatePlayBtnUI();
+    }
+
+    function updatePlayBtnUI() {
+      if (config.isRunning) {
+        playIcon.innerText = '⏸';
+        playText.innerText = '일시정지';
+        playBtn.classList.remove('btn-primary');
+        playBtn.style.background = 'rgba(30, 41, 59, 0.85)';
+      } else {
+        playIcon.innerText = '▶';
+        playText.innerText = '재생 시작';
+        playBtn.classList.add('btn-primary');
+        playBtn.style.background = '';
+      }
+    }
+
+    playBtn.addEventListener('click', togglePlay);
+
+    document.getElementById('btn-step').addEventListener('click', () => {
+      config.isRunning = false;
+      updatePlayBtnUI();
+      updatePhysics(0.016);
+      draw();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      if (simMode === 'blackburn') {
+        resetBlackburnBob();
+        return;
+      }
+      if (backupFullPendulums && backupFullPendulums.length > 0) {
+        pendulums = JSON.parse(JSON.stringify(backupFullPendulums));
+        buildPendulumControlsUI();
+      }
+      flyingBobs = [];
+      snapParticles = [];
+      isStringBroken = false;
+      backupFullPendulums = null;
+      updateBreakStatusUI(false);
+      pendulums.forEach(p => {
+        p.theta = p.initTheta;
+        p.omega = 0;
+      });
+      config.time = 0;
+      config.lossEnergy = 0;
+      currentTensions = computeLinkTensions(pendulums, config.g);
+      syncTwinPendulums();
+      clearTrails();
+      pendulums.forEach((_, i) => updateIndividualUI(i));
+    });
+
+    function clearTrails() {
+      endBobTrail = [];
+      intermediateTrails = [];
+      twinEndTrail = [];
+      frameCounter = 0;
+      if (blackburn.sandCtx) {
+        const rect = container.getBoundingClientRect();
+        blackburn.sandCtx.clearRect(0, 0, rect.width, rect.height);
+      }
+      blackburn.trailPoints = [];
+      blackburn.sandParticles = [];
+      blackburn.sandCount = 0;
+      updateBlackburnHUD();
+    }
+
+    document.getElementById('btn-clear-trace').addEventListener('click', clearTrails);
+
+    // ==========================================
+    // 10. 상단 모드 전환 탭 이벤트
+    // ==========================================
+    const tabModeN = document.getElementById('tab-mode-npendulum');
+    if (tabModeN) tabModeN.addEventListener('click', () => setSimMode('npendulum'));
+    const tabModeB = document.getElementById('tab-mode-blackburn');
+    if (tabModeB) tabModeB.addEventListener('click', () => setSimMode('blackburn'));
+
+    // ==========================================
+    // 11. 힘 벡터 화살표 UI 이벤트 (장력, 중력, 합력)
+    // ==========================================
+    const togForceVec = document.getElementById('toggle-force-vectors');
+    const optForceVec = document.getElementById('force-vectors-sub-options');
+    if (togForceVec) {
+      togForceVec.addEventListener('change', (e) => {
+        config.showForceVectors = e.target.checked;
+        if (optForceVec) optForceVec.style.opacity = e.target.checked ? '1' : '0.4';
+      });
+    }
+
+    const chkTension = document.getElementById('chk-show-tension-vec');
+    if (chkTension) chkTension.addEventListener('change', (e) => { config.showTensionVector = e.target.checked; });
+    const chkGravity = document.getElementById('chk-show-gravity-vec');
+    if (chkGravity) chkGravity.addEventListener('change', (e) => { config.showGravityVector = e.target.checked; });
+    const chkNet = document.getElementById('chk-show-net-vec');
+    if (chkNet) chkNet.addEventListener('change', (e) => { config.showNetForceVector = e.target.checked; });
+
+    const sliderForceScale = document.getElementById('slider-force-scale');
+    const valForceScale = document.getElementById('val-force-scale');
+    if (sliderForceScale) {
+      sliderForceScale.addEventListener('input', (e) => {
+        config.forceVectorScale = parseFloat(e.target.value);
+        if (valForceScale) valForceScale.innerText = `${config.forceVectorScale.toFixed(0)} px/N`;
+      });
+    }
+
+    // ==========================================
+    // 12. 블랙번 진자 UI 이벤트 리스너
+    // ==========================================
+    const sliderBbH1 = document.getElementById('slider-bb-h1');
+    const valBbH1 = document.getElementById('val-bb-h1');
+    if (sliderBbH1) {
+      sliderBbH1.addEventListener('input', (e) => {
+        blackburn.h1 = parseFloat(e.target.value);
+        if (valBbH1) valBbH1.innerText = `${blackburn.h1} px`;
+        updateBlackburnHUD();
+      });
+    }
+
+    const sliderBbH2 = document.getElementById('slider-bb-h2');
+    const valBbH2 = document.getElementById('val-bb-h2');
+    if (sliderBbH2) {
+      sliderBbH2.addEventListener('input', (e) => {
+        blackburn.h2 = parseFloat(e.target.value);
+        if (valBbH2) valBbH2.innerText = `${blackburn.h2} px`;
+        updateBlackburnHUD();
+      });
+    }
+
+    const sliderBbD = document.getElementById('slider-bb-d');
+    const valBbD = document.getElementById('val-bb-d');
+    if (sliderBbD) {
+      sliderBbD.addEventListener('input', (e) => {
+        blackburn.d = parseFloat(e.target.value);
+        if (valBbD) valBbD.innerText = `${blackburn.d} px`;
+      });
+    }
+
+    // 조화비 프리셋 버튼들 (1:1, 2:1, 3:2, 4:3, 5:4, 3:1)
+    const ratioBtns = document.querySelectorAll('.ratio-preset-btn');
+    ratioBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        ratioBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const r = btn.dataset.ratio;
+        if (r === '1-1') {
+          blackburn.h1 = 0; blackburn.h2 = 200;
+        } else if (r === '2-1') {
+          blackburn.h1 = 225; blackburn.h2 = 75;
+        } else if (r === '3-2') {
+          blackburn.h1 = 150; blackburn.h2 = 120;
+        } else if (r === '4-3') {
+          blackburn.h1 = 105; blackburn.h2 = 135;
+        } else if (r === '5-4') {
+          blackburn.h1 = 90; blackburn.h2 = 160;
+        } else if (r === '3-1') {
+          blackburn.h1 = 240; blackburn.h2 = 30;
+        }
+
+        if (sliderBbH1) { sliderBbH1.value = blackburn.h1; if (valBbH1) valBbH1.innerText = `${blackburn.h1} px`; }
+        if (sliderBbH2) { sliderBbH2.value = blackburn.h2; if (valBbH2) valBbH2.innerText = `${blackburn.h2} px`; }
+        resetBlackburnBob();
+        showMiniToast(`⏳ [리사주 프리셋 ${btn.innerText.trim().split('\n')[0]}] h1=${blackburn.h1}px, h2=${blackburn.h2}px 로 설정되었습니다.`);
+      });
+    });
+
+    // 위상차 슬라이더 & 원클릭 버튼
+    const sliderBbPhase = document.getElementById('slider-bb-phase');
+    const valBbPhaseDeg = document.getElementById('val-bb-phase-deg');
+    const valBbPhase = document.getElementById('val-bb-phase');
+    const phaseBtns = document.querySelectorAll('.bb-phase-btn');
+
+    function applyPhaseDeg(deg) {
+      blackburn.phaseDiff = (deg * Math.PI) / 180;
+      if (sliderBbPhase) sliderBbPhase.value = deg;
+      if (valBbPhaseDeg) valBbPhaseDeg.innerText = `${deg}°`;
+      if (valBbPhase) valBbPhase.innerText = `${deg}° (${(blackburn.phaseDiff / Math.PI).toFixed(2)}π)`;
+      phaseBtns.forEach(b => {
+        b.classList.toggle('active', parseFloat(b.dataset.deg) === deg);
+      });
+      resetBlackburnBob();
+    }
+
+    if (sliderBbPhase) {
+      sliderBbPhase.addEventListener('input', (e) => {
+        const deg = parseFloat(e.target.value);
+        applyPhaseDeg(deg);
+      });
+    }
+
+    phaseBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        applyPhaseDeg(parseFloat(btn.dataset.deg));
+      });
+    });
+
+    // 진폭 및 감쇠
+    const sliderBbAmpX = document.getElementById('slider-bb-ampx');
+    const valBbAmpX = document.getElementById('val-bb-ampx');
+    if (sliderBbAmpX) {
+      sliderBbAmpX.addEventListener('input', (e) => {
+        blackburn.initAmpX = parseFloat(e.target.value);
+        if (valBbAmpX) valBbAmpX.innerText = `${blackburn.initAmpX} px`;
+        resetBlackburnBob();
+      });
+    }
+
+    const sliderBbAmpY = document.getElementById('slider-bb-ampy');
+    const valBbAmpY = document.getElementById('val-bb-ampy');
+    if (sliderBbAmpY) {
+      sliderBbAmpY.addEventListener('input', (e) => {
+        blackburn.initAmpY = parseFloat(e.target.value);
+        if (valBbAmpY) valBbAmpY.innerText = `${blackburn.initAmpY} px`;
+        resetBlackburnBob();
+      });
+    }
+
+    const sliderBbDamping = document.getElementById('slider-bb-damping');
+    const valBbDamping = document.getElementById('val-bb-damping');
+    if (sliderBbDamping) {
+      sliderBbDamping.addEventListener('input', (e) => {
+        blackburn.damping = parseFloat(e.target.value);
+        if (valBbDamping) valBbDamping.innerText = blackburn.damping.toFixed(4);
+      });
+    }
+
+    // 모래 분출 토글
+    const togBbSand = document.getElementById('toggle-bb-sand');
+    if (togBbSand) {
+      togBbSand.addEventListener('change', (e) => {
+        blackburn.sandDrop = e.target.checked;
+      });
+    }
+
+    // 뷰 모드 전환 (3D 사투시 vs 2D 탑뷰)
+    const btnView3D = document.getElementById('btn-bb-view-3d');
+    const btnView2D = document.getElementById('btn-bb-view-2d');
+    if (btnView3D && btnView2D) {
+      btnView3D.addEventListener('click', () => {
+        blackburn.viewMode = '3d';
+        btnView3D.classList.add('primary-btn');
+        btnView3D.style.background = 'linear-gradient(135deg, #d97706, #b45309)';
+        btnView3D.style.borderColor = '#f59e0b';
+        btnView2D.classList.remove('primary-btn');
+        btnView2D.style.background = '#1e293b';
+        btnView2D.style.borderColor = '#334155';
+      });
+
+      btnView2D.addEventListener('click', () => {
+        blackburn.viewMode = '2d';
+        btnView2D.classList.add('primary-btn');
+        btnView2D.style.background = 'linear-gradient(135deg, #d97706, #b45309)';
+        btnView2D.style.borderColor = '#f59e0b';
+        btnView3D.classList.remove('primary-btn');
+        btnView3D.style.background = '#1e293b';
+        btnView3D.style.borderColor = '#334155';
+      });
+    }
+
+    // 3D 카메라 뷰 리셋 버튼
+    const btnResetCam = document.getElementById('btn-bb-reset-cam');
+    if (btnResetCam) {
+      btnResetCam.addEventListener('click', () => {
+        blackburn.camYaw = -0.32;
+        blackburn.camPitch = 0.46;
+        blackburn.camZoom = 1.0;
+      });
+    }
+
+    // 모래 스타일 셀렉트
+    const selBbStyle = document.getElementById('select-bb-trail-style');
+    if (selBbStyle) {
+      selBbStyle.addEventListener('change', (e) => {
+        blackburn.trailStyle = e.target.value;
+      });
+    }
+
+    // 모래판 비우기 및 다시 떨구기 버튼
+    const btnBbClear = document.getElementById('btn-bb-clear-sand');
+    if (btnBbClear) btnBbClear.addEventListener('click', clearTrails);
+
+    const btnBbRestart = document.getElementById('btn-bb-restart');
+    if (btnBbRestart) btnBbRestart.addEventListener('click', resetBlackburnBob);
+
+    // 스크린샷 캡처
+    document.getElementById('btn-screenshot').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `pendulum_simulation_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // 전체화면
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => alert(err.message));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+    const btnFs = document.getElementById('btn-fullscreen');
+    if (btnFs) btnFs.addEventListener('click', toggleFullscreen);
+    const btnFsSidebar = document.getElementById('btn-fullscreen-sidebar');
+    if (btnFsSidebar) btnFsSidebar.addEventListener('click', toggleFullscreen);
+
+    // 제어판 토글
+    const sidebar = document.getElementById('control-panel');
+    const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+    toggleSidebarBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      toggleSidebarBtn.innerText = sidebar.classList.contains('collapsed') ? '⚙️ 제어판 열기' : '⚙️ 제어판';
+      setTimeout(resizeCanvas, 320);
+    });
+
+    // 키보드 단축키
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.code === 'KeyR') {
+        document.getElementById('btn-reset').click();
+      } else if (e.code === 'KeyC') {
+        clearTrails();
+      } else if (e.key === '+' || e.key === '=') {
+        addPendulumSegment();
+      } else if (e.key === '-' || e.key === '_') {
+        removePendulumSegment();
+      } else if (e.code === 'KeyM') {
+        setRealityMode(!config.realityMode);
+      } else if (e.code === 'KeyB') {
+        reconnectRopes();
+      }
+    });
+
+    // 초기 UI 생성 및 현실 모드 동기화
+    buildPendulumControlsUI();
+    syncTwinPendulums();
+    setRealityMode(false, 0.0030, 0.0020, false);
+
+    // ==========================================
+    // 10. 메인 애니메이션 루프
+    // ==========================================
+    let lastTime = performance.now();
+    let fpsFrames = 0;
+    let lastFpsTime = performance.now();
+
+    function animate(currentTime) {
+      const dt = Math.min(0.035, (currentTime - lastTime) / 1000);
+      lastTime = currentTime;
+
+      // 실시간 FPS 측정 및 HUD 갱신 (0.4초 주기)
+      fpsFrames++;
+      if (currentTime - lastFpsTime >= 400) {
+        const fps = Math.round((fpsFrames * 1000) / (currentTime - lastFpsTime));
+        const fpsElem = document.getElementById('hud-fps');
+        if (fpsElem) {
+          fpsElem.innerText = `${fps} FPS`;
+          fpsElem.style.color = fps >= 50 ? '#22c55e' : (fps >= 30 ? '#f59e0b' : '#ef4444');
+        }
+        fpsFrames = 0;
+        lastFpsTime = currentTime;
+      }
+
+      updatePhysics(dt);
+      draw();
+
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

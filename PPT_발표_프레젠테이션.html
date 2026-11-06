@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🪐 과학동아리 [코스모스] 탐구 발표 프레젠테이션</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
+    
+    .slide {
+      display: none;
+      opacity: 0;
+      transform: translateY(16px) scale(0.985);
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .math-font {
+      font-family: 'Cambria Math', 'Times New Roman', serif;
+      font-style: italic;
+      letter-spacing: 0.04em;
+    }
+    
+    .glow-cyan {
+      box-shadow: 0 0 35px -5px rgba(0, 210, 255, 0.25);
+    }
+    .glow-amber {
+      box-shadow: 0 0 35px -5px rgba(245, 158, 11, 0.25);
+    }
+    .glow-purple {
+      box-shadow: 0 0 35px -5px rgba(168, 85, 247, 0.25);
+    }
+    .glow-rose {
+      box-shadow: 0 0 35px -5px rgba(244, 63, 94, 0.25);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.8); }
+    ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.5); border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between select-none overflow-x-hidden antialiased text-lg">
+
+  <!-- Top Progress Bar & Header -->
+  <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-lg border-b border-slate-800 px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 font-black text-2xl border border-cyan-500/40">🪐</span>
+      <div>
+        <h1 class="text-xl md:text-2xl font-black text-slate-100 tracking-wide">과학동아리 코스모스 (COSMOS)</h1>
+        <p class="text-xs md:text-sm text-cyan-400 font-bold tracking-wider uppercase">3번~9번 과학 탐구 실험 & 인터랙티브 가이드</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-4">
+      <div class="text-base text-slate-200 font-mono bg-slate-800/90 px-5 py-2 rounded-full border border-slate-700 font-bold">
+        SLIDE <span id="current-slide-num" class="text-cyan-400 text-lg">1</span> / <span id="total-slides-num" class="text-slate-400">20</span>
+      </div>
+      <button id="toggle-notes-btn" class="flex items-center gap-2 text-base bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-5 py-2.5 rounded-xl border border-slate-700 transition font-bold">
+        🎙️ <span>발표 대본</span>
+      </button>
+      <button id="fullscreen-btn" class="text-base bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-4 py-2.5 rounded-xl border border-slate-700 transition font-bold" title="전체화면">
+        ⛶
+      </button>
+    </div>
+  </header>
+
+  <!-- Linear Top Progress Bar -->
+  <div class="w-full bg-slate-800/80 h-2">
+    <div id="progress-bar" class="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 h-full w-[5%] transition-all duration-300"></div>
+  </div>
+
+  <!-- Main Slide Display Area -->
+  <main class="flex-1 flex items-center justify-center p-6 md:p-12 max-w-7xl w-full mx-auto relative">
+    
+    <!-- Slide 1: Cover -->
+    <section class="slide active flex-col items-center justify-center text-center w-full py-8 px-6" data-title="표지" data-note="안녕하십니까, 과학동아리 [코스모스]입니다. 저희가 이번에 진행할 3번부터 9번까지의 7가지 실험에 대해 알기 쉬운 핵심 물리 이론과 단계별 실험 과정을 발표하겠습니다. 3, 5, 7, 8번은 조별 자율 설계 탐구이며, 4번은 EPP 완제품 폼 글라이더 날개 개조 프로젝트입니다.">
+      <div class="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-400 text-base font-bold uppercase tracking-wider mb-6">
+        2026학년도 과학탐구 동아리 학술 프로젝트
+      </div>
+      <h2 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-100 to-indigo-300 leading-tight mb-4 max-w-5xl">
+        코스모스 과학 탐구 실험 가이드
+      </h2>
+      <p class="text-slate-300 text-lg md:text-xl max-w-4xl mb-10 font-light leading-relaxed">
+        3번부터 9번까지 7가지 실험의 물리 이론, 단계별 실험 절차 및 인터랙티브 시뮬레이션
+      </p>
+
+      <!-- 7 Experiment Badges Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 max-w-6xl w-full text-center">
+        <div class="bg-slate-900/90 border border-amber-500/50 p-4 rounded-xl">
+          <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/80">자율 탐구</span>
+          <div class="text-cyan-400 font-bold text-sm mt-1">3번</div>
+          <div class="text-base font-bold text-white">비행체 역학</div>
+        </div>
+        <div class="bg-slate-900/90 border border-cyan-500/50 p-4 rounded-xl glow-cyan">
+          <span class="text-[11px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/80">날개 개조</span>
+          <div class="text-cyan-400 font-bold text-sm mt-1">4번</div>
+          <div class="text-base font-bold text-white">EPP 글라이더</div>
+        </div>
+        <div class="bg-slate-900/90 border border-amber-500/50 p-4 rounded-xl">
+          <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/80">자율 설계</span>
+          <div class="text-cyan-400 font-bold text-sm mt-1">5번</div>
+          <div class="text-base font-bold text-white">마그누스 효과</div>
+        </div>
+        <div class="bg-slate-900/90 border border-cyan-500/40 p-4 rounded-xl">
+          <span class="text-[11px] text-blue-400 font-bold bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800/80">천문 관측</span>
+          <div class="text-cyan-400 font-bold text-sm mt-1">6번</div>
+          <div class="text-base font-bold text-white">별자리 지도</div>
+        </div>
+        <div class="bg-slate-900/90 border border-amber-500/50 p-4 rounded-xl">
+          <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/80">자율 모델링</span>
+          <div class="text-cyan-400 font-bold text-sm mt-1">7번</div>
+          <div class="text-base font-bold text-white">시리우스 중력</div>
+        </div>
+        <div class="bg-slate-900/90 border border-amber-500/50 p-4 rounded-xl">
+          <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/80">행성 선택</span>
+          <div class="text-cyan-400 font-bold text-sm mt-1">8번</div>
+          <div class="text-base font-bold text-white">행성 대기 구현</div>
+        </div>
+        <div class="bg-slate-900/90 border border-purple-500/40 p-4 rounded-xl">
+          <span class="text-[11px] text-purple-400 font-bold bg-purple-950/80 px-2 py-0.5 rounded border border-purple-800/80">비선형 물리</span>
+          <div class="text-cyan-400 font-bold text-sm mt-1">9번</div>
+          <div class="text-base font-bold text-white">카오스 이중진자</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: AI Apology (Independent Dedicated Slide with Detailed Error Confession) -->
+    <section class="slide flex-col w-full" data-title="AI 어시스턴트 사과" data-note="본격적인 발표에 앞서, AI로 준비물을 조사하고 엑셀 견적서를 만드는 과정에서 물건 누락, 엉뚱한 물건 추가, 가격 오계산, 검색창 리다이렉트 링크, 엑셀 파일 충돌 등 여러 치명적인 오류로 부원 여러분께 큰 혼선을 드렸던 점을 솔직하게 고백하고 깊이 사과드립니다.">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-rose-400 font-mono text-sm font-bold bg-rose-950/80 px-3 py-1.5 rounded-lg border border-rose-800">NOTICE & APOLOGY</span>
+        <h3 class="text-2xl md:text-3xl font-black text-white">AI 어시스턴트의 진솔한 반성과 사과</h3>
+      </div>
+      
+      <!-- Big Dedicated Apology Card -->
+      <div class="bg-gradient-to-br from-rose-950/50 via-slate-900/95 to-slate-900/95 border border-rose-500/50 rounded-3xl p-6 md:p-8 space-y-4 glow-rose">
+        <div class="flex items-center gap-4">
+          <div class="w-13 h-13 rounded-2xl bg-rose-500/20 text-rose-400 font-black text-3xl flex items-center justify-center border border-rose-500/40 shrink-0">
+            🙇‍♂️
+          </div>
+          <div>
+            <h4 class="text-xl md:text-2xl font-black text-rose-200">동아리 부원 여러분, 진심으로 사과드립니다!</h4>
+            <p class="text-xs md:text-sm text-rose-400 font-medium">Gmarket 물품 조사 및 엑셀 견적서 작성 중 발생한 5대 치명적 오류 고백</p>
+          </div>
+        </div>
+
+        <!-- 5 Major Errors Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs md:text-sm text-slate-300">
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-rose-900/50 flex items-start gap-2.5">
+            <span class="text-rose-400 font-bold text-base">❌</span>
+            <div>
+              <strong class="text-rose-200 block font-bold">1. 필수 준비물 누락</strong>
+              5번 표면 가공재(사포/엠보싱 스티커/지점토) 등 중요 품목 목록 누락
+            </div>
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-rose-900/50 flex items-start gap-2.5">
+            <span class="text-rose-400 font-bold text-base">❌</span>
+            <div>
+              <strong class="text-rose-200 block font-bold">2. 엉뚱한 물건 추천 및 추가</strong>
+              실제 실험 규격에 맞지 않는 엉뚱한 제품 추천 및 불필요 품목 추가
+            </div>
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-rose-900/50 flex items-start gap-2.5">
+            <span class="text-rose-400 font-bold text-base">❌</span>
+            <div>
+              <strong class="text-rose-200 block font-bold">3. 가격 & 배송비 오계산</strong>
+              단가 및 묶음배송 조건을 부정확하게 산정하여 견적 및 예산 혼선 초래
+            </div>
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-rose-900/50 flex items-start gap-2.5">
+            <span class="text-rose-400 font-bold text-base">❌</span>
+            <div>
+              <strong class="text-rose-200 block font-bold">4. 검색창 리다이렉트 링크</strong>
+              실제 상품 직통 상세페이지 대신 단순 검색창 URL이나 오류 링크 첨부
+            </div>
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-rose-900/50 flex items-start gap-2.5 md:col-span-2 lg:col-span-2">
+            <span class="text-rose-400 font-bold text-base">❌</span>
+            <div>
+              <strong class="text-rose-200 block font-bold">5. 엑셀 파일 충돌 및 데이터 꼬임</strong>
+              동시 다발 수정 및 덮어쓰기로 엑셀 파일 충돌, 데이터 왜곡 및 이전 시트 손상 발생
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1 text-xs text-slate-400 border-t border-slate-800">
+          <span>사죄와 보상의 마음을 담아 제작한 <strong>물리 웹 시뮬레이터 & 웹 앱 3종</strong>을 다음 슬라이드에서 소개해 드립니다. 👉</span>
+          <span class="font-mono text-cyan-400 font-bold">Cosmos AI Assistant</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: Interactive HTML Simulators & Web Apps Intro (Independent Dedicated Slide) -->
+    <section class="slide flex-col w-full" data-title="특별 웹 시뮬레이터 & 웹 앱 소개" data-note="사죄와 보상의 의미로, 실험실 밖에서도 이론을 100% 실감나게 체감할 수 있는 인터랙티브 웹 시뮬레이터 및 스마트 웹 앱 3종을 직접 제작하였습니다. 6번 스마트 별자리 지도, 7번 중력 시뮬레이터, 9번 카오스 이중진자 시뮬레이터로, 발표 중이나 개인 학습 시 모바일 및 PC 브라우저에서 바로 클릭하여 실행할 수 있습니다!">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-cyan-400 font-mono text-xs md:text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">SPECIAL COMPENSATIONS</span>
+          <h3 class="text-2xl md:text-3xl font-black text-white">사죄의 보상: 인터랙티브 웹 물리 시뮬레이터 & 스마트 웹 앱 3종</h3>
+        </div>
+        <div class="hidden lg:flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1.5 rounded-full font-mono">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> LIVE ONLINE
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- 6번 스마트 별자리 지도 (Sky Map) -->
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-blue-500/50 p-6 rounded-3xl space-y-4 glow-cyan flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-blue-300 bg-blue-950 px-2.5 py-1 rounded-full border border-blue-800">[6번 연동] 천문 관측</span>
+              <span class="text-[11px] text-slate-400 font-mono">/sky</span>
+            </div>
+            <h4 class="text-xl font-black text-white flex items-center gap-2">
+              <span>🌟</span> 스마트 별자리 지도
+            </h4>
+            <p class="text-xs md:text-sm text-slate-300 leading-relaxed font-light">
+              북위 37.5° 성좌조견판 원리를 디지털로 구현하여, 관측 일시별 밤하늘 성도와 <strong>1등성 및 여름철 대삼각형 위치</strong>를 실시간으로 탐색합니다.
+            </p>
+            <div class="text-xs text-blue-200 bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1">
+              <div>• 실시간 방위각·고도 계산 및 성도 투영</div>
+              <div class="font-mono text-[11px] text-slate-400 truncate">aberdeen-...trycloudflare.com/sky</div>
+            </div>
+          </div>
+          <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/sky" target="_blank" class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl text-sm font-bold transition shadow-lg shadow-blue-900/40">
+            <span>🌟 별자리 지도 실행하기</span> <span>↗</span>
+          </a>
+        </div>
+
+        <!-- 7번 중력 시뮬레이터 -->
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-cyan-500/50 p-6 rounded-3xl space-y-4 glow-cyan flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-cyan-300 bg-cyan-950 px-2.5 py-1 rounded-full border border-cyan-800">[7번 연동] 천체 물리</span>
+              <span class="text-[11px] text-slate-400 font-mono">/gravity</span>
+            </div>
+            <h4 class="text-xl font-black text-white flex items-center gap-2">
+              <span>🪐</span> 중력장 & 다체 궤도
+            </h4>
+            <p class="text-xs md:text-sm text-slate-300 leading-relaxed font-light">
+              시리우스 A/B 쌍성계의 2체 공전 및 제3의 행성 투입 시 나타나는 <strong>3체 섭동과 라그랑주 점 슬링샷 이탈</strong>을 실시간 2D/3D로 조작합니다.
+            </p>
+            <div class="text-xs text-cyan-200 bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1">
+              <div>• 질량비 조절 & 공통 질량중심 공전 렌더링</div>
+              <div class="font-mono text-[11px] text-slate-400 truncate">aberdeen-...trycloudflare.com/gravity</div>
+            </div>
+          </div>
+          <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/gravity" target="_blank" class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white rounded-xl text-sm font-bold transition shadow-lg shadow-cyan-900/40">
+            <span>🪐 중력 시뮬레이터 실행하기</span> <span>↗</span>
+          </a>
+        </div>
+
+        <!-- 9번 이중진자 시뮬레이터 -->
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-purple-500/50 p-6 rounded-3xl space-y-4 glow-purple flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-purple-300 bg-purple-950 px-2.5 py-1 rounded-full border border-purple-800">[9번 연동] 비선형 역학</span>
+              <span class="text-[11px] text-slate-400 font-mono">/</span>
+            </div>
+            <h4 class="text-xl font-black text-white flex items-center gap-2">
+              <span>🌀</span> 카오스 이중진자
+            </h4>
+            <p class="text-xs md:text-sm text-slate-300 leading-relaxed font-light">
+              룬게-쿠타(RK4) 수치해석 기반으로 <strong>0.001도 각도 차이에 의한 나비효과 궤적 분기</strong>와 암실 LED 장노출 모드를 직접 시뮬레이션합니다.
+            </p>
+            <div class="text-xs text-purple-200 bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1">
+              <div>• 초기 각도 미세 변경 & 리아푸노프 분기 관찰</div>
+              <div class="font-mono text-[11px] text-slate-400 truncate">aberdeen-...trycloudflare.com/</div>
+            </div>
+          </div>
+          <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/" target="_blank" class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-sm font-bold transition shadow-lg shadow-purple-900/40">
+            <span>⚡ 이중진자 실행하기</span> <span>↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Live Connection Guide Banner -->
+      <div class="mt-4 p-3.5 bg-slate-900/90 rounded-2xl border border-cyan-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs md:text-sm">
+        <div class="flex items-center gap-2.5 text-cyan-200">
+          <span class="text-xl">🌐</span>
+          <span><strong>실시간 접속 안내 (모바일 & PC 공용):</strong> 발표 중 스마트폰 또는 PC 브라우저에서 바로 클릭하여 실행할 수 있습니다. (로컬: <code>http://localhost:5000/sky</code> 등)</span>
+        </div>
+        <span class="text-xs text-cyan-300 font-mono bg-cyan-950/80 px-3 py-1 rounded-lg border border-cyan-800 shrink-0">Live Cloudflare Tunnel</span>
+      </div>
+    </section>
+
+    <!-- Slide 4: Who Chose Which Experiment (15 Members Mapping) -->
+    <section class="slide flex-col w-full" data-title="실험별 인원 선택 현황" data-note="각 실험별로 동아리원들이 선택한 현황입니다. 3번 비행체는 김찬우 학생, 4번 날개 개조는 7명, 5번 마그누스는 송지오, 김수혁 학생, 6번 성도는 김수혁 학생, 7번 중력은 8명, 8번 행성대기는 4명, 9번 카오스는 김수혁, 송지오 학생이 선택하여 차시별로 역할을 분담해 탐구합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">MEMBERS ASSIGNMENT</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">실험별 동아리원 선택 및 배정 현황</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- 3번 -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-cyan-400 font-black text-lg">[3번] 비행체 역학</span>
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono font-bold">1명</span>
+          </div>
+          <div class="text-base text-slate-100 font-bold">김찬우</div>
+          <p class="text-xs text-slate-400">드론 기초 호버링/외란 시험 및 종이비행기 CG 이동 탐구</p>
+        </div>
+
+        <!-- 4번 -->
+        <div class="bg-slate-900/80 border border-cyan-500/40 rounded-2xl p-5 space-y-2 glow-cyan">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-cyan-300 font-black text-lg">[4번] EPP 날개 개조</span>
+            <span class="text-xs bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded font-mono font-bold">7명</span>
+          </div>
+          <div class="text-sm text-slate-100 font-bold leading-relaxed">김찬우, 김진우, 최준호, 김병현, 김선우, 김시후, 송지후</div>
+          <p class="text-xs text-slate-400">완제품 폼 글라이더 주날개 에어포일 깎기 및 윙렛 부착 활공 대회</p>
+        </div>
+
+        <!-- 5번 -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-cyan-400 font-black text-lg">[5번] 마그누스 효과</span>
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono font-bold">2명</span>
+          </div>
+          <div class="text-base text-slate-100 font-bold">송지오, 김수혁</div>
+          <p class="text-xs text-slate-400">종이컵 롤러 및 딤플 골프공 백스핀 런처 발사/고속촬영 분석</p>
+        </div>
+
+        <!-- 6번 -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-cyan-400 font-black text-lg">[6번] 별자리 지도</span>
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono font-bold">1명</span>
+          </div>
+          <div class="text-base text-slate-100 font-bold">김수혁 <span class="text-xs text-cyan-400 font-normal">(단독)</span></div>
+          <p class="text-xs text-slate-400">북위 37.5° 성좌조견판 정밀 제작 및 하루 3분 56초 시차 계산 실습</p>
+        </div>
+
+        <!-- 7번 -->
+        <div class="bg-slate-900/80 border border-amber-500/40 rounded-2xl p-5 space-y-2 glow-amber">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-amber-300 font-black text-lg">[7번] 시리우스 중력</span>
+            <span class="text-xs bg-amber-950 text-amber-300 px-2 py-0.5 rounded font-mono font-bold">8명</span>
+          </div>
+          <div class="text-sm text-slate-100 font-bold leading-relaxed">김수혁, 황해나, 김태호, 김민기, 장수빈, 황현서, 송지후, 박찬웅</div>
+          <p class="text-xs text-slate-400">스판덱스 막 2체 공전 실측 및 3체 섭동/라그랑주 점 슬링샷 분석</p>
+        </div>
+
+        <!-- 8번 -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-cyan-400 font-black text-lg">[8번] 행성 대기 구현</span>
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono font-bold">4명</span>
+          </div>
+          <div class="text-base text-slate-100 font-bold">김수혁, 김찬우, 김시후, 최준호</div>
+          <p class="text-xs text-slate-400">조별 행성 자율 선택 (금성 CO2 온실효과 측정 / 목성 소용돌이 수조)</p>
+        </div>
+
+        <!-- 9번 -->
+        <div class="bg-slate-900/80 border border-purple-500/40 rounded-2xl p-5 space-y-2 md:col-span-2 lg:col-span-3 glow-purple">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-purple-300 font-black text-lg">[9번] 카오스 이중진자</span>
+            <span class="text-xs bg-purple-950 text-purple-300 px-2 py-0.5 rounded font-mono font-bold">2명</span>
+          </div>
+          <div class="text-base text-slate-100 font-bold">김수혁, 송지오</div>
+          <p class="text-xs text-slate-400">608zz 베어링 프레임 조립 및 암실 8초 장노출 동일 90도 각도 3회 방출 나비효과 분기 촬영</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: Roadmap / Agenda -->
+    <section class="slide flex-col w-full" data-title="실험 목록" data-note="저희가 진행할 7가지 실험 목록입니다. 3번, 5번, 7번, 8번은 조별로 독창적인 조건을 설정하는 자율 탐구이며, 4번은 EPP 완제품 폼 비행기를 베이스로 날개를 직접 개조하는 실험입니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXPERIMENTS</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">3번 ~ 9번 탐구 실험 목록</h3>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 font-black flex items-center justify-center text-lg">3</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <strong class="text-white text-lg">비행체 역학 (드론 & 종이비행기)</strong>
+                <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">자율 조건</span>
+              </div>
+              <span class="text-sm text-slate-400">조별 자율 조건(무게추·조종면·외란) 인가에 따른 궤적 변화 관찰</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/80 border border-cyan-500/40 rounded-xl flex items-center justify-between glow-cyan">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-cyan-500/30 text-cyan-300 font-black flex items-center justify-center text-lg">4</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <strong class="text-cyan-200 text-lg">날개 모양 (EPP 글라이더 날개 개조)</strong>
+                <span class="text-[11px] text-cyan-300 font-bold bg-cyan-950 px-2 py-0.5 rounded border border-cyan-700">커스텀 개조</span>
+              </div>
+              <span class="text-sm text-slate-400">완제품 폼 비행기 주날개 에어포일 깎기 및 윙렛 부착 성능 비교</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 font-black flex items-center justify-center text-lg">5</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <strong class="text-white text-lg">마그누스 효과 투사체 분석</strong>
+                <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">자율 설계</span>
+              </div>
+              <span class="text-sm text-slate-400">조별로 원하는 형태와 표면의 투사체를 직접 만들어 마그누스 힘 비교</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 font-black flex items-center justify-center text-lg">6</span>
+            <div>
+              <strong class="text-white text-lg block">별보기 + 별자리 지도 만들기</strong>
+              <span class="text-sm text-slate-400">회전식 성좌조견판 제작 및 야간 천체 관측 실습</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 font-black flex items-center justify-center text-lg">7</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <strong class="text-white text-lg">시리우스 쌍성계 중력 모델링</strong>
+                <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">자율 모델링</span>
+              </div>
+              <span class="text-sm text-slate-400">스판덱스 막에서 조별로 원하는 다체 중력 시스템 자유 구현</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 font-black flex items-center justify-center text-lg">8</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <strong class="text-white text-lg">태양계 행성 대기 구현</strong>
+                <span class="text-[11px] text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">행성 선택</span>
+              </div>
+              <span class="text-sm text-slate-400">원하는 행성(금성·화성·목성 등)을 선택해 고유 대기 모형 구현</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between md:col-span-2">
+          <div class="flex items-center gap-4">
+            <span class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 font-black flex items-center justify-center text-lg">9</span>
+            <div>
+              <strong class="text-white text-lg block">카오스 이론 (이중진자 운동)</strong>
+              <span class="text-sm text-slate-400">볼베어링 이중진자 제작 및 암실 장노출 궤적 추적</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6: Exp 3 Theory -->
+    <section class="slide flex-col w-full" data-title="[3번] 비행체 역학 - 이론" data-note="3번 비행체 역학 이론입니다. 고정익 종이비행기는 무게중심이 앞쪽에 위치할 때 자연스러운 피치 다운 복원 토크가 작동합니다. 쿼드콥터 드론은 대각선 방향 모터가 서로 반대로 돌며 회전 토크를 상쇄합니다. 3번 실험은 정해진 조건 외에도 각 조가 원하는 자유로운 비행 조건을 탐구할 수 있습니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 03 · THEORY</span>
+        <div class="flex items-center gap-3">
+          <h3 class="text-3xl md:text-4xl font-black text-white">[3번] 비행체 역학: 4대 힘과 자세 복원 원리</h3>
+          <span class="text-xs text-amber-400 font-bold bg-amber-950/80 px-2.5 py-1 rounded-md border border-amber-800">조별 자율 조건 탐구</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">1. 고정익(종이비행기)의 세로 복원 모멘트</h4>
+          <div class="bg-slate-950/90 p-5 rounded-xl border border-slate-800 text-center text-cyan-300 font-bold text-xl tracking-wider">
+            <span class="math-font">Σ F = 양력 + 중력 + 추력 + 항력 = 0</span><br>
+            <span class="text-lg text-cyan-400 mt-2 block font-mono">복원 토크: τ = -k · α &nbsp;(조건: 무게중심이 압력중심보다 앞)</span>
+          </div>
+          <p class="text-base text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 무게중심(CG)이 날개가 공기를 떠받치는 압력중심(CP)보다 앞에 있으면, 돌풍에 기수가 들리더라도(받음각 α 증가) 중력이 앞을 아래로 끌어내리는 <strong>자연스러운 복원력</strong>이 생겨 실속 추락을 방지합니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">2. 쿼드콥터 드론의 토크 상쇄 원리</h4>
+          <div class="bg-slate-950/90 p-5 rounded-xl border border-slate-800 text-center text-cyan-300 font-bold text-xl tracking-wider font-mono">
+            Σ τ<sub>yaw</sub> = (τ<sub>M1</sub> + τ<sub>M3</sub>) - (τ<sub>M2</sub> + τ<sub>M4</sub>) = 0
+          </div>
+          <p class="text-base text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 프로펠러가 돌면 작용-반작용에 의해 드론 몸체는 반대 방향으로 회전하려 합니다. 이를 막기 위해 대각선 쌍(1번, 3번)은 시계방향, 다른 쌍(2번, 4번)은 반시계방향으로 회전시켜 <strong>몸체의 헛돌림을 상쇄</strong>하고 정밀 비행합니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: Exp 3 Method -->
+    <section class="slide flex-col w-full" data-title="[3번] 비행체 역학 - 실험 과정" data-note="3번 실험 과정입니다. 각 조는 종이비행기와 드론에 원하는 조건을 자유롭게 설정하여 비행 움직임이 어떻게 변하는지 관찰합니다. 기본 조건 외에도 날개 형상 개조나 모터 파워 변경 등 자율적인 가설을 세워 실험할 수 있습니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 03 · METHOD</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[3번] 비행체 역학: 자율 조건 설정 및 실험 절차</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300 flex items-center gap-2">
+            <span>📦</span> 준비물
+          </h4>
+          <p class="text-sm text-slate-300">A4 용지, 다양한 무게추(클립 등), 완구 드론(프롭가드형), 선풍기, 스마트폰(슬로모션 촬영)</p>
+          
+          <h4 class="text-lg font-bold text-amber-400 flex items-center gap-2 border-t border-slate-800 pt-3">
+            <span>🎯</span> [조별 자율 조건 설계 가이드]
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-300">
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>아이디어 1:</strong> 무게추의 무게와 장착 위치(기수/날개끝/동체하단) 자유 변경</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>아이디어 2:</strong> 플랩(에일러론/러더) 각도 변경 및 카나드(앞날개) 추가</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>아이디어 3:</strong> 드론 암 한쪽에 비대칭 무게추를 달았을 때 자동 복원 한계점 측정</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">🚀 단계별 실험 절차</h4>
+          <ol class="space-y-2.5 text-sm text-slate-300 list-decimal list-inside">
+            <li>조별로 검증하고자 하는 '조건(가설)'을 1~2가지 정한다.</li>
+            <li>조건을 변경한 종이비행기 또는 드론을 일정한 출발 높이에서 작동시킨다.</li>
+            <li>스마트폰 슬로모션 카메라로 비행 궤적(직진, 상하 요동, 롤링 등)을 정밀 촬영한다.</li>
+            <li>조건 변경 전 기본 상태와 비교하여 비행 움직임의 변화 원리를 물리적으로 분석한다.</li>
+          </ol>
+          <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60 text-sm text-cyan-200">
+            🔍 <strong>관찰 포인트:</strong> 특정 조건을 가했을 때 비행체의 자세 안정성과 복원력 변화
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Report Tip for Exp 3 -->
+      <div class="mt-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 p-4 rounded-xl space-y-2 text-xs md:text-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-amber-300 font-bold">
+            <span>📝</span>
+            <span>[3번 탐구 보고서 팁] 개인 보고서 & 세특 작성 가이드</span>
+          </div>
+          <span class="text-[11px] bg-amber-950 px-2.5 py-0.5 rounded text-amber-400 border border-amber-800 font-mono font-bold">REPORT GUIDE</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300">
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-amber-200 block text-xs font-bold mb-1">📌 추천 보고서 주제</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">고정익 비행체의 무게중심(CG) 이동에 따른 세로 복원 모멘트(τ)와 피치 복원 안정성 정량 분석</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-cyan-200 block text-xs font-bold mb-1">📊 필수 정량 데이터 & 수식</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">클립 위치별 활공각·비행거리 5회 평균치 산출, CG-CP 위치차에 따른 복원 토크 수식(τ = -kα) 연계 분석</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-purple-200 block text-xs font-bold mb-1">🔑 세특 핵심 키워드</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">#정적세로안정성 #압력중심(CP) #무게중심(CG) #받음각(AoA) #복원토크 #토크상쇄</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: Exp 4 Theory -->
+    <section class="slide flex-col w-full" data-title="[4번] 날개 개조 - 이론" data-note="4번 실험은 사진 속 대형 EPP 완제품 폼 글라이더를 바탕으로 날개를 직접 개조하는 실험입니다. 완제품 비행기의 주날개를 사포나 열선 커터기로 깎아 에어포일 캠버를 만들거나, 윙렛을 붙이고 상반각을 조절하여 양력과 활공 성능을 극대화하는 물리적 원리를 학습합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 04 · THEORY</span>
+        <div class="flex items-center gap-3">
+          <h3 class="text-3xl md:text-4xl font-black text-white">[4번] EPP 글라이더 날개 개조: 공기역학 이론</h3>
+          <span class="text-xs text-cyan-300 font-bold bg-cyan-950 px-2.5 py-1 rounded-md border border-cyan-700">폼 비행기 커스텀</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl text-center space-y-4">
+          <div class="text-lg font-bold text-cyan-400">1. 에어포일 캠버 곡면 깎기</div>
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-lg font-bold text-white font-mono">
+            L' = ρ<sub>∞</sub> · V<sub>∞</sub> · Γ
+          </div>
+          <p class="text-sm text-slate-300 leading-relaxed text-left">
+            💡 <strong>쉽게 이해하기:</strong> EPP 날개 윗면을 사포로 둥글게 갈아내어 <strong>볼록한 캠버 곡면</strong>을 만들면, 날개 위쪽 유속이 빨라져 양력이 크게 증가합니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl text-center space-y-4">
+          <div class="text-lg font-bold text-cyan-400">2. 윙렛 부착 (와류 차단)</div>
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-lg font-bold text-white font-mono">
+            유도항력 저감: C<sub>Di</sub> ∝ 1 / AR
+          </div>
+          <p class="text-sm text-slate-300 leading-relaxed text-left">
+            💡 <strong>쉽게 이해하기:</strong> 주날개 양쪽 끝에 수직 윙렛을 덧붙이면 날개 끝에서 공기가 헛도는 <strong>팁 와류를 억제하여 비행 거리가 증가</strong>합니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl text-center space-y-4">
+          <div class="text-lg font-bold text-cyan-400">3. 상반각(Dihedral Angle)</div>
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-base font-bold text-white font-mono">
+            자체 롤(Roll) 복원 안정성
+          </div>
+          <p class="text-sm text-slate-300 leading-relaxed text-left">
+            💡 <strong>쉽게 이해하기:</strong> 양쪽 날개를 약간 V자 형태로 위로 꺾어주면, 비행기가 좌우로 기울어졌을 때 <strong>스스로 수평을 되찾는 복원력</strong>이 생깁니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Exp 4 Method -->
+    <section class="slide flex-col w-full" data-title="[4번] 날개 개조 - 실험 과정" data-note="4번 실험 과정입니다. 사진의 EPP 폼 글라이더 완제품의 날개 부분을 열선 커터기나 사포로 직접 가공 및 개조합니다. 순정 상태의 비행과 날개를 개조한 비행기의 활공 거리 및 비행 안정성을 비교합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 04 · METHOD</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[4번] EPP 폼 글라이더 날개 개조 및 비행 실험</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">📦 준비물 및 글라이더 개조 방법</h4>
+          <p class="text-sm text-slate-300">대형 EPP 완제품 폼 글라이더(사진 모델), 열선 커터기, 사포, 폼보드 조각, 우드락 본드/테이프, 줄자, 초시계</p>
+          <ul class="space-y-2 text-sm text-slate-300">
+            <li class="p-2 bg-slate-800/40 rounded-lg"><strong>개조 1 (에어포일 가공):</strong> 주날개 윗면을 사포로 샌딩하여 전형적인 유선형 곡면 형성</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg"><strong>개조 2 (윙렛 장착):</strong> 폼보드로 작은 날개 조각을 오려 주날개 끝에 90도로 부착</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg"><strong>개조 3 (상반각 조절):</strong> 주날개 중앙 결합부에 각도를 주어 완만한 V자 날개 형성</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg"><strong>개조 4 (꼬리날개 플랩):</strong> 수평꼬리날개 뒷부분을 살짝 칼집 내어 엘레베이터 플랩 제작</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">🚀 단계별 비행 비교 절차</h4>
+          <ol class="space-y-2.5 text-sm text-slate-300 list-decimal list-inside">
+            <li><strong>순정 상태 테스트:</strong> 개조하지 않은 기본 EPP 글라이더를 3회 날려 기준 비행 거리와 체공 시간을 측정한다.</li>
+            <li><strong>날개 개조 작업:</strong> 조별로 계획한 방식으로 주날개 및 꼬리날개를 가공·개조한다.</li>
+            <li><strong>개조 후 테스트:</strong> 동일한 투척 힘과 각도로 개조 글라이더를 5회 반복 비행시킨다.</li>
+            <li>개조 전후의 비행 거리(m), 체공 시간(초), 활공 안정성을 비교 분석한다.</li>
+          </ol>
+          <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60 text-sm text-cyan-200">
+            🔍 <strong>관찰 포인트:</strong> 순정 상태 대비 날개 형상 개조 후 어떤 글라이더가 더 멀리 안정적으로 나는지 규명
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Report Tip for Exp 4 -->
+      <div class="mt-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 p-4 rounded-xl space-y-2 text-xs md:text-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-amber-300 font-bold">
+            <span>📝</span>
+            <span>[4번 탐구 보고서 팁] 개인 보고서 & 세특 작성 가이드</span>
+          </div>
+          <span class="text-[11px] bg-amber-950 px-2.5 py-0.5 rounded text-amber-400 border border-amber-800 font-mono font-bold">REPORT GUIDE</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300">
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-amber-200 block text-xs font-bold mb-1">📌 추천 보고서 주제</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">EPP 완제품 글라이더 주날개 캠버 가공 및 윙렛 부착이 양항비(L/D)와 유도항력 저감에 미치는 영향</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-cyan-200 block text-xs font-bold mb-1">📊 필수 정량 데이터 & 수식</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">순정 vs 개조 1:1 대조군 비행 거리·체공 시간 5회 표준편차 비교, 활공비(L/D) 및 유도항력 공식(CDi ∝ 1/AR) 적용</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-purple-200 block text-xs font-bold mb-1">🔑 세특 핵심 키워드</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">#에어포일캠버 #유도항력저감 #윙렛(Winglet) #상반각안정성 #쿠타-주코프스키정리 #활공비</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 10: Exp 5 Theory -->
+    <section class="slide flex-col w-full" data-title="[5번] 마그누스 효과 - 이론" data-note="5번 마그누스 효과 이론입니다. 회전하는 투사체는 유속의 비대칭으로 인해 경로가 휘어지는 마그누스 힘을 받습니다. 5번 실험은 조별로 원하는 형태와 표면을 가진 투사체를 자유롭게 설계하여 마그누스 힘과의 상호작용을 비교하는 자율 탐구입니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 05 · THEORY</span>
+        <div class="flex items-center gap-3">
+          <h3 class="text-3xl md:text-4xl font-black text-white">[5번] 마그누스 효과: 투사체 회전과 딤플 표면 이론</h3>
+          <span class="text-xs text-amber-400 font-bold bg-amber-950/80 px-2.5 py-1 rounded-md border border-amber-800">조별 자율 설계 탐구</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">1. 마그누스 힘(Magnus Force) 공식</h4>
+          <div class="bg-slate-950/90 p-5 rounded-xl border border-slate-800 text-center text-cyan-300 font-bold text-2xl font-mono">
+            F<sub>M</sub> = 2π · ρ · R<sup>2</sup> · L · (v × ω)
+          </div>
+          <p class="text-base text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 역회전(백스핀 ω)을 걸어 던지면 위쪽 공기는 빠르게 흐르고 아래쪽 공기는 느리게 흐릅니다. 베르누이 원리에 의해 위쪽 압력이 낮아지며 <strong>공이 위로 떠오르는 힘</strong>이 작용합니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">2. 딤플 표면의 난류 경계층 박리 지연</h4>
+          <div class="space-y-3 text-base text-slate-300">
+            <div class="p-3.5 bg-slate-800/50 rounded-xl border border-slate-700">
+              <strong class="text-slate-300 block mb-1">매끄러운 표면:</strong>
+              층류 경계층 형성 → 일찍 공기가 떨어져 나감(조기 박리) → 뒤쪽 와류 증가
+            </div>
+            <div class="p-3.5 bg-cyan-950/40 rounded-xl border border-cyan-800/60">
+              <strong class="text-cyan-300 block mb-1">딤플/거친 표면:</strong>
+              난류 경계층 형성 → 공기가 표면에 끝까지 밀착(<strong>박리 지연</strong>) → 후류가 아래로 크게 꺾이며 마그누스 힘 증폭
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 11: Exp 5 Method -->
+    <section class="slide flex-col w-full" data-title="[5번] 마그누스 효과 - 실험 과정" data-note="5번 실험 과정입니다. 각 조는 종이컵 롤러, 원통형 실린더, 구형 탁구공/골프공 등 원하는 형태의 투사체를 자유롭게 설계하고 표면 처리를 달리하여 제작합니다. 고무줄 런처로 발사하여 어떤 투사체가 마그누스 효과를 가장 많이 받는지 비교합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 05 · METHOD</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[5번] 마그누스 효과: 자율 투사체 제작 및 비교 실험</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">📦 준비물 및 자율 투사체 제작 가이드</h4>
+          <p class="text-sm text-slate-300">종이컵, 고무줄 런처, 사포 조각, 엠보싱 스티커/지점토, 딤플 골프공, 탁구공, 원통형 캔, 모눈종이</p>
+          <ul class="space-y-2 text-sm text-slate-300">
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>형태 변인:</strong> 모래시계형 종이컵 롤러 vs 직선형 원통 vs 구형 공</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>표면 변인:</strong> 매끄러운 표면 vs 사포/엠보싱 스티커 부착 vs 딤플 홈 가공</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>질량 변인:</strong> 가벼운 투사체 vs 내부에 지점토/무게추를 넣은 무거운 투사체</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">🚀 발사 및 궤적 측정 절차</h4>
+          <ol class="space-y-2.5 text-sm text-slate-300 list-decimal list-inside">
+            <li>각 조별로 비교하고자 하는 2~3종류의 투사체를 제작한다.</li>
+            <li>고무줄 런처를 이용해 일정한 회전수(백스핀)를 주어 수평 발사한다.</li>
+            <li>모눈종이 배경 앞에서 측면 스마트폰 고속 카메라로 비행 궤적을 촬영한다.</li>
+            <li>투사체 종류별로 최고 상승 높이와 곡선 궤적의 굴절 정도를 비교한다.</li>
+          </ol>
+          <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60 text-sm text-cyan-200">
+            🔍 <strong>관찰 포인트:</strong> 어떤 형태와 표면의 투사체가 마그누스 효과를 가장 많이/적게 받는지 비교
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Report Tip for Exp 5 -->
+      <div class="mt-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 p-4 rounded-xl space-y-2 text-xs md:text-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-amber-300 font-bold">
+            <span>📝</span>
+            <span>[5번 탐구 보고서 팁] 개인 보고서 & 세특 작성 가이드</span>
+          </div>
+          <span class="text-[11px] bg-amber-950 px-2.5 py-0.5 rounded text-amber-400 border border-amber-800 font-mono font-bold">REPORT GUIDE</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300">
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-amber-200 block text-xs font-bold mb-1">📌 추천 보고서 주제</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">회전 투사체의 기하학적 형상(실린더 vs 구 vs 롤러) 및 표면 거칠기(사포/딤플)에 따른 마그누스 양력(FM) 발현 정량 비교</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-cyan-200 block text-xs font-bold mb-1">📊 필수 정량 데이터 & 수식</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">고속촬영 (x, y) 궤적 좌표 추출 및 정점 고도 산출, 마그누스 힘 공식(FM = 2πρR²Lvω) 및 난류 경계층 박리 지연 메커니즘 도식화</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-purple-200 block text-xs font-bold mb-1">🔑 세특 핵심 키워드</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">#마그누스효과 #경계층박리지연 #딤플효과 #베르누이원리 #백스핀양력 #후류와류제어</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 12: Exp 6 Theory -->
+    <section class="slide flex-col w-full" data-title="[6번] 별자리 지도 - 이론" data-note="6번 별자리 지도 이론입니다. 지구가 공전하기 때문에 별자리는 매일 3분 56초씩 일찍 뜨게 됩니다. 성좌조견판은 3차원 구면인 밤하늘을 2차원 평면으로 투영하고, 관측지의 지평선 타원창을 덮어 언제 어떤 별이 보이는지 계산해 주는 도구입니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 06 · THEORY</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[6번] 별자리 지도: 천구 좌표계와 하루 3분 56초 시차</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">1. 항성일과 태양일의 하루 시차 계산</h4>
+          <div class="bg-slate-950/90 p-5 rounded-xl border border-slate-800 text-center text-cyan-300 font-bold text-xl font-mono">
+            시차 Δt = 24시간 - 23시간 56분 04초 ≈ 3분 56초<br>
+            <span class="text-base text-slate-400 mt-2 block">하루 공전 각도: 360° ÷ 365.25일 ≈ 0.9856°/일</span>
+          </div>
+          <p class="text-base text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 지구가 공전하기 때문에 하루 동안 자전한 뒤 태양을 다시 정면에 두려면 지구가 약 1도를 더 돌아야 합니다. 그래서 별자리는 매일 약 4분씩 일찍 뜨며 계절마다 보이는 별자리가 달라집니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">2. 성좌조견판의 투영 원리</h4>
+          <p class="text-base text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 북극성을 중심으로 1년 365일 날짜가 적힌 별자리 원판 위에, 북위 37.5도(한국)의 지평선을 나타내는 타원창 덮개판을 얹어 <strong>'날짜와 시간 눈금'을 맞추면 지금 내 머리 위에 보이는 밤하늘이 그대로 창 안에 나타납니다.</strong>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 13: Exp 6 Method -->
+    <section class="slide flex-col w-full" data-title="[6번] 별자리 지도 - 실험 과정" data-note="6번 실험 과정입니다. 북위 37.5도 성도 도면과 지평선 덮개판을 오려 할핀으로 북극성에 결합합니다. 관측할 날짜와 시각을 맞춘 뒤, 야간에 나침반으로 북극성을 찾고 여름철 대삼각형인 직녀성, 견우성, 데네브를 실제 관측합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 06 · METHOD</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[6번] 별자리 지도: 성좌조견판 제작 및 야간 관측 절차</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">📦 준비물 및 조견판 제작 절차</h4>
+          <p class="text-sm text-slate-300">북위 37.5° 성도 도면 인쇄물, 투명 OHP필름, 황동 할핀, 가위, 나침반, 붉은색 셀로판지 손전등</p>
+          <ol class="space-y-2 text-sm text-slate-300 list-decimal list-inside">
+            <li>날짜가 적힌 365일 원형 성도판을 외곽선을 따라 정밀하게 오린다.</li>
+            <li>24시간 눈금과 타원형 지평선 창이 뚫린 덮개판을 오린다.</li>
+            <li>중심의 북극성 위치에 황동 할핀을 꽂아 두 판을 회전 가능하게 결합한다.</li>
+          </ol>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">🔭 야외 관측 및 탐색 절차</h4>
+          <ol class="space-y-2.5 text-sm text-slate-300 list-decimal list-inside">
+            <li>오늘 날짜와 현재 시각의 눈금을 서로 일치시킨다.</li>
+            <li>야외에서 나침반으로 북쪽을 찾아 조견판의 북쪽을 맞추고 머리 위로 들어 올린다.</li>
+            <li>조견판 타원창 안에 위치한 주요 1등성(여름철 대삼각형: 베가, 데네브, 알타이르)을 육안으로 탐색한다.</li>
+            <li>스마트폰 천체 관측 앱(Stellarium)의 실시간 AR 화면과 위치를 대조한다.</li>
+          </ol>
+          <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60 text-sm text-cyan-200">
+            🔍 <strong>관찰 포인트:</strong> 조견판의 예측 위치와 실제 밤하늘 별자리의 방위각·고도 일치 여부
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Web App Banner for Exp 6 -->
+      <div class="mt-4 bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/50 p-4 rounded-xl flex items-center justify-between glow-cyan">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🌟</span>
+          <div>
+            <strong class="text-white text-base block font-bold">[웹 앱 연동] 실시간 스마트 별자리 지도 (Sky Map)</strong>
+            <span class="text-xs text-blue-300">야간 관측 전, 모바일/PC 브라우저에서 북위 37.5° 오늘 날짜와 시각의 실시간 성도와 주요 1등성을 확인해보세요!</span>
+          </div>
+        </div>
+        <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/sky" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition shrink-0">
+          별자리 지도 열기 ↗
+        </a>
+      </div>
+
+      <!-- Inquiry Report Tip for Exp 6 -->
+      <div class="mt-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 p-4 rounded-xl space-y-2 text-xs md:text-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-amber-300 font-bold">
+            <span>📝</span>
+            <span>[6번 탐구 보고서 팁] 개인 보고서 & 세특 작성 가이드</span>
+          </div>
+          <span class="text-[11px] bg-amber-950 px-2.5 py-0.5 rounded text-amber-400 border border-amber-800 font-mono font-bold">REPORT GUIDE</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300">
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-amber-200 block text-xs font-bold mb-1">📌 추천 보고서 주제</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">천구 극평사도법 투영 원리를 적용한 북위 37.5° 성좌조견판 제작 및 하루 3분 56초 시차 기하학적 유도</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-cyan-200 block text-xs font-bold mb-1">📊 필수 정량 데이터 & 수식</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">항성일(23h 56m 04s)과 태양일(24h) 시차(Δt ≈ 3분 56초) 정량 수식 유도, 스마트 별자리 지도(Sky Map)와 실제 관측 방위각·고도 오차율 비교</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-purple-200 block text-xs font-bold mb-1">🔑 세특 핵심 키워드</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">#천구좌표계(적경/적위) #항성일vs태양일 #성좌조견판 #극평사도법 #여름철대삼각형 #방위각과고도</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 14: Exp 7 Theory (with Gravity Simulator integration) -->
+    <section class="slide flex-col w-full" data-title="[7번] 시리우스 중력 - 이론" data-note="7번 다체 중력 이론입니다. 시리우스 A와 B처럼 여러 개의 중력체가 있을 때 서로 어떻게 상호작용하는지 탐구합니다. 두 별은 공통 질량중심을 회전하며, 7번 실험은 시리우스 쌍성계 외에도 3체 중력계나 라그랑주 점 등 각 조가 원하는 천체 시스템을 자유롭게 모델링할 수 있습니다. 함께 제작된 [중력 시뮬레이터]를 통해 2체 및 3체 궤적을 컴퓨터나 모바일로 미리 시뮬레이션해볼 수 있습니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 07 · THEORY</span>
+        <div class="flex items-center gap-3">
+          <h3 class="text-3xl md:text-4xl font-black text-white">[7번] 시리우스 중력: 쌍성계와 다체 중력 상호작용 이론</h3>
+          <span class="text-xs text-amber-400 font-bold bg-amber-950/80 px-2.5 py-1 rounded-md border border-amber-800">조별 자율 모델링</span>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl text-center space-y-3">
+          <div class="text-lg font-bold text-cyan-400">1. 수정 케플러 제3법칙</div>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-base font-bold text-white font-mono">
+            P<sup>2</sup> = [4π<sup>2</sup> / G(M<sub>1</sub> + M<sub>2</sub>)] · a<sup>3</sup>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed text-left">
+            💡 <strong>쉽게 이해하기:</strong> 두 별이 서로를 끌어당기므로, 두 별의 <strong>질량 합(M1 + M2)</strong>에 의해 전체 공전 주기(P)가 결정됩니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl text-center space-y-3">
+          <div class="text-lg font-bold text-cyan-400">2. 공통 질량중심 회전</div>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-base font-bold text-white font-mono">
+            r<sub>A</sub> / r<sub>B</sub> = M<sub>B</sub> / M<sub>A</sub> ≈ 1 / 2
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed text-left">
+            💡 <strong>쉽게 이해하기:</strong> 시소처럼 무거운 시리우스 A는 중심 가까이서 작은 원을 돌고, 절반 무게인 시리우스 B는 2배 먼 곳에서 큰 원을 돕니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl text-center space-y-3">
+          <div class="text-lg font-bold text-cyan-400">3. 라그랑주 점과 3체 섭동</div>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-sm font-bold text-white font-mono">
+            다체 중력 궤도 상호작용
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed text-left">
+            💡 <strong>쉽게 이해하기:</strong> 중력체가 3개 이상이 되면 서로의 인력이 복잡하게 얽혀 행성이 튕겨 나가거나 궤도가 요동치는 <strong>다체 섭동</strong>이 일어납니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- Interactive Web Simulator Banner -->
+      <div class="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 border border-cyan-500/50 p-4 rounded-xl flex items-center justify-between glow-cyan">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🪐</span>
+          <div>
+            <strong class="text-white text-base block font-bold">[웹 시뮬레이터 연동] 중력장 & 다체 궤도 시뮬레이터</strong>
+            <span class="text-xs text-cyan-300">스판덱스 실험 전, 브라우저에서 질량비에 따른 2체 공전 및 제3의 행성 궤도 섭동을 실시간으로 확인해보세요!</span>
+          </div>
+        </div>
+        <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/gravity" target="_blank" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg transition shrink-0">
+          시뮬레이터 열기 ↗
+        </a>
+      </div>
+    </section>
+
+    <!-- Slide 15: Exp 7 Method -->
+    <section class="slide flex-col w-full" data-title="[7번] 시리우스 중력 - 실험 과정" data-note="7번 실험 과정입니다. 스판덱스 탄성막 위에 쇠구슬들을 올려 중력 우물을 만듭니다. 시리우스 A와 B처럼 질량이 다른 2개 이상의 중력체를 배치하고 공전시키며, 제3의 행성을 투입했을 때 어떻게 상호작용하는지 조별로 자유롭게 실험합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 07 · METHOD</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[7번] 시리우스 중력: 탄성막 다체 중력 실험 절차</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">📦 준비물 및 자율 모델링 세팅</h4>
+          <p class="text-sm text-slate-300">원형 프레임(지름 90cm 훌라후프), 사방 스판덱스 원단, 고정 클램프 12개, 다양한 무게의 쇠구슬 세트</p>
+          <ul class="space-y-2 text-sm text-slate-300">
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>모델 1 (시리우스 A/B):</strong> 200g 대형 구슬과 100g 중형 구슬의 2:1 쌍성계</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>모델 2 (태양-지구-달):</strong> 대형-중형-소형 3단계 계층 중력계</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>모델 3 (3중성계):</strong> 비슷한 질량의 구슬 3개가 이루는 삼체 상호작용</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">🪐 단계별 다체 궤도 실험 절차</h4>
+          <ol class="space-y-2.5 text-sm text-slate-300 list-decimal list-inside">
+            <li>스판덱스 천을 원형 틀에 사방으로 균일한 장력으로 팽팽하게 고정한다.</li>
+            <li>조별로 설정한 중력체 쇠구슬들을 올려 공통 질량중심을 축으로 회전시킨다.</li>
+            <li>중력계 주변으로 작은 쇠구슬(행성)을 다양한 각도와 속도로 굴려 투입한다.</li>
+            <li>중력체가 여러 개 있을 때 행성이 궤도를 유지하는지, 혹은 튕겨 나가는지 궤적을 촬영하여 분석한다.</li>
+          </ol>
+          <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60 text-sm text-cyan-200">
+            🔍 <strong>관찰 포인트:</strong> 중력체가 2개 이상일 때 나타나는 공통 중심 공전 및 행성의 궤도 섭동
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Report Tip for Exp 7 -->
+      <div class="mt-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 p-4 rounded-xl space-y-2 text-xs md:text-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-amber-300 font-bold">
+            <span>📝</span>
+            <span>[7번 탐구 보고서 팁] 개인 보고서 & 세특 작성 가이드</span>
+          </div>
+          <span class="text-[11px] bg-amber-950 px-2.5 py-0.5 rounded text-amber-400 border border-amber-800 font-mono font-bold">REPORT GUIDE</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300">
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-amber-200 block text-xs font-bold mb-1">📌 추천 보고서 주제</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">스판덱스 탄성막 공간 곡률 모델을 이용한 시리우스 A/B 쌍성계 2체 공전 및 3체 라그랑주 점 섭동 연구</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-cyan-200 block text-xs font-bold mb-1">📊 필수 정량 데이터 & 수식</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">질량비(2:1) 공통 질량중심 거리비(rA/rB = MB/MA) 실측·이론치 대조, 웹 중력 시뮬레이터 궤적과 탄성막 마찰 오차 분석</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-purple-200 block text-xs font-bold mb-1">🔑 세특 핵심 키워드</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">#수정케플러제3법칙 #공통질량중심 #3체문제(Three-Body) #라그랑주점(L1~L5) #중력슬링샷 #궤도섭동</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 16: Exp 8 Theory -->
+    <section class="slide flex-col w-full" data-title="[8번] 행성 대기 - 이론" data-note="8번 행성 대기 이론입니다. 행성의 환경은 대기 성분과 순환에 의해 결정됩니다. 8번 실험은 각 조가 탐구하고 싶은 태양계 행성을 자유롭게 선택하여, 금성의 폭주 온실효과나 목성의 대적점 소용돌이, 화성의 희박한 대기 등 고유한 대기 특성을 물리 모형으로 구현하는 프로젝트입니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 08 · THEORY</span>
+        <div class="flex items-center gap-3">
+          <h3 class="text-3xl md:text-4xl font-black text-white">[8번] 행성 대기: 대기 열역학 및 소용돌이 이론</h3>
+          <span class="text-xs text-amber-400 font-bold bg-amber-950/80 px-2.5 py-1 rounded-md border border-amber-800">조별 행성 선택 탐구</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">1. 금성형 폭주 온실효과 (Runaway Greenhouse)</h4>
+          <div class="bg-slate-950/90 p-5 rounded-xl border border-slate-800 text-center text-cyan-300 font-bold text-xl font-mono">
+            표면 온도 = 복사 평형 온도 + 온실 효과 ΔT<br>
+            <span class="text-base text-slate-400 mt-2 block">(금성 온실효과: ΔT ≈ +500 K)</span>
+          </div>
+          <p class="text-base text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> $\text{CO}_2$는 태양 빛(가시광선)은 통과시키지만 지표면이 뿜어내는 열(적외선)을 흡수해 가둡니다. 두꺼운 이불을 덮은 것처럼 열 방출이 차단되어 표면 온도가 급상승합니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-7 space-y-4">
+          <h4 class="text-xl font-bold text-cyan-300 border-b border-slate-800 pb-3">2. 목성형 제트기류와 대적점 소용돌이</h4>
+          <div class="bg-slate-950/90 p-5 rounded-xl border border-slate-800 text-center text-cyan-300 font-bold text-xl font-mono">
+            정역학 평형: dP / dz = -ρ · g
+          </div>
+          <p class="text-base text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 목성의 빠른 자전과 서로 반대로 부는 제트기류 사이의 마찰(전단력)에 의해 두 기류의 경계면에서 수백 년간 꺼지지 않는 거대한 타원형 소용돌이(대적점)가 자발적으로 유지됩니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 17: Exp 8 Method -->
+    <section class="slide flex-col w-full" data-title="[8번] 행성 대기 - 실험 과정" data-note="8번 실험 과정입니다. 각 조는 원하는 행성을 선택합니다. 금성을 고른 조는 밀폐 용기에 이산화탄소를 채워 온실효과를 측정하고, 목성을 고른 조는 회전 수조에 펄 안료와 잉크로 대적점 소용돌이를 구현합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 08 · METHOD</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[8번] 행성 대기: 선택한 행성 대기 구현 실험</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">📦 준비물 및 행성 선택 가이드</h4>
+          <p class="text-sm text-slate-300">밀폐 용기, 프로브형 디지털 온도계 2개, 150W 할로겐 램프, CO2 발생재, 회전 수조, 펄 안료</p>
+          <ul class="space-y-2 text-sm text-slate-300">
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>[선택 A: 금성]</strong> 고농도 CO2 밀폐 용기와 일반 공기 용기의 가열/냉각 비교</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>[선택 B: 목성]</strong> 회전 턴테이블 수조에서 반대 방향 전단류로 대적점 와류 형성</li>
+            <li class="p-2 bg-slate-800/40 rounded-lg">• <strong>[선택 C: 화성/타이탄]</strong> 희박한 대기 먼지폭풍 모형 또는 메탄 연무 대류 모형</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">🌡️ 단계별 구현 절차</h4>
+          <ol class="space-y-2.5 text-sm text-slate-300 list-decimal list-inside">
+            <li>조별로 구현할 태양계 행성을 1개 선택한다.</li>
+            <li><strong>금성 조:</strong> 두 용기에 온도계를 꽂고 램프로 20분 가열 후 1분 간격 온도 기록 및 소등 후 냉각 속도를 측정한다.</li>
+            <li><strong>목성 조:</strong> 회전 수조에 펄 안료를 풀고 반대 방향 전단 잉크를 주입해 소용돌이의 안정성을 관찰한다.</li>
+          </ol>
+          <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60 text-sm text-cyan-200">
+            🔍 <strong>관찰 포인트:</strong> 대기 성분(온실기체)과 유체 흐름이 행성 환경에 미치는 영향
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Report Tip for Exp 8 -->
+      <div class="mt-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 p-4 rounded-xl space-y-2 text-xs md:text-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-amber-300 font-bold">
+            <span>📝</span>
+            <span>[8번 탐구 보고서 팁] 개인 보고서 & 세특 작성 가이드</span>
+          </div>
+          <span class="text-[11px] bg-amber-950 px-2.5 py-0.5 rounded text-amber-400 border border-amber-800 font-mono font-bold">REPORT GUIDE</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300">
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-amber-200 block text-xs font-bold mb-1">📌 추천 보고서 주제</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">밀폐 챔버 내 CO2 농도에 따른 복사 평형 온도 변화 측정과 금성 폭주 온실효과 열역학 모델링 (또는 목성 대적점 전단류 소용돌이)</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-cyan-200 block text-xs font-bold mb-1">📊 필수 정량 데이터 & 수식</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">1분 단위 시간-온도(t, T) 40분 데이터 표 & 승온/냉각 꺾은선 그래프, 슈테판-볼츠만 복사 평형 및 온실효과 온도차(ΔT) 수식 적용</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-purple-200 block text-xs font-bold mb-1">🔑 세특 핵심 키워드</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">#폭주온실효과(Runaway) #복사평형 #파장선택성(적외선흡수) #정역학평형 #대기척도고 #전단류소용돌이</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 18: Exp 9 Theory (with Double Pendulum Simulator integration) -->
+    <section class="slide flex-col w-full" data-title="[9번] 카오스 이론 - 이론" data-note="9번 카오스 이론입니다. 단진자는 규칙적인 조화 진동을 하지만, 진자 끝에 또 다른 진자를 단 이중진자는 제1진자의 회전축이 흔들리며 극도로 복잡한 비선형 운동을 합니다. 초기 조건의 미세한 오차가 시간 경과에 따라 지수함수적으로 폭발하여 미래를 예측할 수 없는 카오스와 나비효과가 발생합니다. 함께 제작된 [이중진자_시뮬레이션.html]을 통해 0.001도 각도 차이에 의한 궤적 분기를 브라우저에서 직접 관찰할 수 있습니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 09 · THEORY</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[9번] 카오스 이론: 비선형 라그랑지안과 나비효과</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3">
+          <h4 class="text-lg font-bold text-cyan-300 border-b border-slate-800 pb-2">1. 이중진자의 비선형 라그랑지안 (Lagrangian)</h4>
+          <div class="bg-slate-950/90 p-3.5 rounded-xl border border-slate-800 text-xs font-mono text-cyan-200 leading-relaxed">
+            L = T - V = ½(m<sub>1</sub>+m<sub>2</sub>)l<sub>1</sub><sup>2</sup>θ̇<sub>1</sub><sup>2</sup> + ½m<sub>2</sub>l<sub>2</sub><sup>2</sup>θ̇<sub>2</sub><sup>2</sup><br>
+            + m<sub>2</sub>l<sub>1</sub>l<sub>2</sub>θ̇<sub>1</sub>θ̇<sub>2</sub> · cos(θ<sub>1</sub> - θ<sub>2</sub>) - V
+          </div>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 두 진자의 각도 차이인 <strong>cos(θ1 - θ2)</strong> 항이 서로를 복잡하게 뒤흔듭니다. 수식은 결정되어 있지만 손으로 풀 수 있는 해석적 해가 없어 불규칙하게 요동칩니다.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3">
+          <h4 class="text-lg font-bold text-cyan-300 border-b border-slate-800 pb-2">2. 초기조건 민감성과 나비 효과</h4>
+          <div class="bg-slate-950/90 p-3.5 rounded-xl border border-slate-800 text-center text-cyan-300 font-bold text-lg font-mono">
+            궤적 오차: |δZ(t)| ≈ |δZ<sub>0</sub>| · e<sup>λt</sup> &nbsp;(λ &gt; 0)
+          </div>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            💡 <strong>쉽게 이해하기:</strong> 0.0001도의 극미한 차이(δZ0)라도 지수함수적으로 폭발 증폭되어, 불과 몇 초 만에 <strong>완전히 다른 경로로 궤적이 분기</strong>하는 카오스 현상이 나타납니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- Interactive Web Simulator Banner -->
+      <div class="bg-gradient-to-r from-purple-950/80 via-slate-900 to-indigo-950/80 border border-purple-500/50 p-4 rounded-xl flex items-center justify-between glow-purple">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🌀</span>
+          <div>
+            <strong class="text-white text-base block font-bold">[웹 시뮬레이터 연동] 카오스 이중진자 물리 시뮬레이터</strong>
+            <span class="text-xs text-purple-300">암실 장노출 촬영 전, 브라우저에서 초기 각도를 조금씩 바꿔보며 궤적 분기와 나비효과를 직접 시뮬레이션해보세요!</span>
+          </div>
+        </div>
+        <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/" target="_blank" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-lg transition shrink-0">
+          시뮬레이터 열기 ↗
+        </a>
+      </div>
+    </section>
+
+    <!-- Slide 19: Exp 9 Method -->
+    <section class="slide flex-col w-full" data-title="[9번] 카오스 이론 - 실험 과정" data-note="9번 실험 과정입니다. 회전 마찰을 극소화한 608zz 베어링 2개와 아크릴 바를 조립하여 이중진자를 만듭니다. 제2진자 끝에 LED 전구를 달고, 암실에서 스마트폰 장노출 카메라를 켠 상태에서 동일한 90도 각도에서 3회 반복 방출하여 궤적 사진의 분기를 비교합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">EXP 09 · METHOD</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">[9번] 카오스 이론: 이중진자 제작 및 나비효과 촬영</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">📦 준비물 및 이중진자 조립 절차</h4>
+          <p class="text-sm text-slate-300">608zz 정밀 볼베어링 2개, 아크릴/알루미늄 바 2개, 고정 스탠드, 초소형 LED 칩, 스마트폰(장노출 모드)</p>
+          <ol class="space-y-2 text-sm text-slate-300 list-decimal list-inside">
+            <li>스탠드 축에 첫 번째 베어링으로 제1링크(상단 바)를 결합한다.</li>
+            <li>제1링크 하단에 두 번째 베어링으로 제2링크(하단 바)를 부드럽게 체결한다.</li>
+            <li>제2링크 최하단에 초소형 고휘도 LED 전구를 단단히 부착한다.</li>
+          </ol>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h4 class="text-lg font-bold text-cyan-300">📸 암실 장노출 촬영 및 분석 절차</h4>
+          <ol class="space-y-2.5 text-sm text-slate-300 list-decimal list-inside">
+            <li>실내 조명을 모두 끄고 암실 환경을 조성한다.</li>
+            <li>스마트폰 카메라의 프로(Pro) 모드에서 셔터 스피드를 5초~8초 장노출로 설정한다.</li>
+            <li>이중진자를 90도 각도에서 조심스럽게 놓아 방출함과 동시에 촬영한다.</li>
+            <li><strong>동일하다고 생각되는 90도 각도에서 3회 연속 반복</strong> 촬영하여 3장의 LED 궤적 사진이 언제부터 서로 다른 형태로 갈라지는지 비교한다.</li>
+          </ol>
+          <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60 text-sm text-cyan-200">
+            🔍 <strong>관찰 포인트:</strong> 초기 각도가 같아도 시간 경과에 따라 3장의 사진 궤적이 완전히 분기하는 시점
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Report Tip for Exp 9 -->
+      <div class="mt-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 p-4 rounded-xl space-y-2 text-xs md:text-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-amber-300 font-bold">
+            <span>📝</span>
+            <span>[9번 탐구 보고서 팁] 개인 보고서 & 세특 작성 가이드</span>
+          </div>
+          <span class="text-[11px] bg-amber-950 px-2.5 py-0.5 rounded text-amber-400 border border-amber-800 font-mono font-bold">REPORT GUIDE</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300">
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-amber-200 block text-xs font-bold mb-1">📌 추천 보고서 주제</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">이중진자의 비선형 라그랑주 운동방정식 해석 및 암실 LED 장노출 촬영을 통한 나비효과 궤적 분기 규명</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-cyan-200 block text-xs font-bold mb-1">📊 필수 정량 데이터 & 수식</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">동일 90° 3회 반복 방출 사진 3장 타임라인별 분기 시점(리아푸노프 시간) 도출, 라그랑지안 L=T-V 결합항 cos(θ1-θ2) 및 웹 시뮬레이터(RK4) 위상공간 플롯 비교</span>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+            <strong class="text-purple-200 block text-xs font-bold mb-1">🔑 세특 핵심 키워드</strong>
+            <span class="text-[11px] leading-relaxed block text-slate-300">#라그랑주역학 #비선형동역학 #초기조건민감성(나비효과) #리아푸노프지수 #위상공간분기 #룬게-쿠타(RK4)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 20: Conclusion -->
+    <section class="slide flex-col w-full" data-title="종합 안내" data-note="이상으로 코스모스 과학동아리 3번부터 9번까지의 7개 실험 가이드 발표를 마칩니다. 4번 EPP 글라이더 날개 개조와 3, 5, 7, 8번 자율 탐구 활동, 그리고 3종의 웹 시뮬레이터 & 웹 앱을 통해 깊이 있는 과학적 통찰을 얻으시기 바랍니다. 감사합니다.">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-cyan-400 font-mono text-sm font-bold bg-cyan-950/80 px-3 py-1.5 rounded-lg border border-cyan-800">SUMMARY</span>
+        <h3 class="text-3xl md:text-4xl font-black text-white">실험 준비 및 탐구 활동 안내</h3>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl space-y-3">
+          <h5 class="text-cyan-300 font-bold text-xl flex items-center gap-2">
+            <span>🛡️</span> 실험실 안전 수칙
+          </h5>
+          <ul class="text-sm text-slate-300 space-y-2">
+            <li>• <strong>열선 커터기:</strong> 날개 가공 시 환기 필수 및 화상 방지 장갑 착용</li>
+            <li>• <strong>글라이더 & 투사체:</strong> 실내 사람이나 창문 쪽으로 발사 금지</li>
+            <li>• <strong>드론 비행:</strong> 프로펠러 보호 가드 장착 및 안전거리 유지</li>
+            <li>• <strong>할로겐 램프:</strong> 고온 표면 직접 접촉 금지</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl space-y-3">
+          <h5 class="text-cyan-300 font-bold text-xl flex items-center gap-2">
+            <span>🎯</span> 조별 자율 탐구 활동 팁
+          </h5>
+          <ul class="text-sm text-slate-300 space-y-2">
+            <li>• <strong>3, 5, 7, 8번 자율 탐구:</strong> 정해진 틀에 얽매이지 않고 조별로 흥미로운 가설을 자유롭게 설계하여 검증</li>
+            <li>• <strong>4번 글라이더 개조:</strong> 순정 상태와 개조 후 비행 성능을 반드시 1:1로 비교 기록</li>
+            <li>• <strong>웹 시뮬레이터 & 앱 활용:</strong> 별자리 지도, 중력, 진자 웹 앱으로 사전 예측 및 분석</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Comprehensive Individual Report Writing Strategy for High Evaluation -->
+      <div class="bg-gradient-to-r from-amber-950/40 via-slate-900 to-indigo-950/40 border border-amber-500/40 p-5 rounded-2xl mb-6 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <div class="flex items-center gap-2 text-amber-300 font-bold text-base md:text-lg">
+            <span>🏆</span>
+            <span>[수행평가 & 학생부 세특] 고득점 개인 탐구 보고서 5단계 작성 전략</span>
+          </div>
+          <span class="text-xs bg-amber-950 px-3 py-1 rounded-md text-amber-400 border border-amber-800 font-mono font-bold">5-STEP STRATEGY</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold font-mono text-[10px] mb-1.5">STEP 1</span>
+              <strong class="text-white block text-sm font-bold mb-1">동기 & 가설 설정</strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">"왜 이 변인을 선택했는가?" 명확한 동기와 물리 법칙에 기반한 결과 예측 가설 제시</p>
+            </div>
+            <span class="text-amber-400 font-mono text-[10px] mt-2 block font-semibold">#가설연역 #변인통제</span>
+          </div>
+
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold font-mono text-[10px] mb-1.5">STEP 2</span>
+              <strong class="text-white block text-sm font-bold mb-1">정량 데이터화</strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">5회 반복 측정 평균·표준편차 표, (x, y) 좌표 추출, 시간-변위 그래프 등 시각화</p>
+            </div>
+            <span class="text-cyan-400 font-mono text-[10px] mt-2 block font-semibold">#정량수치화 #표준편차</span>
+          </div>
+
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold font-mono text-[10px] mb-1.5">STEP 3</span>
+              <strong class="text-white block text-sm font-bold mb-1">물리 수식 직접 대입</strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">베르누이, 라그랑지안, 케플러 등 이론 수식에 실측 데이터를 대입하여 이론값 산출</p>
+            </div>
+            <span class="text-blue-400 font-mono text-[10px] mt-2 block font-semibold">#수식해석 #물리원리적용</span>
+          </div>
+
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold font-mono text-[10px] mb-1.5">STEP 4</span>
+              <strong class="text-white block text-sm font-bold mb-1">오차 & 한계 과학적 규명</strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">이론값과 실측치 차이(공기저항, 축 마찰, 탄성 한계 등)를 물리학적 근거로 심층 분석</p>
+            </div>
+            <span class="text-rose-400 font-mono text-[10px] mt-2 block font-semibold">#오차원인분석 #실험한계</span>
+          </div>
+
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold font-mono text-[10px] mb-1.5">STEP 5</span>
+              <strong class="text-white block text-sm font-bold mb-1">웹 시뮬레이터 & 진로 연계</strong>
+              <p class="text-slate-300 text-[11px] leading-relaxed">시뮬레이터(별자리/중력/진자) 교차 검증 및 항공·물리·천문·SW 등 희망 전공과 융합</p>
+            </div>
+            <span class="text-purple-400 font-mono text-[10px] mt-2 block font-semibold">#교차검증 #학생부세특</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live URLs Quick Link Bar in Slide 20 -->
+      <div class="bg-slate-900/90 border border-cyan-500/40 p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🌐</span>
+          <div class="text-xs text-slate-300">
+            <strong class="text-white text-sm block">실시간 웹 시뮬레이터 & 웹 앱 (모바일/PC)</strong>
+            <span>별자리: <code>/sky</code> &nbsp;|&nbsp; 중력: <code>/gravity</code> &nbsp;|&nbsp; 진자: <code>/</code></span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap text-xs">
+          <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/sky" target="_blank" class="px-3 py-1.5 bg-blue-600/80 hover:bg-blue-500 text-white rounded-lg font-bold transition">🌟 별자리 지도</a>
+          <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/gravity" target="_blank" class="px-3 py-1.5 bg-cyan-600/80 hover:bg-cyan-500 text-white rounded-lg font-bold transition">🪐 중력 시뮬레이터</a>
+          <a href="https://aberdeen-category-pubs-fisher.trycloudflare.com/" target="_blank" class="px-3 py-1.5 bg-purple-600/80 hover:bg-purple-500 text-white rounded-lg font-bold transition">🌀 진자 시뮬레이터</a>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-r from-cyan-950/60 via-blue-950/60 to-slate-900/60 border border-slate-700 p-5 rounded-2xl text-center">
+        <div class="text-slate-100 text-lg md:text-xl font-bold mb-1">"직접 만들고, 시뮬레이션하고, 탐구하며 물리 법칙을 체감하자!"</div>
+        <div class="text-xs md:text-sm text-slate-400 font-light">- 과학동아리 [코스모스] 탐구 활동 안내 -</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Speaker Notes Panel -->
+  <aside id="speaker-notes-panel" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 w-11/12 max-w-5xl bg-slate-900/95 border border-cyan-500/50 rounded-2xl p-6 shadow-2xl backdrop-blur-xl z-40 max-h-60 overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+      <div class="flex items-center gap-2">
+        <span class="text-base font-bold text-cyan-400 uppercase tracking-wider">🎙️ 발표자 대본 (Speaker Notes)</span>
+      </div>
+      <button id="close-notes-btn" class="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg bg-slate-800">닫기 ✕</button>
+    </div>
+    <p id="speaker-notes-text" class="text-base md:text-lg text-slate-200 leading-relaxed font-light whitespace-pre-line"></p>
+  </aside>
+
+  <!-- Bottom Navigation Bar -->
+  <footer class="bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <button id="prev-btn" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-xl text-base font-bold border border-slate-700 transition flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed">
+        ◀ 이전
+      </button>
+      <button id="next-btn" class="px-7 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white rounded-xl text-base font-bold shadow-lg shadow-cyan-900/40 transition flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed">
+        다음 ▶
+      </button>
+    </div>
+
+    <!-- Slide Thumb Dots -->
+    <div id="slide-dots" class="hidden sm:flex items-center gap-2"></div>
+
+    <div class="text-sm text-slate-400 font-mono hidden md:block">
+      방향키(←/→) 또는 스페이스바로 이동 | 'N'키로 발표대본 토글
+    </div>
+  </footer>
+
+  <!-- Script for Presentation Logic -->
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+
+    const currentSlideNumEl = document.getElementById('current-slide-num');
+    const totalSlidesNumEl = document.getElementById('total-slides-num');
+    const progressBar = document.getElementById('progress-bar');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const dotsContainer = document.getElementById('slide-dots');
+    const notesPanel = document.getElementById('speaker-notes-panel');
+    const notesText = document.getElementById('speaker-notes-text');
+    const toggleNotesBtn = document.getElementById('toggle-notes-btn');
+    const closeNotesBtn = document.getElementById('close-notes-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+    totalSlidesNumEl.textContent = totalSlides;
+
+    // Create navigation dots
+    slides.forEach((slide, index) => {
+      const dot = document.createElement('button');
+      dot.className = `w-3 h-3 rounded-full transition-all duration-200 ${index === 0 ? 'bg-cyan-400 scale-125' : 'bg-slate-700 hover:bg-slate-500'}`;
+      dot.title = `Slide ${index + 1}: ${slide.dataset.title || ''}`;
+      dot.addEventListener('click', () => goToSlide(index));
+      dotsContainer.appendChild(dot);
+    });
+
+    const dots = dotsContainer.querySelectorAll('button');
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        if (index === currentSlide) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      // Update indicators
+      currentSlideNumEl.textContent = currentSlide + 1;
+      const progressPercent = ((currentSlide + 1) / totalSlides) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+
+      // Update dots
+      dots.forEach((dot, index) => {
+        if (index === currentSlide) {
+          dot.className = 'w-3.5 h-3.5 rounded-full bg-cyan-400 scale-125 transition-all duration-200';
+        } else {
+          dot.className = 'w-3 h-3 rounded-full bg-slate-700 hover:bg-slate-500 transition-all duration-200';
+        }
+      });
+
+      // Update speaker notes
+      const activeSlide = slides[currentSlide];
+      notesText.textContent = activeSlide.dataset.note || '발표자 대본이 없습니다.';
+
+      // Button states
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === totalSlides - 1;
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < totalSlides) {
+        currentSlide = index;
+        updateSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    prevBtn.addEventListener('click', prevSlide);
+    nextBtn.addEventListener('click', nextSlide);
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goToSlide(totalSlides - 1);
+      } else if (e.key.toLowerCase() === 'n') {
+        notesPanel.classList.toggle('hidden');
+      }
+    });
+
+    toggleNotesBtn.addEventListener('click', () => {
+      notesPanel.classList.toggle('hidden');
+    });
+
+    closeNotesBtn.addEventListener('click', () => {
+      notesPanel.classList.add('hidden');
+    });
+
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // Initialize
+    updateSlide();
+  </script>
+</body>
+</html>

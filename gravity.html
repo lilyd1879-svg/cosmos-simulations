@@ -1,0 +1,3027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COSMOS - 정밀 다체 중력 시뮬레이터 (N-Body Gravity Simulator)</title>
+  <style>
+    :root {
+      --bg-dark: #04060f;
+      --panel-bg: rgba(13, 19, 38, 0.78);
+      --panel-border: rgba(66, 153, 225, 0.25);
+      --panel-hover: rgba(25, 36, 69, 0.85);
+      --accent-cyan: #38bdf8;
+      --accent-glow: #60a5fa;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-emerald: #10b981;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      font-size: 13px;
+    }
+
+    #sim-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      z-index: 1;
+    }
+
+    /* Glassmorphism Common Style */
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      z-index: 10;
+      transition: all 0.2s ease;
+    }
+
+    /* Top Navigation Bar */
+    header#top-bar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    header#top-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    header#top-bar * {
+      white-space: nowrap !important;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .brand-badge {
+      font-size: 9.5px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .controls-center {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: var(--text-main);
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.18s ease;
+      flex-shrink: 0 !important;
+      height: 34px;
+      box-sizing: border-box;
+      line-height: 1;
+    }
+
+    .btn:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+    }
+
+    .btn-danger {
+      background: rgba(190, 18, 60, 0.3);
+      border-color: rgba(244, 63, 94, 0.5);
+      color: #fecdd3;
+    }
+
+    .btn-danger:hover {
+      background: rgba(190, 18, 60, 0.6);
+      border-color: var(--accent-rose);
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+    }
+
+    select.preset-select {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      flex-shrink: 0 !important;
+      max-width: 220px;
+      height: 34px;
+      box-sizing: border-box;
+      text-overflow: ellipsis;
+    }
+
+    select.preset-select:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* Speed Control Buttons */
+    .speed-control-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(15, 23, 42, 0.75);
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0 !important;
+      height: 34px;
+      box-sizing: border-box;
+    }
+
+    .btn-speed {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: var(--text-muted);
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0 !important;
+    }
+
+    .btn-speed:hover {
+      color: #fff;
+      border-color: var(--accent-cyan);
+      background: rgba(51, 65, 85, 0.9);
+    }
+
+    .btn-speed.active {
+      background: linear-gradient(135deg, #0284c7, #3b82f6);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+    }
+
+    /* 반응형 헤더 (크롬북 1366px 및 작은 화면 전용) */
+    @media (max-width: 1440px) {
+      .brand-badge {
+        display: none !important;
+      }
+      .btn-speed[data-speed="0.2"],
+      .btn-speed[data-speed="2.0"],
+      .btn-speed[data-speed="10.0"] {
+        display: none !important;
+      }
+      select.preset-select {
+        max-width: 185px;
+      }
+      .btn {
+        padding: 5px 9px;
+        font-size: 11.5px;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .btn-speed[data-speed="25.0"],
+      #top-slider-timescale {
+        display: none !important;
+      }
+      select.preset-select {
+        max-width: 155px;
+      }
+      .btn-label-responsive {
+        display: none !important;
+      }
+    }
+
+    /* Left Sidebar: Spawner & Tools */
+    #left-panel {
+      position: absolute;
+      top: 80px;
+      left: 14px;
+      width: 280px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    #left-panel::-webkit-scrollbar,
+    #right-panel::-webkit-scrollbar {
+      width: 4px;
+    }
+    #left-panel::-webkit-scrollbar-thumb,
+    #right-panel::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.3);
+      border-radius: 4px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    /* Spawn Mode Selector */
+    .mode-pills {
+      display: flex;
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .mode-pill {
+      flex: 1;
+      padding: 6px 4px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+    }
+
+    .mode-pill.active {
+      background: linear-gradient(135deg, #0284c7, #3b82f6);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    }
+
+    /* Celestial Templates Grid */
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .template-btn {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .template-btn:hover {
+      background: rgba(30, 41, 59, 0.9);
+      border-color: var(--accent-cyan);
+    }
+
+    .template-btn.active {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }
+
+    .body-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .template-name {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .input-row label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .input-control {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 4px 8px;
+      width: 105px;
+      font-size: 11.5px;
+      text-align: right;
+      font-family: monospace;
+    }
+
+    .input-control:focus {
+      border-color: var(--accent-cyan);
+      outline: none;
+    }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 8px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .slider-header span.val {
+      color: var(--accent-cyan);
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      height: 4px;
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+      transition: transform 0.1s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    /* Right Sidebar: Inspector & Simulation Options */
+    #right-panel {
+      position: absolute;
+      top: 80px;
+      right: 14px;
+      width: 300px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 38px;
+      height: 20px;
+      display: inline-block;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(51, 65, 85, 0.8);
+      transition: .2s;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      border-color: #38bdf8;
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(18px);
+    }
+
+    /* Target Inspector Card */
+    #inspector-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: monospace;
+      font-size: 11.5px;
+      color: var(--accent-cyan);
+    }
+
+    /* Bottom Info & Stats Bar */
+    #bottom-bar {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-item b {
+      color: var(--text-main);
+      font-family: monospace;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: absolute;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent-cyan);
+      color: var(--text-main);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Keyboard Guide Hint */
+    .key-hint {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fullscreen Physics Canvas -->
+  <canvas id="sim-canvas"></canvas>
+
+  <!-- Notification Toast -->
+  <div id="toast">
+    <span id="toast-icon">✨</span>
+    <span id="toast-msg">메시지</span>
+  </div>
+
+  <!-- Header Bar -->
+  <header id="top-bar" class="glass-panel">
+    <div class="brand-group">
+      <div class="brand-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M3.6 9h16.8"></path>
+          <path d="M3.6 15h16.8"></path>
+          <path d="M12 3a15.3 15.3 0 0 1 4 18"></path>
+          <path d="M12 3a15.3 15.3 0 0 0-4 18"></path>
+        </svg>
+        COSMOS
+      </div>
+      <div class="brand-badge">N-BODY GRAVITY SIMULATOR</div>
+    </div>
+
+    <div class="controls-center">
+      <select id="preset-select" class="preset-select">
+        <option value="solarsystem" selected>🌌 태양계 전행성 (8대 행성 - 실제 AU 거리 비례)</option>
+        <option value="innersolar">🪐 태양계 내행성 (수·금·지·화·목 - 실제 AU 거리 비례)</option>
+        <option value="solar">☀️ 태양 - 지구 - 달 (3-Body Orbit)</option>
+        <option value="sirius">🌟 시리우스 A & B (쌍성계 공전)</option>
+        <option value="figure8">♾️ 3체 문제: 8자 주기 궤도 (Figure-8)</option>
+        <option value="lagrange">🛡️ 라그랑주 점 (L4 / L5 트로이군)</option>
+        <option value="chaos">🌀 카오스 3체 문제: 피타고라스 댄스 (Burrau 1913)</option>
+        <option value="collision">🌌 은하 충돌 (Galaxy Collision)</option>
+        <option value="kepler">🎯 케플러 5대 궤도와 탈출 속도 (원·타원·탈출)</option>
+        <option value="empty">🧹 빈 우주 (직접 생성)</option>
+      </select>
+
+      <button id="btn-play-pause" class="btn btn-primary" title="단축키: Space">
+        <span id="icon-play-pause">⏸️</span>
+        <span id="text-play-pause">일시정지</span>
+      </button>
+
+      <button id="btn-reset" class="btn" title="현재 프리셋 재설정 (단축키: R)">
+        🔄 초기화
+      </button>
+
+      <button id="btn-clear-trails" class="btn" title="궤적 지우기 (단축키: C)">
+        ✨ 궤적 지우기
+      </button>
+
+      <!-- 시간 배속 컨트롤러 그룹 -->
+      <div class="speed-control-group">
+        <span class="speed-label">⚡ 배속:</span>
+        <button class="btn-speed" data-speed="0.2" title="슬로모션">0.2x</button>
+        <button class="btn-speed" data-speed="0.5">0.5x</button>
+        <button class="btn-speed active" data-speed="1.0" title="정상 속도">1x</button>
+        <button class="btn-speed" data-speed="2.0">2x</button>
+        <button class="btn-speed" data-speed="5.0">5x</button>
+        <button class="btn-speed" data-speed="10.0">10x</button>
+        <button class="btn-speed" data-speed="25.0">25x</button>
+        <input type="range" id="top-slider-timescale" min="0.1" max="30" step="0.1" value="1.0" style="width: 60px; margin-left: 2px;" title="배속 미세 조절 (단축키: [ / ])">
+        <span id="top-val-timescale" style="font-family: monospace; font-weight: bold; color: var(--accent-cyan); font-size: 11px; min-width: 32px; text-align: right;">1.0x</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <a href="./air.html" class="btn" style="background: rgba(34, 197, 94, 0.18); border-color: rgba(34, 197, 94, 0.45); color: #bbf7d0; text-decoration: none;" title="대기 만들기 & 행성 환경 시뮬레이터로 이동">
+        🌫️ 대기 시뮬레이터
+      </a>
+      <a href="./sky.html" class="btn" style="background: rgba(56, 189, 248, 0.18); border-color: rgba(56, 189, 248, 0.45); color: #bae6fd; text-decoration: none;" title="실시간 위치기반 별자리 지도로 이동">
+        ✨ 별자리 지도
+      </a>
+      <a href="./index.html" class="btn" style="background: rgba(168, 85, 247, 0.18); border-color: rgba(168, 85, 247, 0.45); color: #e9d5ff; text-decoration: none;" title="진자 시뮬레이터 (기본 메인)로 이동">
+        🌀 진자 시뮬레이터
+      </a>
+      <button id="btn-fullscreen" class="btn" style="background: rgba(255,255,255,0.06);" title="전체화면 전환">
+        ⛶ 전체화면
+      </button>
+      <button id="btn-help" class="btn" style="background: rgba(255,255,255,0.06);" title="도움말">
+        💡 안내
+      </button>
+    </div>
+  </header>
+
+  <!-- Left Sidebar: Creation Tools -->
+  <aside id="left-panel" class="glass-panel">
+    <div class="section-title">
+      <span>천체 생성 모드</span>
+      <span class="key-hint">1, 2, 3</span>
+    </div>
+    <div class="mode-pills">
+      <div class="mode-pill active" data-mode="drag">🚀 마우스 발사</div>
+      <div class="mode-pill" data-mode="auto_orbit">🎯 자동 궤도</div>
+      <div class="mode-pill" data-mode="static">📍 정적 배치</div>
+    </div>
+    <div id="mode-desc" style="font-size: 11px; color: var(--accent-cyan); line-height: 1.4;">
+      화면을 <b>우클릭 후 드래그</b>하여 발사 속도 벡터를 지정하세요. (좌클릭은 화면 이동)
+    </div>
+
+    <div class="section-title" style="margin-top: 6px;">
+      <span>천체 템플릿 선택</span>
+    </div>
+    <div class="template-grid">
+      <div class="template-btn active" data-type="star">
+        <span class="body-icon" style="background: #ffb703; color: #ffb703;"></span>
+        <span class="template-name">항성 (태양)</span>
+      </div>
+      <div class="template-btn" data-type="whitedwarf">
+        <span class="body-icon" style="background: #caf0f8; color: #caf0f8;"></span>
+        <span class="template-name">백색왜성</span>
+      </div>
+      <div class="template-btn" data-type="blackhole">
+        <span class="body-icon" style="background: #0f172a; border: 2px solid #818cf8; color: #818cf8;"></span>
+        <span class="template-name">블랙홀</span>
+      </div>
+      <div class="template-btn" data-type="gasgiant">
+        <span class="body-icon" style="background: #e07a5f; color: #e07a5f;"></span>
+        <span class="template-name">가스 행성</span>
+      </div>
+      <div class="template-btn" data-type="earth">
+        <span class="body-icon" style="background: #38bdf8; color: #38bdf8;"></span>
+        <span class="template-name">지구형 행성</span>
+      </div>
+      <div class="template-btn" data-type="moon">
+        <span class="body-icon" style="background: #94a3b8; color: #94a3b8;"></span>
+        <span class="template-name">위성 / 달</span>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 6px;">
+      <span>생성 파라미터 튜닝</span>
+    </div>
+    <div class="input-row">
+      <label>천체 명칭</label>
+      <input type="text" id="param-name" class="input-control" value="항성" style="text-align: left;">
+    </div>
+    <div class="input-row">
+      <label>질량 (Mass)</label>
+      <input type="number" id="param-mass" class="input-control" value="1000" min="0.001" step="any">
+    </div>
+    <div class="input-row">
+      <label>반지름 (Radius)</label>
+      <input type="number" id="param-radius" class="input-control" value="16" min="1" max="100" step="0.5">
+    </div>
+    <div class="input-row">
+      <label>색상</label>
+      <input type="color" id="param-color" class="input-control" value="#ffb703" style="padding: 1px 4px; height: 26px; cursor: pointer;">
+    </div>
+    <div class="toggle-row">
+      <span>위치 고정 (Immovable)</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="param-fixed">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="section-title" style="margin-top: 6px;">
+      <span>물리 엔진 튜닝</span>
+    </div>
+    <div class="slider-row">
+      <div class="slider-header">
+        <span>중력 상수 (G)</span>
+        <span class="val" id="val-g">1.0</span>
+      </div>
+      <input type="range" id="slider-g" min="0" max="5" step="0.1" value="1.0">
+    </div>
+    <div class="slider-row">
+      <div class="slider-header">
+        <span>시간 흐름 배속 (Time Scale)</span>
+        <span class="val" id="val-timescale">1.0x</span>
+      </div>
+      <input type="range" id="slider-timescale" min="0.1" max="10" step="0.1" value="1.0">
+    </div>
+
+    <div class="section-title" style="margin-top: 6px;">
+      <span>우주 생성 마법사 (Quick Tools)</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <button id="btn-spawn-belt" class="btn" style="justify-content: center; background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.35);" title="중심 항성 둘레에 안정적인 소행성대 36개 고리 생성">
+        🪐 소행성대 고리 생성 (36개)
+      </button>
+      <button id="btn-spawn-comet" class="btn" style="justify-content: center; background: rgba(129, 140, 248, 0.12); border-color: rgba(129, 140, 248, 0.35);" title="외곽에서 중심계를 관통하는 장주기 타원 혜성 발사">
+        ☄️ 장주기 혜성 발사 (Comet)
+      </button>
+      <button id="btn-spawn-supernova" class="btn btn-danger" style="justify-content: center;" title="가장 무거운 항성을 폭발시켜 성운과 충격파 생성">
+        💥 초신성 대폭발 (Supernova)
+      </button>
+    </div>
+  </aside>
+
+  <!-- Right Sidebar: Inspector & View Settings -->
+  <aside id="right-panel" class="glass-panel">
+    <div class="section-title">
+      <span>선택 천체 인스펙터</span>
+      <span id="inspector-action-hint" style="font-size: 10px; color: var(--text-muted);">천체 클릭 시 상세</span>
+    </div>
+
+    <div id="inspector-card">
+      <div class="card-empty">화면의 천체를 마우스로 클릭하면<br>실시간 물리 상태를 분석합니다.</div>
+    </div>
+
+    <div class="section-title" style="margin-top: 8px;">
+      <span>시각화 옵션</span>
+    </div>
+    <div class="toggle-row">
+      <span>궤도 궤적 (Orbit Trails)</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="opt-trails" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>속도 벡터 화살표</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="opt-vectors">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>시공간 곡률 왜곡망 (Grid)</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="opt-grid">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>천체 이름 레이블</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="opt-labels" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>충돌 시 질량 병합 (Collision)</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="opt-collisions" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>질량 중심(Barycenter) 표시</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="opt-barycenter">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="section-title" style="margin-top: 8px;">
+      <span>카메라 제어</span>
+    </div>
+    <div style="display: flex; gap: 6px;">
+      <button id="btn-camera-reset" class="btn" style="flex: 1;">중심 뷰 복귀</button>
+      <button id="btn-camera-barycenter" class="btn" style="flex: 1;">질량중심 추적</button>
+    </div>
+  </aside>
+
+  <!-- Bottom Stats Bar -->
+  <footer id="bottom-bar" class="glass-panel">
+    <div style="display: flex; gap: 20px;">
+      <div class="stat-item">
+        <span>천체 수:</span>
+        <b id="stat-count">0</b>
+      </div>
+      <div class="stat-item">
+        <span>FPS:</span>
+        <b id="stat-fps">60</b>
+      </div>
+      <div class="stat-item">
+        <span>경과 시간:</span>
+        <b id="stat-time">0.0 년</b>
+      </div>
+      <div class="stat-item">
+        <span>카메라 줌:</span>
+        <b id="stat-zoom">100%</b>
+      </div>
+    </div>
+    <div style="font-size: 11px; color: var(--text-muted);">
+      <b>좌클릭 드래그: 화면 이동</b> | <b>우클릭 드래그: 천체 생성</b> | <span class="key-hint">[ / ]</span>: 배속 조절 | <span class="key-hint">Space</span>: 정지/재생 | <span class="key-hint">C</span>: 궤적 지우기
+    </div>
+  </footer>
+
+  <!-- Help Modal (Hidden by default) -->
+  <div id="help-modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 999; align-items: center; justify-content: center;">
+    <div class="glass-panel" style="width: 520px; max-width: 90vw; padding: 24px; border-radius: 16px;">
+      <h3 style="font-size: 18px; color: var(--accent-cyan); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <span>🚀 COSMOS 중력 시뮬레이터 안내</span>
+        <button id="btn-help-close" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;">✕</button>
+      </h3>
+      <div style="line-height: 1.6; color: #cbd5e1; font-size: 13px; display: flex; flex-direction: column; gap: 10px;">
+        <p><b>1. 화면 이동 & 천체 조작 (간편 조작)</b></p>
+        <ul style="padding-left: 18px;">
+          <li><b>화면 이동 (카메라 패닝):</b> 빈 공간을 <b>마우스 좌클릭 후 드래그</b>(또는 모바일/크롬북 1손가락 드래그)하면 지도를 보듯 자유롭게 화면을 이동할 수 있습니다.</li>
+          <li><b>천체 선택:</b> 천체를 <b>좌클릭</b>하면 우측 인스펙터에 상세 정보가 표시되며 [카메라 추적]할 수 있습니다.</li>
+        </ul>
+        <p><b>2. 천체 생성하기 (우클릭 전용)</b></p>
+        <ul style="padding-left: 18px;">
+          <li><b>우클릭 발사:</b> 원하는 위치에서 <b>마우스 우클릭을 누른 채 드래그</b>하여 화살표(속도 벡터)를 당긴 뒤 놓으면 발사됩니다!</li>
+          <li><b>자동 궤도 (Auto-Orbit):</b> 중심 항성 근처에서 우클릭 드래그하면, 자동으로 안정적인 원형 공전 속도가 계산되어 궤도에 투입됩니다.</li>
+          <li><b>정적 배치:</b> 원하는 위치를 우클릭하면 즉시 정지 상태로 생성됩니다.</li>
+        </ul>
+        <p><b>2. 실제 천문학 프리셋</b></p>
+        <ul style="padding-left: 18px;">
+          <li><b>태양계 전행성 (8대 행성):</b> 수·금·지·화·목·토·천·해 실제 천문단위(AU) 거리 비례 및 케플러 법칙 공전.</li>
+          <li><b>태양계 내행성군:</b> 수·금·지·화(+목) 실제 거리 비례 궤도 집중 관찰.</li>
+          <li><b>태양-지구-달:</b> 3체 중력 섭동과 힐 구(Hill sphere) 안정 공전 관찰.</li>
+          <li><b>시리우스 A & B:</b> 주계열성과 백색왜성이 공통 질량중심 주위를 타원으로 춤추는 쌍성계.</li>
+          <li><b>Figure-8:</b> 세 천체가 8자 모양으로 영구히 도는 유명한 3체 문제 특수해.</li>
+          <li><b>라그랑주 점:</b> 목성과 태양의 중력 평형 지점(L4, L5)에 모인 트로이 소행성군.</li>
+          <li><b>피타고라스 3체 문제 (Burrau):</b> 질량비 3:4:5의 세 항성이 쉼 없이 궤도를 바꾸며 펼치는 정통 카오스 댄스.</li>
+          <li><b>케플러 5대 궤도:</b> 원형, 근일점 타원, 장타원, 포물선 탈출, 쌍곡선 탈출을 한눈에 비교.</li>
+        </ul>
+        <p><b>3. 카메라 & 뷰</b></p>
+        <ul style="padding-left: 18px;">
+          <li>마우스 휠로 줌 인/아웃, 우클릭 또는 휠 드래그로 화면 이동.</li>
+          <li>천체를 클릭하면 우측 창에서 실시간 속도, 질량 정보 확인 및 <b>[카메라 추적]</b> 가능.</li>
+        </ul>
+      </div>
+      <div style="text-align: right; margin-top: 16px;">
+        <button id="btn-help-ok" class="btn btn-primary" style="padding: 8px 20px;">시작하기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       COSMOS 다체 중력 시뮬레이션 엔진 (Velocity Verlet Integrator)
+       ========================================================================== */
+
+    // 캔버스 및 그래픽스 컨텍스트
+    const canvas = document.getElementById('sim-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // 천체 기본 클래스
+    class CelestialBody {
+      constructor({
+        name = '천체',
+        x = 0,
+        y = 0,
+        vx = 0,
+        vy = 0,
+        mass = 100,
+        radius = 10,
+        color = '#38bdf8',
+        isFixed = false,
+        type = 'planet'
+      }) {
+        this.id = 'body_' + Math.random().toString(36).substr(2, 9);
+        this.name = name;
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.ax = 0;
+        this.ay = 0;
+        this.mass = mass;
+        this.radius = radius;
+        this.color = color;
+        this.isFixed = isFixed;
+        this.type = type; // star, planet, gasgiant, whitedwarf, blackhole, moon
+        this.trail = [];
+        this.maxTrailLength = 120;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+      }
+
+      updatePosition(dt) {
+        if (this.isFixed) {
+          this.vx = 0;
+          this.vy = 0;
+          this.ax = 0;
+          this.ay = 0;
+          return;
+        }
+        // Velocity Verlet Step 1: r(t + dt) = r(t) + v(t)*dt + 0.5*a(t)*dt^2
+        this.x += this.vx * dt + 0.5 * this.ax * dt * dt;
+        this.y += this.vy * dt + 0.5 * this.ay * dt * dt;
+      }
+
+      updateVelocity(newAx, newAy, dt) {
+        if (this.isFixed) return;
+        // Velocity Verlet Step 2: v(t + dt) = v(t) + 0.5*(a(t) + a(t + dt))*dt
+        this.vx += 0.5 * (this.ax + newAx) * dt;
+        this.vy += 0.5 * (this.ay + newAy) * dt;
+        this.ax = newAx;
+        this.ay = newAy;
+      }
+
+      recordTrail() {
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > this.maxTrailLength) {
+          this.trail.shift();
+        }
+      }
+    }
+
+    // 시뮬레이션 글로벌 상태
+    const Sim = {
+      bodies: [],
+      particles: [],
+      G: 1.0,
+      timeScale: 1.0,
+      isPaused: false,
+      elapsedTime: 0,
+      subSteps: 4, // 높은 정밀도를 위한 서브스텝
+      softening: 4.0, // 근접 발산 방지 파라미터 (softening length)
+
+      // 카메라 상태
+      camera: {
+        x: 0,
+        y: 0,
+        zoom: 1.0,
+        targetBody: null,
+        followBarycenter: false,
+        isDragging: false,
+        dragStartX: 0,
+        dragStartY: 0,
+        camStartX: 0,
+        camStartY: 0
+      },
+
+      // 옵션
+      options: {
+        trails: true,
+        vectors: false,
+        grid: false,
+        labels: true,
+        collisions: true,
+        barycenter: false
+      },
+
+      // 생성 컨트롤
+      spawnMode: 'drag', // 'drag', 'auto_orbit', 'static'
+      currentTemplate: 'star',
+      selectedBody: null,
+
+      // 마우스 발사 인터랙션 상태
+      dragLaunch: {
+        active: false,
+        startX: 0,
+        startY: 0,
+        currentX: 0,
+        currentY: 0
+      }
+    };
+
+    // 천체 템플릿 기본 정의
+    const Templates = {
+      star: { name: '태양 (항성)', mass: 1500, radius: 20, color: '#ffb703', fixed: false, type: 'star' },
+      whitedwarf: { name: '시리우스 B (백색왜성)', mass: 900, radius: 7, color: '#e0f2fe', fixed: false, type: 'whitedwarf' },
+      blackhole: { name: '블랙홀 (Black Hole)', mass: 6000, radius: 14, color: '#0f172a', fixed: false, type: 'blackhole' },
+      gasgiant: { name: '목성형 거대행성', mass: 80, radius: 11, color: '#f97316', fixed: false, type: 'gasgiant' },
+      earth: { name: '지구형 암석행성', mass: 5, radius: 5.5, color: '#38bdf8', fixed: false, type: 'planet' },
+      moon: { name: '위성 (달)', mass: 0.2, radius: 3, color: '#94a3b8', fixed: false, type: 'moon' }
+    };
+
+    /* ==========================================================================
+       물리 계산 엔진 (N-Body Acceleration & Collision)
+       ========================================================================== */
+
+    function computeAccelerations(bodies, G, softening) {
+      const n = bodies.length;
+      const acc = new Array(n);
+      for (let i = 0; i < n; i++) {
+        acc[i] = { ax: 0, ay: 0 };
+      }
+
+      const soft2 = softening * softening;
+
+      for (let i = 0; i < n; i++) {
+        const bi = bodies[i];
+        for (let j = i + 1; j < n; j++) {
+          const bj = bodies[j];
+
+          const dx = bj.x - bi.x;
+          const dy = bj.y - bi.y;
+          const distSq = dx * dx + dy * dy + soft2;
+          const dist = Math.sqrt(distSq);
+          const forceMag = G / (distSq * dist); // F / (m1*m2)
+
+          const fx = forceMag * dx;
+          const fy = forceMag * dy;
+
+          acc[i].ax += fx * bj.mass;
+          acc[i].ay += fy * bj.mass;
+
+          acc[j].ax -= fx * bi.mass;
+          acc[j].ay -= fy * bi.mass;
+        }
+      }
+
+      return acc;
+    }
+
+    function handleElasticBounce(b1, b2, dist) {
+      if (dist < 0.001) dist = 0.001;
+      const nx = (b2.x - b1.x) / dist;
+      const ny = (b2.y - b1.y) / dist;
+
+      const vrx = b2.vx - b1.vx;
+      const vry = b2.vy - b1.vy;
+      const vn = vrx * nx + vry * ny;
+      if (vn > 0) return; // 이미 멀어지고 있는 중
+
+      const restit = 0.96; // 고탄성 반발 계수
+      const m1 = b1.isFixed ? 1e9 : b1.mass;
+      const m2 = b2.isFixed ? 1e9 : b2.mass;
+      const impulse = -(1 + restit) * vn / (1 / m1 + 1 / m2);
+
+      if (!b1.isFixed) {
+        b1.vx -= (impulse / m1) * nx;
+        b1.vy -= (impulse / m1) * ny;
+      }
+      if (!b2.isFixed) {
+        b2.vx += (impulse / m2) * nx;
+        b2.vy += (impulse / m2) * ny;
+      }
+
+      // 겹침 즉시 해소
+      const targetDist = (b1.radius + b2.radius) * 0.45;
+      const overlap = targetDist - dist;
+      if (overlap > 0) {
+        if (!b1.isFixed && !b2.isFixed) {
+          b1.x -= overlap * 0.5 * nx;
+          b1.y -= overlap * 0.5 * ny;
+          b2.x += overlap * 0.5 * nx;
+          b2.y += overlap * 0.5 * ny;
+        } else if (!b1.isFixed) {
+          b1.x -= overlap * nx;
+          b1.y -= overlap * ny;
+        } else if (!b2.isFixed) {
+          b2.x += overlap * nx;
+          b2.y += overlap * ny;
+        }
+      }
+    }
+
+    function checkCollisions() {
+      if (!Sim.options.collisions) return;
+
+      const bodies = Sim.bodies;
+      const toRemove = new Set();
+
+      for (let i = 0; i < bodies.length; i++) {
+        if (toRemove.has(bodies[i])) continue;
+        const b1 = bodies[i];
+
+        for (let j = i + 1; j < bodies.length; j++) {
+          if (toRemove.has(bodies[j])) continue;
+          const b2 = bodies[j];
+
+          // 1. 질량이 극소인 시험 입자/우주선(mass < 0.1)끼리는 서로 충돌 병합하지 않음
+          if (b1.mass < 0.1 && b2.mass < 0.1) continue;
+
+          const dx = b2.x - b1.x;
+          const dy = b2.y - b1.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          // 충돌 판정: 항성 간에는 정밀 코어 충돌(35% 이하)만 병합, 일반 천체는 50% 이하일 때만 병합
+          const isBothHeavy = b1.mass >= 300 && b2.mass >= 300;
+          const hitThreshold = (b1.radius + b2.radius) * (isBothHeavy ? 0.35 : 0.5);
+
+          if (dist < hitThreshold) {
+            // 2. 카오스 3체 모드이거나 Figure-8 3체 모드에서는 항성들이 서로 흡수되어 2체계로 붕괴되지 않도록
+            //    눈부신 스파크와 함께 탄성 충돌 반사(Bounce)를 수행하여 영구적인 3체 댄스를 유지
+            if (Sim.currentPreset === 'chaos' || Sim.currentPreset === 'figure8' || (isBothHeavy && Sim.currentPreset === 'sirius')) {
+              handleElasticBounce(b1, b2, dist);
+              createCollisionSparks((b1.x + b2.x) / 2, (b1.y + b2.y) / 2, b1.color, b2.color);
+              continue;
+            }
+
+            // 더 큰 천체(bWinner)가 작은 천체(bLoser)를 흡수/병합
+            let bWinner = b1;
+            let bLoser = b2;
+            if (b2.mass > b1.mass) {
+              bWinner = b2;
+              bLoser = b1;
+            }
+
+            // 충돌 파티클 폭발 효과 생성
+            createCollisionSparks((b1.x + b2.x) / 2, (b1.y + b2.y) / 2, b1.color, b2.color);
+
+            // 완전 비탄성 충돌: 운동량 및 질량 보존
+            const totalMass = bWinner.mass + bLoser.mass;
+            if (!bWinner.isFixed) {
+              bWinner.vx = (bWinner.mass * bWinner.vx + bLoser.mass * bLoser.vx) / totalMass;
+              bWinner.vy = (bWinner.mass * bWinner.vy + bLoser.mass * bLoser.vy) / totalMass;
+              bWinner.x = (bWinner.mass * bWinner.x + bLoser.mass * bLoser.x) / totalMass;
+              bWinner.y = (bWinner.mass * bWinner.y + bLoser.mass * bLoser.y) / totalMass;
+            }
+
+            // 반경 증가: 체적(Volume) 합산 모델 (r = (r1^3 + r2^3)^(1/3))
+            bWinner.radius = Math.min(60, Math.cbrt(Math.pow(bWinner.radius, 3) + Math.pow(bLoser.radius, 3)));
+            bWinner.mass = totalMass;
+
+            toRemove.add(bLoser);
+            showToast(`💥 [${bWinner.name}]이(가) [${bLoser.name}]을(를) 흡수·병합했습니다!`);
+
+            if (Sim.selectedBody === bLoser) {
+              Sim.selectedBody = bWinner;
+            }
+          }
+        }
+      }
+
+      if (toRemove.size > 0) {
+        Sim.bodies = Sim.bodies.filter(b => !toRemove.has(b));
+        updateStats();
+        updateInspectorCard();
+      }
+    }
+
+    function createCollisionSparks(x, y, color1, color2) {
+      const count = 28;
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 4 + 1;
+        Sim.particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1.0,
+          decay: Math.random() * 0.03 + 0.02,
+          color: Math.random() > 0.5 ? color1 : color2,
+          size: Math.random() * 3 + 1.5
+        });
+      }
+    }
+
+    function stepPhysics(dt) {
+      if (Sim.bodies.length === 0) return;
+
+      const subDt = dt / Sim.subSteps;
+
+      for (let step = 0; step < Sim.subSteps; step++) {
+        // 1. 기존 가속도로 위치 업데이트
+        for (let i = 0; i < Sim.bodies.length; i++) {
+          Sim.bodies[i].updatePosition(subDt);
+        }
+
+        // 2. 새 위치에 따른 가속도 계산
+        const newAcc = computeAccelerations(Sim.bodies, Sim.G, Sim.softening);
+
+        // 3. 속도 업데이트
+        for (let i = 0; i < Sim.bodies.length; i++) {
+          Sim.bodies[i].updateVelocity(newAcc[i].ax, newAcc[i].ay, subDt);
+        }
+
+        // 4. 충돌 체크
+        checkCollisions();
+      }
+
+      // 궤적 기록 (매 프레임)
+      if (Sim.options.trails) {
+        for (let i = 0; i < Sim.bodies.length; i++) {
+          Sim.bodies[i].recordTrail();
+        }
+      }
+
+      // 파티클 업데이트
+      for (let i = Sim.particles.length - 1; i >= 0; i--) {
+        const p = Sim.particles[i];
+        p.x += p.vx * dt * 30;
+        p.y += p.vy * dt * 30;
+        p.life -= p.decay * dt * 30;
+        if (p.life <= 0) {
+          Sim.particles.splice(i, 1);
+        }
+      }
+    }
+
+    /* ==========================================================================
+       시뮬레이션 프리셋 (Presets)
+       ========================================================================== */
+
+    function loadPreset(presetKey) {
+      Sim.currentPreset = presetKey;
+      Sim.bodies = [];
+      Sim.particles = [];
+      Sim.selectedBody = null;
+      Sim.camera.targetBody = null;
+      Sim.camera.followBarycenter = false;
+      Sim.camera.x = 0;
+      Sim.camera.y = 0;
+      Sim.camera.zoom = 1.0;
+      Sim.elapsedTime = 0;
+
+      // 충돌 옵션 토글 상태 동기화
+      const collToggle = document.getElementById('opt-collisions');
+      if (collToggle) {
+        collToggle.checked = true;
+        Sim.options.collisions = true;
+      }
+
+      switch (presetKey) {
+        case 'solar': {
+          // 태양 - 지구 - 달 (힐 구 Hill Sphere 내 안정적인 3체 공전)
+          const sun = new CelestialBody({
+            name: '태양 (Sun)',
+            x: 0, y: 0, vx: 0, vy: 0,
+            mass: 2600, radius: 22, color: '#ffb703', type: 'star'
+          });
+
+          // 지구: r = 340
+          const rEarth = 340;
+          const mEarth = 35;
+          const vEarth = Math.sqrt(Sim.G * sun.mass / rEarth);
+          const earth = new CelestialBody({
+            name: '지구 (Earth)',
+            x: rEarth, y: 0, vx: 0, vy: vEarth,
+            mass: mEarth, radius: 6.5, color: '#38bdf8', type: 'planet'
+          });
+
+          // 달: 힐 구(Hill Sphere r_H ~ 56) 내부 안정 영역인 거리 d = 15에 배치
+          // 지구가 1바퀴 돌 때 달이 약 12.5회 공전 (실제 지구-달 주기 비율 재현)
+          const dMoon = 15;
+          const vMoonRel = Math.sqrt(Sim.G * mEarth / dMoon);
+          const moon = new CelestialBody({
+            name: '달 (Moon)',
+            x: rEarth + dMoon, y: 0, vx: 0, vy: vEarth + vMoonRel,
+            mass: 0.08, radius: 2.2, color: '#e2e8f0', type: 'moon'
+          });
+
+          Sim.bodies.push(sun, earth, moon);
+          Sim.camera.zoom = 1.15;
+          showToast('☀️ 태양-지구-달 정밀 공전 궤도 로드 완료 (1년 당 12회 공전)');
+          break;
+        }
+
+        case 'sirius': {
+          // 시리우스 A & B 쌍성계 (Sirius Binary System)
+          // 공통 질량 중심(Barycenter) 주위를 타원으로 상호 공전
+          const m1 = 2000; // 시리우스 A (A형 주계열성)
+          const m2 = 1000; // 시리우스 B (백색왜성 - 작지만 무거움)
+          const dist = 360;
+          const r1 = dist * (m2 / (m1 + m2));
+          const r2 = dist * (m1 / (m1 + m2));
+
+          const totalMass = m1 + m2;
+          const vOrbit = Math.sqrt((Sim.G * totalMass) / dist) * 0.95;
+
+          const siriusA = new CelestialBody({
+            name: '시리우스 A (주계열성)',
+            x: -r1, y: 0, vx: 0, vy: -vOrbit * (m2 / totalMass),
+            mass: m1, radius: 18, color: '#bae6fd', type: 'star'
+          });
+
+          const siriusB = new CelestialBody({
+            name: '시리우스 B (백색왜성)',
+            x: r2, y: 0, vx: 0, vy: vOrbit * (m1 / totalMass),
+            mass: m2, radius: 6, color: '#ffffff', type: 'whitedwarf'
+          });
+
+          Sim.bodies.push(siriusA, siriusB);
+          Sim.camera.zoom = 1.1;
+          Sim.options.barycenter = true;
+          document.getElementById('opt-barycenter').checked = true;
+          showToast('🌟 시리우스 쌍성계 (공통 질량중심 공전) 로드 완료');
+          break;
+        }
+
+        case 'solarsystem': {
+          // 🌌 태양계 전행성 (8대 행성 실제 AU 거리 비례 - 1 AU = 110 px)
+          // 실제 천문학적 공전 궤도 장반경 (AU 기준):
+          // 수성: 0.387 AU, 금성: 0.723 AU, 지구: 1.000 AU, 화성: 1.524 AU
+          // 목성: 5.204 AU, 토성: 9.582 AU, 천왕성: 19.22 AU, 해왕성: 30.07 AU
+          const sun = new CelestialBody({
+            name: '태양 (Sun)',
+            x: 0, y: 0, vx: 0, vy: 0,
+            mass: 5500, radius: 24, color: '#ffb703', type: 'star'
+          });
+          Sim.bodies.push(sun);
+
+          const auScale = 110; // 1 AU = 110px
+          const planetsData = [
+            { name: '수성 (Mercury)', au: 0.3871, m: 1.5, radius: 3.5, color: '#94a3b8', desc: '0.39 AU (5,790만 km)' },
+            { name: '금성 (Venus)', au: 0.7233, m: 4.2, radius: 5.5, color: '#fde047', desc: '0.72 AU (1억 820만 km)' },
+            { name: '지구 (Earth)', au: 1.0000, m: 5.0, radius: 6.0, color: '#38bdf8', desc: '1.00 AU (1억 4,960만 km)', hasMoon: true },
+            { name: '화성 (Mars)', au: 1.5237, m: 2.2, radius: 4.2, color: '#f87171', desc: '1.52 AU (2억 2,790만 km)' },
+            { name: '목성 (Jupiter)', au: 5.2044, m: 55.0, radius: 13.0, color: '#fb923c', desc: '5.20 AU (7억 7,860만 km)' },
+            { name: '토성 (Saturn)', au: 9.5826, m: 25.0, radius: 11.0, color: '#facc15', desc: '9.58 AU (14억 3,350만 km)', hasRing: true },
+            { name: '천왕성 (Uranus)', au: 19.2184, m: 12.0, radius: 8.5, color: '#67e8f9', desc: '19.22 AU (28억 7,250만 km)' },
+            { name: '해왕성 (Neptune)', au: 30.0700, m: 13.0, radius: 8.5, color: '#3b82f6', desc: '30.07 AU (44억 9,510만 km)' }
+          ];
+
+          planetsData.forEach((p, idx) => {
+            const r = p.au * auScale;
+            // 각 행성의 초기 위상을 서로 다른 각도로 자연스럽게 배치
+            const angle = (idx * 0.95) + 0.35;
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
+            // 케플러 제3법칙을 만족하는 원형 공전 속도: v = sqrt(G * M_sun / r)
+            const v = Math.sqrt(Sim.G * sun.mass / r);
+            const vx = -Math.sin(angle) * v;
+            const vy = Math.cos(angle) * v;
+
+            const planetBody = new CelestialBody({
+              name: p.name,
+              x, y, vx, vy,
+              mass: p.m, radius: p.radius, color: p.color, type: p.au >= 5 ? 'gasgiant' : 'planet'
+            });
+            planetBody.au = p.au;
+            planetBody.realDistDesc = p.desc;
+            planetBody.hasRing = !!p.hasRing;
+            Sim.bodies.push(planetBody);
+
+            // 지구 주위 달(Moon) 공전 궤도
+            if (p.hasMoon) {
+              const dMoon = 10;
+              const vMoonRel = Math.sqrt(Sim.G * p.m / dMoon);
+              const moon = new CelestialBody({
+                name: '달 (Moon)',
+                x: x + dMoon, y, vx, vy: vy + vMoonRel,
+                mass: 0.05, radius: 2.0, color: '#e2e8f0', type: 'moon'
+              });
+              moon.realDistDesc = '지구로부터 38.4만 km (0.0026 AU)';
+              Sim.bodies.push(moon);
+            }
+          });
+
+          Sim.camera.zoom = 0.32;
+          setTimeScale(2.5, false); // 외행성 궤도 순환을 위해 2.5배속 기본 설정
+          showToast('🌌 태양계 전행성 (8대 행성 실제 AU 거리 비례) 로드 완료 (휠로 줌 조절)');
+          break;
+        }
+
+        case 'innersolar': {
+          // 🪐 태양계 내행성군 (수·금·지·화·목 - 실제 거리 비례, 1 AU = 220px)
+          const sun = new CelestialBody({
+            name: '태양 (Sun)',
+            x: 0, y: 0, vx: 0, vy: 0,
+            mass: 5000, radius: 26, color: '#ffb703', type: 'star'
+          });
+          Sim.bodies.push(sun);
+
+          const auScale = 220; // 내행성 확대 모드: 1 AU = 220px
+          const planetsData = [
+            { name: '수성 (Mercury)', au: 0.3871, m: 2.0, radius: 4.0, color: '#94a3b8', desc: '0.39 AU (5,790만 km)' },
+            { name: '금성 (Venus)', au: 0.7233, m: 5.0, radius: 5.5, color: '#fde047', desc: '0.72 AU (1억 820만 km)' },
+            { name: '지구 (Earth)', au: 1.0000, m: 6.0, radius: 6.5, color: '#38bdf8', desc: '1.00 AU (1억 4,960만 km)', hasMoon: true },
+            { name: '화성 (Mars)', au: 1.5237, m: 3.0, radius: 4.5, color: '#f87171', desc: '1.52 AU (2억 2,790만 km)' },
+            { name: '목성 (Jupiter)', au: 5.2044, m: 45.0, radius: 13.0, color: '#fb923c', desc: '5.20 AU (7억 7,860만 km)' }
+          ];
+
+          planetsData.forEach((p, idx) => {
+            const r = p.au * auScale;
+            const angle = (idx * 1.2) + 0.5;
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
+            const v = Math.sqrt(Sim.G * sun.mass / r);
+            const vx = -Math.sin(angle) * v;
+            const vy = Math.cos(angle) * v;
+
+            const planetBody = new CelestialBody({
+              name: p.name,
+              x, y, vx, vy,
+              mass: p.m, radius: p.radius, color: p.color, type: p.au >= 5 ? 'gasgiant' : 'planet'
+            });
+            planetBody.au = p.au;
+            planetBody.realDistDesc = p.desc;
+            Sim.bodies.push(planetBody);
+
+            if (p.hasMoon) {
+              const dMoon = 14;
+              const vMoonRel = Math.sqrt(Sim.G * p.m / dMoon);
+              const moon = new CelestialBody({
+                name: '달 (Moon)',
+                x: x + dMoon, y, vx, vy: vy + vMoonRel,
+                mass: 0.08, radius: 2.2, color: '#e2e8f0', type: 'moon'
+              });
+              moon.realDistDesc = '지구로부터 38.4만 km (0.0026 AU)';
+              Sim.bodies.push(moon);
+            }
+          });
+
+          Sim.camera.zoom = 0.72;
+          setTimeScale(1.0, false);
+          showToast('🪐 태양계 내행성군 (수·금·지·화·목 실제 AU 거리 비례) 로드 완료');
+          break;
+        }
+
+        case 'figure8': {
+          // 크리스 무어(Moore 1993) 및 첸시너-몽고메리(Chenciner & Montgomery 2000)의 3체 Figure-8 정밀 주기 궤도
+          const m = 1000;
+          const r = 9;
+          const L = 240;
+          const vScale = Math.sqrt((Sim.G * m) / L); // 천체역학 스케일링 팩터 ~ 2.0412
+
+          // 정밀 무차원 초기 조건: r1=(-0.97000436, 0.24308753), v3=(-0.93240737, -0.86473146)
+          const x1 = -0.97000436 * L;
+          const y1 = 0.24308753 * L;
+          const x2 = -x1;
+          const y2 = -y1;
+          const x3 = 0, y3 = 0;
+
+          const vx3 = -0.93240737 * vScale;
+          const vy3 = -0.86473146 * vScale;
+          const vx1 = -vx3 / 2;
+          const vy1 = -vy3 / 2;
+          const vx2 = vx1;
+          const vy2 = vy1;
+
+          Sim.bodies.push(
+            new CelestialBody({ name: '알파 (Alpha)', x: x1, y: y1, vx: vx1, vy: vy1, mass: m, radius: r, color: '#38bdf8', type: 'star' }),
+            new CelestialBody({ name: '베타 (Beta)', x: x2, y: y2, vx: vx2, vy: vy2, mass: m, radius: r, color: '#f43f5e', type: 'star' }),
+            new CelestialBody({ name: '감마 (Gamma)', x: x3, y: y3, vx: vx3, vy: vy3, mass: m, radius: r, color: '#10b981', type: 'star' })
+          );
+
+          Sim.camera.zoom = 1.15;
+          showToast('♾️ 3체 문제 8자 주기 궤도 (Figure-8) 로드 완료');
+          break;
+        }
+
+        case 'lagrange': {
+          // 라그랑주 점 (L4/L5 트로이 소행성군)
+          const sun = new CelestialBody({
+            name: '중심 항성 (Sun)',
+            x: 0, y: 0, vx: 0, vy: 0,
+            mass: 4000, radius: 24, color: '#f59e0b', type: 'star'
+          });
+
+          const jupiterR = 360;
+          const jupiterV = Math.sqrt(Sim.G * sun.mass / jupiterR);
+          const jupiter = new CelestialBody({
+            name: '거대 행성 (Jupiter)',
+            x: jupiterR, y: 0, vx: 0, vy: jupiterV,
+            mass: 140, radius: 13, color: '#e07a5f', type: 'gasgiant'
+          });
+
+          Sim.bodies.push(sun, jupiter);
+
+          const trojanAngles = [Math.PI / 3, -Math.PI / 3]; // +60 deg, -60 deg
+          trojanAngles.forEach((baseAngle, gIdx) => {
+            const groupName = gIdx === 0 ? 'L4 그리스군' : 'L5 트로이군';
+            for (let i = 0; i < 14; i++) {
+              const rOffset = jupiterR + (Math.random() - 0.5) * 35;
+              const aOffset = baseAngle + (Math.random() - 0.5) * 0.18;
+              const ax = Math.cos(aOffset) * rOffset;
+              const ay = Math.sin(aOffset) * rOffset;
+              const vMag = Math.sqrt(Sim.G * sun.mass / rOffset);
+              const vx = -Math.sin(aOffset) * vMag;
+              const vy = Math.cos(aOffset) * vMag;
+
+              Sim.bodies.push(new CelestialBody({
+                name: `${groupName} #${i+1}`,
+                x: ax, y: ay, vx: vx, vy: vy,
+                mass: 0.05, radius: 2.2, color: '#a7f3d0', type: 'planet'
+              }));
+            }
+          });
+
+          Sim.camera.zoom = 0.85;
+          showToast('🛡️ 라그랑주 L4/L5 트로이 소행성 안정 궤도 로드');
+          break;
+        }
+
+        case 'chaos': {
+          // 피타고라스 3체 문제 (Burrau's Pythagorean Three-Body Problem, 1913)
+          // 천체물리학에서 가장 상징적인 카오스 3체 벤치마크 (질량비 3 : 4 : 5)
+          // 3-4-5 직각삼각형 꼭짓점에 정지 상태(v=0)로 배치되어,
+          // 상호 중력으로 중심에 빨려들어가며 쉼 없는 궤도 교환, 근접 스윙바이, 카오스 댄스를 펼침
+          const S = 55;
+          const mBase = 450;
+
+          // 질량 3 (알파), 질량 4 (베타), 질량 5 (감마)
+          // 질량 중심이 (0,0)에 일치하여 계 전체가 한쪽으로 쏠리지 않음
+          const star1 = new CelestialBody({
+            name: '항성 1 (질량 3)',
+            x: -1.667 * S, y: 2.25 * S,
+            vx: 0, vy: 0,
+            mass: 3 * mBase, radius: 7.5, color: '#f43f5e', type: 'star'
+          });
+
+          const star2 = new CelestialBody({
+            name: '항성 2 (질량 4)',
+            x: -1.667 * S, y: -0.75 * S,
+            vx: 0, vy: 0,
+            mass: 4 * mBase, radius: 9.0, color: '#38bdf8', type: 'star'
+          });
+
+          const star3 = new CelestialBody({
+            name: '항성 3 (질량 5)',
+            x: 2.333 * S, y: -0.75 * S,
+            vx: 0, vy: 0,
+            mass: 5 * mBase, radius: 10.5, color: '#fbbf24', type: 'star'
+          });
+
+          Sim.bodies.push(star1, star2, star3);
+          Sim.camera.zoom = 1.35;
+          setTimeScale(1.5, false); // 박진감 넘치는 1.5배속
+          showToast('🌀 피타고라스 3체 문제 (Burrau 1913) 카오스 댄스 로드 완료');
+          break;
+        }
+
+        case 'collision': {
+          // 두 은하의 충돌 (Galaxy Collision)
+          const g1X = -260, g1Y = -60, g1Vx = 0.5, g1Vy = 0.3;
+          const g2X = 260, g2Y = 60, g2Vx = -0.5, g2Vy = -0.3;
+
+          const bh1 = new CelestialBody({
+            name: '은하 A 초대질량 블랙홀',
+            x: g1X, y: g1Y, vx: g1Vx, vy: g1Vy,
+            mass: 2500, radius: 14, color: '#38bdf8', type: 'blackhole'
+          });
+          const bh2 = new CelestialBody({
+            name: '은하 B 초대질량 블랙홀',
+            x: g2X, y: g2Y, vx: g2Vx, vy: g2Vy,
+            mass: 2500, radius: 14, color: '#f43f5e', type: 'blackhole'
+          });
+          Sim.bodies.push(bh1, bh2);
+
+          for (let i = 0; i < 70; i++) {
+            const rad = Math.random() * 120 + 25;
+            const theta = Math.random() * Math.PI * 2;
+            const vStar = Math.sqrt(Sim.G * bh1.mass / rad);
+            Sim.bodies.push(new CelestialBody({
+              name: `별 A-${i+1}`,
+              x: g1X + Math.cos(theta) * rad,
+              y: g1Y + Math.sin(theta) * rad,
+              vx: g1Vx - Math.sin(theta) * vStar,
+              vy: g1Vy + Math.cos(theta) * vStar,
+              mass: 0.05, radius: 2, color: '#93c5fd', type: 'star'
+            }));
+          }
+
+          for (let i = 0; i < 70; i++) {
+            const rad = Math.random() * 120 + 25;
+            const theta = Math.random() * Math.PI * 2;
+            const vStar = Math.sqrt(Sim.G * bh2.mass / rad);
+            Sim.bodies.push(new CelestialBody({
+              name: `별 B-${i+1}`,
+              x: g2X + Math.cos(theta) * rad,
+              y: g2Y + Math.sin(theta) * rad,
+              vx: g2Vx - Math.sin(theta) * vStar,
+              vy: g2Vy + Math.cos(theta) * vStar,
+              mass: 0.05, radius: 2, color: '#fda4af', type: 'star'
+            }));
+          }
+
+          Sim.camera.zoom = 0.7;
+          showToast('🌌 140여 개 별들의 은하 충돌 시뮬레이션 로드');
+          break;
+        }
+
+        case 'kepler': {
+          // 케플러 5대 궤도와 탈출 속도 (Kepler 5 Conic Orbits & Escape Velocity)
+          // 중심 항성 M에 대해 5가지 서로 다른 원추곡선 궤도를 4방위에 독립 배치하여
+          // 겹침/충돌 없이 원, 근일점 타원, 원일점 타원, 포물선 탈출, 쌍곡선 탈출을 한눈에 비교
+          const sun = new CelestialBody({
+            name: '태양 (중심 질량 M)',
+            x: 0, y: 0, vx: 0, vy: 0,
+            mass: 3200, radius: 22, color: '#ffb703', isFixed: true, type: 'star'
+          });
+          Sim.bodies.push(sun);
+
+          const r = 240;
+          const vCircle = Math.sqrt(Sim.G * sun.mass / r); // 원궤도 속도 v_c ~ 3.65
+          const vEscape = Math.sqrt(2) * vCircle;           // 탈출 속도 v_esc = √2 v_c ~ 5.16
+
+          // 1. 완벽한 원형 궤도 (e = 0.0) - 동쪽 (r, 0)
+          Sim.bodies.push(new CelestialBody({
+            name: '1. 원형 궤도선 (v = 1.0 v_c, e = 0)',
+            x: r, y: 0, vx: 0, vy: vCircle,
+            mass: 0.001, radius: 5, color: '#10b981', type: 'planet'
+          }));
+
+          // 2. 근일점 내부 타원 (e ~ 0.48) - 북쪽 (0, r): 이곳이 원일점(Aphelion)
+          Sim.bodies.push(new CelestialBody({
+            name: '2. 근일점 타원선 (0.72 v_c, e = 0.5)',
+            x: 0, y: r, vx: -vCircle * 0.72, vy: 0,
+            mass: 0.001, radius: 5, color: '#38bdf8', type: 'planet'
+          }));
+
+          // 3. 원일점 외부 장타원 (e ~ 0.39) - 서쪽 (-r, 0): 이곳이 근일점(Perihelion)
+          Sim.bodies.push(new CelestialBody({
+            name: '3. 장타원 궤도선 (1.18 v_c, e = 0.4)',
+            x: -r, y: 0, vx: 0, vy: -vCircle * 1.18,
+            mass: 0.001, radius: 5, color: '#f59e0b', type: 'planet'
+          }));
+
+          // 4. 포물선 탈출 궤도 (e = 1.0) - 남쪽 (0, -r)
+          Sim.bodies.push(new CelestialBody({
+            name: '4. 포물선 탈출선 (v = v_esc = √2 v_c)',
+            x: 0, y: -r, vx: vEscape * 1.01, vy: 0,
+            mass: 0.001, radius: 5, color: '#fb923c', type: 'planet'
+          }));
+
+          // 5. 쌍곡선 초고속 탈출 (e > 1.5) - 남서쪽
+          const diag = r * 0.7071;
+          Sim.bodies.push(new CelestialBody({
+            name: '5. 쌍곡선 탈출선 (1.25 v_esc, e > 1)',
+            x: -diag, y: -diag, vx: vEscape * 1.25 * 0.7071, vy: -vEscape * 1.25 * 0.7071,
+            mass: 0.001, radius: 5, color: '#f43f5e', type: 'planet'
+          }));
+
+          Sim.camera.zoom = 0.82;
+          setTimeScale(1.0, false);
+          showToast('🎯 케플러 5대 궤도군 (원·타원 2종·포물선·쌍곡선) 비교 로드 완료');
+          break;
+        }
+
+        case 'empty':
+        default:
+          showToast('🧹 빈 우주입니다. 천체를 마우스로 직접 생성해 보세요!');
+          break;
+      }
+
+      const initAcc = computeAccelerations(Sim.bodies, Sim.G, Sim.softening);
+      for (let i = 0; i < Sim.bodies.length; i++) {
+        Sim.bodies[i].ax = initAcc[i].ax;
+        Sim.bodies[i].ay = initAcc[i].ay;
+      }
+
+      updateStats();
+      updateInspectorCard();
+    }
+
+    /* ==========================================================================
+       렌더링 루프 (Canvas Rendering Loop)
+       ========================================================================== */
+
+    function worldToScreen(wx, wy) {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      return {
+        x: cx + (wx - Sim.camera.x) * Sim.camera.zoom,
+        y: cy + (wy - Sim.camera.y) * Sim.camera.zoom
+      };
+    }
+
+    function screenToWorld(sx, sy) {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      return {
+        x: Sim.camera.x + (sx - cx) / Sim.camera.zoom,
+        y: Sim.camera.y + (sy - cy) / Sim.camera.zoom
+      };
+    }
+
+    function renderSpacetimeGrid() {
+      if (!Sim.options.grid) return;
+
+      const spacing = 50;
+      const topLeft = screenToWorld(0, 0);
+      const bottomRight = screenToWorld(canvas.width, canvas.height);
+
+      const startX = Math.floor(topLeft.x / spacing) * spacing;
+      const endX = Math.ceil(bottomRight.x / spacing) * spacing;
+      const startY = Math.floor(topLeft.y / spacing) * spacing;
+      const endY = Math.ceil(bottomRight.y / spacing) * spacing;
+
+      ctx.save();
+      ctx.lineWidth = 1;
+
+      function deformPoint(wx, wy) {
+        let dxSum = 0;
+        let dySum = 0;
+        for (let i = 0; i < Sim.bodies.length; i++) {
+          const b = Sim.bodies[i];
+          if (b.mass < 5) continue;
+          const dx = b.x - wx;
+          const dy = b.y - wy;
+          const distSq = dx * dx + dy * dy + 400;
+          const pull = (Sim.G * b.mass) / (distSq * 1.8);
+          const clampedPull = Math.min(pull, 20);
+          dxSum += (dx / Math.sqrt(distSq)) * clampedPull;
+          dySum += (dy / Math.sqrt(distSq)) * clampedPull;
+        }
+        return worldToScreen(wx + dxSum, wy + dySum);
+      }
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+      for (let wy = startY; wy <= endY; wy += spacing) {
+        ctx.beginPath();
+        let first = true;
+        for (let wx = startX; wx <= endX; wx += spacing / 2) {
+          const p = deformPoint(wx, wy);
+          if (first) {
+            ctx.moveTo(p.x, p.y);
+            first = false;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      for (let wx = startX; wx <= endX; wx += spacing) {
+        ctx.beginPath();
+        let first = true;
+        for (let wy = startY; wy <= endY; wy += spacing / 2) {
+          const p = deformPoint(wx, wy);
+          if (first) {
+            ctx.moveTo(p.x, p.y);
+            first = false;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function renderTrails() {
+      if (!Sim.options.trails) return;
+
+      ctx.save();
+      for (let i = 0; i < Sim.bodies.length; i++) {
+        const b = Sim.bodies[i];
+        if (b.trail.length < 2) continue;
+
+        ctx.beginPath();
+        const startP = worldToScreen(b.trail[0].x, b.trail[0].y);
+        ctx.moveTo(startP.x, startP.y);
+
+        for (let t = 1; t < b.trail.length; t++) {
+          const p = worldToScreen(b.trail[t].x, b.trail[t].y);
+          ctx.lineTo(p.x, p.y);
+        }
+
+        ctx.strokeStyle = b.color;
+        ctx.globalAlpha = 0.35;
+        ctx.lineWidth = Math.max(1, 1.4 * Sim.camera.zoom);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function renderBodies() {
+      const now = performance.now() * 0.003;
+
+      for (let i = 0; i < Sim.bodies.length; i++) {
+        const b = Sim.bodies[i];
+        const screenPos = worldToScreen(b.x, b.y);
+        const screenR = Math.max(2, b.radius * Sim.camera.zoom);
+
+        if (
+          screenPos.x + screenR * 3 < 0 ||
+          screenPos.x - screenR * 3 > canvas.width ||
+          screenPos.y + screenR * 3 < 0 ||
+          screenPos.y - screenR * 3 > canvas.height
+        ) {
+          continue;
+        }
+
+        ctx.save();
+
+        if (b.mass >= 400 || b.type === 'star' || b.type === 'whitedwarf') {
+          const glowR = screenR * 3.2;
+          const grad = ctx.createRadialGradient(
+            screenPos.x, screenPos.y, screenR * 0.5,
+            screenPos.x, screenPos.y, glowR
+          );
+          grad.addColorStop(0, b.color);
+          grad.addColorStop(0.4, b.color + '55');
+          grad.addColorStop(1, 'transparent');
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, glowR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (b.type === 'blackhole') {
+          const discR = screenR * 2.8;
+          const discGrad = ctx.createRadialGradient(
+            screenPos.x, screenPos.y, screenR,
+            screenPos.x, screenPos.y, discR
+          );
+          discGrad.addColorStop(0, 'rgba(129, 140, 248, 0.8)');
+          discGrad.addColorStop(0.5, 'rgba(236, 72, 153, 0.4)');
+          discGrad.addColorStop(1, 'transparent');
+
+          ctx.fillStyle = discGrad;
+          ctx.beginPath();
+          ctx.ellipse(screenPos.x, screenPos.y, discR, discR * 0.45, now, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, screenR, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = '#a5b4fc';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          const grad = ctx.createRadialGradient(
+            screenPos.x - screenR * 0.35, screenPos.y - screenR * 0.35, screenR * 0.1,
+            screenPos.x, screenPos.y, screenR
+          );
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.35, b.color);
+          grad.addColorStop(1, '#050b1a');
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, screenR, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = b.color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // 토성 고리 시각화 (실제 행성 비주얼 재현)
+        if (b.hasRing || b.name.includes('토성')) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(253, 224, 71, 0.65)';
+          ctx.lineWidth = Math.max(1.5, screenR * 0.35);
+          ctx.beginPath();
+          ctx.ellipse(screenPos.x, screenPos.y, screenR * 2.3, screenR * 0.7, -0.35, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (Sim.selectedBody === b) {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, screenR + 8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        if (Sim.options.vectors && (b.vx !== 0 || b.vy !== 0)) {
+          const vScale = 14 * Sim.camera.zoom;
+          const endX = screenPos.x + b.vx * vScale;
+          const endY = screenPos.y + b.vy * vScale;
+
+          ctx.strokeStyle = 'rgba(74, 222, 128, 0.85)';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(screenPos.x, screenPos.y);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+
+          const angle = Math.atan2(b.vy, b.vx);
+          ctx.fillStyle = '#4ade80';
+          ctx.beginPath();
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(endX - 7 * Math.cos(angle - 0.4), endY - 7 * Math.sin(angle - 0.4));
+          ctx.lineTo(endX - 7 * Math.cos(angle + 0.4), endY - 7 * Math.sin(angle + 0.4));
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        if (Sim.options.labels) {
+          ctx.fillStyle = 'rgba(241, 245, 249, 0.85)';
+          ctx.font = '11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(b.name, screenPos.x, screenPos.y + screenR + 14);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function renderParticles() {
+      ctx.save();
+      for (let i = 0; i < Sim.particles.length; i++) {
+        const p = Sim.particles[i];
+        const screenP = worldToScreen(p.x, p.y);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(screenP.x, screenP.y, p.size * Sim.camera.zoom, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function renderBarycenter() {
+      if (!Sim.options.barycenter || Sim.bodies.length === 0) return;
+
+      let totalM = 0;
+      let sumX = 0;
+      let sumY = 0;
+      for (let i = 0; i < Sim.bodies.length; i++) {
+        const b = Sim.bodies[i];
+        totalM += b.mass;
+        sumX += b.x * b.mass;
+        sumY += b.y * b.mass;
+      }
+      if (totalM === 0) return;
+
+      const bx = sumX / totalM;
+      const by = sumY / totalM;
+      const sp = worldToScreen(bx, by);
+
+      ctx.save();
+      ctx.strokeStyle = '#f43f5e';
+      ctx.fillStyle = '#f43f5e';
+      ctx.lineWidth = 1.5;
+
+      const size = 10;
+      ctx.beginPath();
+      ctx.moveTo(sp.x - size, sp.y);
+      ctx.lineTo(sp.x + size, sp.y);
+      ctx.moveTo(sp.x, sp.y - size);
+      ctx.lineTo(sp.x, sp.y + size);
+      ctx.stroke();
+
+      ctx.font = '10px monospace';
+      ctx.fillText('공통 질량중심', sp.x + 12, sp.y - 4);
+      ctx.restore();
+    }
+
+    function renderDragLaunchGuide() {
+      if (!Sim.dragLaunch.active) return;
+
+      const start = Sim.dragLaunch;
+      const cur = { x: start.currentX, y: start.currentY };
+      const startWorld = screenToWorld(start.startX, start.startY);
+      const endWorld = screenToWorld(cur.x, cur.y);
+
+      // 속도 벡터 계산 (마우스 발사 또는 자동 궤도)
+      let vx = 0;
+      let vy = 0;
+
+      if (Sim.spawnMode === 'auto_orbit') {
+        let central = null;
+        let minDist = Infinity;
+        for (let b of Sim.bodies) {
+          if (b.mass < 10) continue;
+          const d = Math.hypot(b.x - startWorld.x, b.y - startWorld.y);
+          if (d < minDist) {
+            minDist = d;
+            central = b;
+          }
+        }
+        if (central && minDist > 10) {
+          const vMag = Math.sqrt((Sim.G * central.mass) / minDist);
+          const angle = Math.atan2(startWorld.y - central.y, startWorld.x - central.x);
+          vx = central.vx - Math.sin(angle) * vMag;
+          vy = central.vy + Math.cos(angle) * vMag;
+        } else {
+          vx = (endWorld.x - startWorld.x) * 0.04;
+          vy = (endWorld.y - startWorld.y) * 0.04;
+        }
+      } else {
+        vx = (endWorld.x - startWorld.x) * 0.04;
+        vy = (endWorld.y - startWorld.y) * 0.04;
+      }
+
+      ctx.save();
+
+      // 1. 미래 궤적 시뮬레이션 예측선 (Trajectory Prediction, 100스텝)
+      if (Sim.bodies.length > 0 && (vx !== 0 || vy !== 0)) {
+        let simX = startWorld.x;
+        let simY = startWorld.y;
+        let simVx = vx;
+        let simVy = vy;
+        const predDt = 0.5 * Sim.timeScale;
+        const soft2 = Sim.softening * Sim.softening;
+
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        const firstP = worldToScreen(simX, simY);
+        ctx.moveTo(firstP.x, firstP.y);
+
+        let collided = false;
+        let colPos = null;
+
+        for (let step = 0; step < 110; step++) {
+          let ax = 0;
+          let ay = 0;
+
+          for (let b of Sim.bodies) {
+            const dx = b.x - simX;
+            const dy = b.y - simY;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < (b.radius + 4) * (b.radius + 4)) {
+              collided = true;
+              colPos = worldToScreen(simX, simY);
+              break;
+            }
+            const dist = Math.sqrt(distSq + soft2);
+            const f = (Sim.G * b.mass) / ((distSq + soft2) * dist);
+            ax += f * dx;
+            ay += f * dy;
+          }
+
+          if (collided) break;
+
+          simVx += ax * predDt;
+          simVy += ay * predDt;
+          simX += simVx * predDt;
+          simY += simVy * predDt;
+
+          const sp = worldToScreen(simX, simY);
+          ctx.lineTo(sp.x, sp.y);
+        }
+
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 충돌 예상 지점 X 마커
+        if (collided && colPos) {
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(colPos.x - 6, colPos.y - 6);
+          ctx.lineTo(colPos.x + 6, colPos.y + 6);
+          ctx.moveTo(colPos.x + 6, colPos.y - 6);
+          ctx.lineTo(colPos.x - 6, colPos.y + 6);
+          ctx.stroke();
+        }
+      }
+
+      // 2. 시작 위치 가상 천체 미리보기
+      const previewR = Math.max(3, parseFloat(document.getElementById('param-radius').value) * Sim.camera.zoom);
+      ctx.fillStyle = document.getElementById('param-color').value + 'aa';
+      ctx.beginPath();
+      ctx.arc(start.startX, start.startY, previewR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 3. 발사 방향 드래그 화살표
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(start.startX, start.startY);
+      ctx.lineTo(cur.x, cur.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const speedMag = Math.hypot(vx, vy).toFixed(2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`속도: ${speedMag} v | 궤적 예측 활성`, cur.x + 12, cur.y + 4);
+
+      ctx.restore();
+    }
+
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsTimer = 0;
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+
+      const realDt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      frameCount++;
+      fpsTimer += realDt;
+      if (fpsTimer >= 0.5) {
+        document.getElementById('stat-fps').textContent = Math.round(frameCount / fpsTimer);
+        frameCount = 0;
+        fpsTimer = 0;
+      }
+
+      if (!Sim.isPaused) {
+        const simDt = realDt * Sim.timeScale;
+        stepPhysics(simDt);
+        Sim.elapsedTime += simDt;
+        document.getElementById('stat-time').textContent = (Sim.elapsedTime * 0.08).toFixed(1) + ' 년';
+      }
+
+      if (Sim.camera.targetBody && Sim.bodies.includes(Sim.camera.targetBody)) {
+        Sim.camera.x += (Sim.camera.targetBody.x - Sim.camera.x) * 0.15;
+        Sim.camera.y += (Sim.camera.targetBody.y - Sim.camera.y) * 0.15;
+      } else if (Sim.camera.followBarycenter && Sim.bodies.length > 0) {
+        let totalM = 0, sumX = 0, sumY = 0;
+        for (let b of Sim.bodies) {
+          totalM += b.mass;
+          sumX += b.x * b.mass;
+          sumY += b.y * b.mass;
+        }
+        if (totalM > 0) {
+          Sim.camera.x += (sumX / totalM - Sim.camera.x) * 0.15;
+          Sim.camera.y += (sumY / totalM - Sim.camera.y) * 0.15;
+        }
+      }
+
+      ctx.fillStyle = '#04060f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      renderSpacetimeGrid();
+      renderTrails();
+      renderBodies();
+      renderParticles();
+      renderBarycenter();
+      renderDragLaunchGuide();
+
+      if (Sim.selectedBody) {
+        updateInspectorValues();
+      }
+    }
+
+    /* ==========================================================================
+       사용자 인터랙션 & 이벤트 핸들링 (Mouse, Keyboard, Controls)
+       ========================================================================== */
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    let toastTimeout;
+    function showToast(msg, icon = '✨') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      document.getElementById('toast-icon').textContent = icon;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2400);
+    }
+
+    // 마우스 및 터치 조작 상태 변수
+    let isMouseDownLeft = false;
+    let leftDownStart = { x: 0, y: 0 };
+    let didDragLeft = false;
+
+    // 1. mousedown 이벤트
+    canvas.addEventListener('mousedown', (e) => {
+      // 우클릭 (e.button === 2): 천체 생성 전용
+      if (e.button === 2) {
+        e.preventDefault();
+        const worldPos = screenToWorld(e.clientX, e.clientY);
+        if (Sim.spawnMode === 'static') {
+          spawnBodyAt(worldPos.x, worldPos.y, 0, 0);
+        } else {
+          Sim.dragLaunch.active = true;
+          Sim.dragLaunch.startX = e.clientX;
+          Sim.dragLaunch.startY = e.clientY;
+          Sim.dragLaunch.currentX = e.clientX;
+          Sim.dragLaunch.currentY = e.clientY;
+          canvas.style.cursor = 'crosshair';
+        }
+        return;
+      }
+
+      // 좌클릭 (e.button === 0) 또는 휠클릭 (e.button === 1): 카메라 이동 및 천체 선택
+      if (e.button === 0 || e.button === 1) {
+        isMouseDownLeft = true;
+        didDragLeft = false;
+        leftDownStart = { x: e.clientX, y: e.clientY };
+
+        Sim.camera.isDragging = true;
+        Sim.camera.dragStartX = e.clientX;
+        Sim.camera.dragStartY = e.clientY;
+        Sim.camera.camStartX = Sim.camera.x;
+        Sim.camera.camStartY = Sim.camera.y;
+        Sim.camera.targetBody = null;
+        Sim.camera.followBarycenter = false;
+      }
+    });
+
+    // 2. mousemove 이벤트
+    window.addEventListener('mousemove', (e) => {
+      // 카메라 좌클릭/휠클릭 드래그 패닝
+      if (Sim.camera.isDragging) {
+        const distMoved = Math.hypot(e.clientX - leftDownStart.x, e.clientY - leftDownStart.y);
+        if (distMoved > 3) {
+          didDragLeft = true;
+          canvas.style.cursor = 'grabbing';
+        }
+        const dx = (e.clientX - Sim.camera.dragStartX) / Sim.camera.zoom;
+        const dy = (e.clientY - Sim.camera.dragStartY) / Sim.camera.zoom;
+        Sim.camera.x = Sim.camera.camStartX - dx;
+        Sim.camera.y = Sim.camera.camStartY - dy;
+      }
+
+      // 우클릭 행성 발사 가이드라인 실시간 추적
+      if (Sim.dragLaunch.active) {
+        Sim.dragLaunch.currentX = e.clientX;
+        Sim.dragLaunch.currentY = e.clientY;
+      }
+    });
+
+    // 3. mouseup 이벤트
+    window.addEventListener('mouseup', (e) => {
+      // 좌클릭 또는 휠클릭 해제 시:
+      if (e.button === 0 || e.button === 1) {
+        Sim.camera.isDragging = false;
+        canvas.style.cursor = 'grab';
+
+        // 드래그가 아닌 단순 좌클릭이었던 경우: 천체 선택 판정
+        if (!didDragLeft && e.button === 0) {
+          // 패널 내부를 클릭한 경우 캔버스 천체 선택/해제 로직 건너뛰기
+          if (e.target !== canvas && !e.target.closest('#sim-canvas')) {
+            isMouseDownLeft = false;
+            return;
+          }
+
+          const worldPos = screenToWorld(e.clientX, e.clientY);
+          let clickedBody = null;
+
+          for (let i = Sim.bodies.length - 1; i >= 0; i--) {
+            const b = Sim.bodies[i];
+            const dx = b.x - worldPos.x;
+            const dy = b.y - worldPos.y;
+            const hitRadius = Math.max(b.radius + 6, 14 / Sim.camera.zoom);
+            if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+              clickedBody = b;
+              break;
+            }
+          }
+
+          Sim.selectedBody = clickedBody;
+          updateInspectorCard();
+        }
+        isMouseDownLeft = false;
+      }
+
+      // 우클릭 해제 시: 행성 생성 및 발사 완료!
+      if (e.button === 2 && Sim.dragLaunch.active) {
+        Sim.dragLaunch.active = false;
+        canvas.style.cursor = 'grab';
+
+        const startWorld = screenToWorld(Sim.dragLaunch.startX, Sim.dragLaunch.startY);
+        const endWorld = screenToWorld(Sim.dragLaunch.currentX, Sim.dragLaunch.currentY);
+
+        let vx = 0;
+        let vy = 0;
+
+        if (Sim.spawnMode === 'auto_orbit') {
+          let central = null;
+          let minDist = Infinity;
+          for (let b of Sim.bodies) {
+            if (b.mass < 10) continue;
+            const d = Math.hypot(b.x - startWorld.x, b.y - startWorld.y);
+            if (d < minDist) {
+              minDist = d;
+              central = b;
+            }
+          }
+
+          if (central && minDist > 10) {
+            const vMag = Math.sqrt((Sim.G * central.mass) / minDist);
+            const angle = Math.atan2(startWorld.y - central.y, startWorld.x - central.x);
+            vx = central.vx - Math.sin(angle) * vMag;
+            vy = central.vy + Math.cos(angle) * vMag;
+            showToast(`🎯 [${central.name}] 주위 안정 궤도 생성!`);
+          } else {
+            vx = (endWorld.x - startWorld.x) * 0.04;
+            vy = (endWorld.y - startWorld.y) * 0.04;
+          }
+        } else {
+          vx = (endWorld.x - startWorld.x) * 0.04;
+          vy = (endWorld.y - startWorld.y) * 0.04;
+        }
+
+        spawnBodyAt(startWorld.x, startWorld.y, vx, vy);
+      }
+    });
+
+    // 휠 줌 인/아웃
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+      const mouseBefore = screenToWorld(e.clientX, e.clientY);
+
+      Sim.camera.zoom = Math.max(0.008, Math.min(25.0, Sim.camera.zoom * zoomFactor));
+      document.getElementById('stat-zoom').textContent = Math.round(Sim.camera.zoom * 100) + '%';
+
+      const mouseAfter = screenToWorld(e.clientX, e.clientY);
+      Sim.camera.x += (mouseBefore.x - mouseAfter.x);
+      Sim.camera.y += (mouseBefore.y - mouseAfter.y);
+    }, { passive: false });
+
+    // 크롬북 및 터치스크린 디바이스 제스처 (1손가락 이동, 2손가락 핀치 줌)
+    let touchStartDist = 0;
+    let touchLastPos = { x: 0, y: 0 };
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        touchLastPos = { x: t.clientX, y: t.clientY };
+        Sim.camera.targetBody = null;
+        Sim.camera.followBarycenter = false;
+      } else if (e.touches.length === 2) {
+        touchStartDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        const dx = (t.clientX - touchLastPos.x) / Sim.camera.zoom;
+        const dy = (t.clientY - touchLastPos.y) / Sim.camera.zoom;
+        Sim.camera.x -= dx;
+        Sim.camera.y -= dy;
+        touchLastPos = { x: t.clientX, y: t.clientY };
+      } else if (e.touches.length === 2) {
+        const newDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if (touchStartDist > 0) {
+          const factor = newDist / touchStartDist;
+          Sim.camera.zoom = Math.max(0.008, Math.min(25.0, Sim.camera.zoom * factor));
+          document.getElementById('stat-zoom').textContent = Math.round(Sim.camera.zoom * 100) + '%';
+        }
+        touchStartDist = newDist;
+      }
+    }, { passive: false });
+
+    // 우클릭 컨텍스트 메뉴 방지
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    function spawnBodyAt(x, y, vx, vy) {
+      const name = document.getElementById('param-name').value || '신규 천체';
+      const mass = parseFloat(document.getElementById('param-mass').value) || 10;
+      const radius = parseFloat(document.getElementById('param-radius').value) || 6;
+      const color = document.getElementById('param-color').value || '#38bdf8';
+      const isFixed = document.getElementById('param-fixed').checked;
+
+      const newBody = new CelestialBody({
+        name,
+        x,
+        y,
+        vx,
+        vy,
+        mass,
+        radius,
+        color,
+        isFixed,
+        type: Sim.currentTemplate
+      });
+
+      const acc = computeAccelerations([...Sim.bodies, newBody], Sim.G, Sim.softening);
+      newBody.ax = acc[acc.length - 1].ax;
+      newBody.ay = acc[acc.length - 1].ay;
+
+      Sim.bodies.push(newBody);
+      Sim.selectedBody = newBody;
+
+      updateStats();
+      updateInspectorCard();
+      showToast(`✨ [${name}] 생성 완료!`);
+    }
+
+    /* ==========================================================================
+       UI 바인딩 및 패널 업데이트
+       ========================================================================== */
+
+    function updateStats() {
+      document.getElementById('stat-count').textContent = Sim.bodies.length;
+    }
+
+    document.querySelectorAll('.template-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tplKey = btn.dataset.type;
+        Sim.currentTemplate = tplKey;
+        const tpl = Templates[tplKey];
+
+        document.getElementById('param-name').value = tpl.name;
+        document.getElementById('param-mass').value = tpl.mass;
+        document.getElementById('param-radius').value = tpl.radius;
+        document.getElementById('param-color').value = tpl.color;
+        document.getElementById('param-fixed').checked = tpl.fixed;
+      });
+    });
+
+    document.querySelectorAll('.mode-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        Sim.spawnMode = pill.dataset.mode;
+
+        const desc = document.getElementById('mode-desc');
+        if (Sim.spawnMode === 'drag') {
+          desc.textContent = '화면을 우클릭 후 드래그하여 발사 속도 벡터를 지정하세요. (좌클릭은 화면 이동)';
+        } else if (Sim.spawnMode === 'auto_orbit') {
+          desc.textContent = '항성 주위를 우클릭 후 드래그하면 안정적인 공전 속도가 자동 부여됩니다.';
+        } else {
+          desc.textContent = '화면을 우클릭하면 정지 상태의 천체가 즉시 배치됩니다.';
+        }
+      });
+    });
+
+    const presetSelect = document.getElementById('preset-select');
+    presetSelect.addEventListener('change', (e) => {
+      loadPreset(e.target.value);
+    });
+
+    const btnPlayPause = document.getElementById('btn-play-pause');
+    btnPlayPause.addEventListener('click', () => {
+      Sim.isPaused = !Sim.isPaused;
+      document.getElementById('icon-play-pause').textContent = Sim.isPaused ? '▶️' : '⏸️';
+      document.getElementById('text-play-pause').textContent = Sim.isPaused ? '재생' : '일시정지';
+      showToast(Sim.isPaused ? '일시 정지됨' : '시뮬레이션 재생 중');
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      loadPreset(presetSelect.value);
+    });
+
+    document.getElementById('btn-clear-trails').addEventListener('click', () => {
+      Sim.bodies.forEach(b => b.trail = []);
+      showToast('궤적을 모두 지웠습니다.');
+    });
+
+    const sliderG = document.getElementById('slider-g');
+    sliderG.addEventListener('input', (e) => {
+      Sim.G = parseFloat(e.target.value);
+      document.getElementById('val-g').textContent = Sim.G.toFixed(1);
+    });
+
+    // 배속 설정 통합 함수 (사이드바 슬라이더, 상단 바 슬라이더 및 프리셋 버튼 상호 동기화)
+    function setTimeScale(scale, notify = false) {
+      scale = Math.max(0.05, Math.min(50.0, parseFloat(scale)));
+      Sim.timeScale = scale;
+
+      const scaleStr = scale >= 10 ? scale.toFixed(0) + 'x' : scale.toFixed(1) + 'x';
+
+      // 상단 바 UI 업데이트
+      const topSlider = document.getElementById('top-slider-timescale');
+      const topVal = document.getElementById('top-val-timescale');
+      if (topSlider) topSlider.value = scale;
+      if (topVal) topVal.textContent = scaleStr;
+
+      // 좌측 사이드바 UI 업데이트
+      const sideSlider = document.getElementById('slider-timescale');
+      const sideVal = document.getElementById('val-timescale');
+      if (sideSlider) sideSlider.value = Math.min(10, scale);
+      if (sideVal) sideVal.textContent = scaleStr;
+
+      // 배속 버튼 active 클래스 갱신
+      document.querySelectorAll('.btn-speed').forEach(btn => {
+        const btnSpeed = parseFloat(btn.dataset.speed);
+        if (Math.abs(btnSpeed - scale) < 0.05) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      if (notify) {
+        showToast(`⚡ 시간 배속: ${scaleStr}`);
+      }
+    }
+
+    // 상단 배속 버튼 클릭 이벤트
+    document.querySelectorAll('.btn-speed').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setTimeScale(btn.dataset.speed, true);
+      });
+    });
+
+    // 상단 배속 슬라이더 이벤트
+    const topSliderTimescale = document.getElementById('top-slider-timescale');
+    if (topSliderTimescale) {
+      topSliderTimescale.addEventListener('input', (e) => {
+        setTimeScale(e.target.value);
+      });
+    }
+
+    const sliderTimescale = document.getElementById('slider-timescale');
+    sliderTimescale.addEventListener('input', (e) => {
+      setTimeScale(e.target.value);
+    });
+
+    document.getElementById('opt-trails').addEventListener('change', e => Sim.options.trails = e.target.checked);
+    document.getElementById('opt-vectors').addEventListener('change', e => Sim.options.vectors = e.target.checked);
+    document.getElementById('opt-grid').addEventListener('change', e => Sim.options.grid = e.target.checked);
+    document.getElementById('opt-labels').addEventListener('change', e => Sim.options.labels = e.target.checked);
+    document.getElementById('opt-collisions').addEventListener('change', e => Sim.options.collisions = e.target.checked);
+    document.getElementById('opt-barycenter').addEventListener('change', e => Sim.options.barycenter = e.target.checked);
+
+    document.getElementById('btn-camera-reset').addEventListener('click', () => {
+      Sim.camera.targetBody = null;
+      Sim.camera.followBarycenter = false;
+      Sim.camera.x = 0;
+      Sim.camera.y = 0;
+      Sim.camera.zoom = 1.0;
+      document.getElementById('stat-zoom').textContent = '100%';
+      showToast('카메라 뷰 복귀 완료');
+    });
+
+    document.getElementById('btn-camera-barycenter').addEventListener('click', () => {
+      Sim.camera.targetBody = null;
+      Sim.camera.followBarycenter = true;
+      showToast('공통 질량중심 추적 모드 활성화');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        btnPlayPause.click();
+      } else if (e.code === 'KeyR') {
+        document.getElementById('btn-reset').click();
+      } else if (e.code === 'KeyC') {
+        document.getElementById('btn-clear-trails').click();
+      } else if (e.key === '1') {
+        document.querySelector('.mode-pill[data-mode="drag"]').click();
+      } else if (e.key === '2') {
+        document.querySelector('.mode-pill[data-mode="auto_orbit"]').click();
+      } else if (e.key === '3') {
+        document.querySelector('.mode-pill[data-mode="static"]').click();
+      } else if (e.key === 'BracketLeft' || e.key === '[') {
+        // 배속 감소
+        const newSpeed = Math.max(0.1, Sim.timeScale <= 1.0 ? Sim.timeScale - 0.2 : Sim.timeScale * 0.7);
+        setTimeScale(newSpeed, true);
+      } else if (e.key === 'BracketRight' || e.key === ']') {
+        // 배속 증가
+        const newSpeed = Math.min(30.0, Sim.timeScale < 1.0 ? Sim.timeScale + 0.2 : Sim.timeScale * 1.4);
+        setTimeScale(newSpeed, true);
+      } else if (e.key === '0') {
+        // 1배속 복귀
+        setTimeScale(1.0, true);
+      }
+    });
+
+    const helpModal = document.getElementById('help-modal');
+    document.getElementById('btn-help').addEventListener('click', () => {
+      helpModal.style.display = 'flex';
+    });
+    document.getElementById('btn-help-close').addEventListener('click', () => {
+      helpModal.style.display = 'none';
+    });
+    document.getElementById('btn-help-ok').addEventListener('click', () => {
+      helpModal.style.display = 'none';
+    });
+
+    // 전체화면 토글
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    if (btnFullscreen) {
+      btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            showToast('전체화면 전환 실패: ' + err.message);
+          });
+        } else {
+          document.exitFullscreen().catch(err => console.error(err));
+        }
+      });
+      document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+          btnFullscreen.innerHTML = '🗗 창모드';
+          btnFullscreen.title = '창모드로 복귀';
+        } else {
+          btnFullscreen.innerHTML = '⛶ 전체화면';
+          btnFullscreen.title = '전체화면 전환';
+        }
+      });
+    }
+
+    // 우주 마법사: 소행성대 36개 고리 일괄 생성
+    const btnSpawnBelt = document.getElementById('btn-spawn-belt');
+    if (btnSpawnBelt) {
+      btnSpawnBelt.addEventListener('click', () => {
+        let central = null;
+        let maxM = 0;
+        for (let b of Sim.bodies) {
+          if (b.mass > maxM) {
+            maxM = b.mass;
+            central = b;
+          }
+        }
+
+        const cx = central ? central.x : 0;
+        const cy = central ? central.y : 0;
+        const cvx = central ? central.vx : 0;
+        const cvy = central ? central.vy : 0;
+        const cMass = central ? central.mass : 3000;
+
+        const count = 36;
+        const baseRadius = central ? Math.max(central.radius * 6.5, 230) : 250;
+        const beltWidth = 65;
+        const colors = ['#94a3b8', '#cbd5e1', '#a0aec0', '#e2e8f0', '#718096'];
+
+        for (let i = 0; i < count; i++) {
+          const angle = (i / count) * Math.PI * 2 + (Math.random() * 0.12 - 0.06);
+          const r = baseRadius + (Math.random() - 0.5) * beltWidth;
+          const px = cx + Math.cos(angle) * r;
+          const py = cy + Math.sin(angle) * r;
+
+          const vMag = Math.sqrt((Sim.G * cMass) / r) * (1 + (Math.random() - 0.5) * 0.03);
+          const vx = cvx - Math.sin(angle) * vMag;
+          const vy = cvy + Math.cos(angle) * vMag;
+
+          Sim.bodies.push(new CelestialBody({
+            name: `소행성 #${i + 1}`,
+            x: px,
+            y: py,
+            vx: vx,
+            vy: vy,
+            mass: Math.random() * 0.15 + 0.05,
+            radius: Math.random() * 1.5 + 1.8,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            type: 'moon'
+          }));
+        }
+
+        updateStats();
+        showToast(`🪐 ${central ? `[${central.name}] 주위에 ` : ''}36개의 소행성대 고리를 형성했습니다!`);
+      });
+    }
+
+    // 우주 마법사: 장주기 혜성 발사
+    const btnSpawnComet = document.getElementById('btn-spawn-comet');
+    if (btnSpawnComet) {
+      btnSpawnComet.addEventListener('click', () => {
+        let central = null;
+        let maxM = 0;
+        for (let b of Sim.bodies) {
+          if (b.mass > maxM) {
+            maxM = b.mass;
+            central = b;
+          }
+        }
+
+        const cx = central ? central.x : 0;
+        const cy = central ? central.y : 0;
+        const cvx = central ? central.vx : 0;
+        const cvy = central ? central.vy : 0;
+        const cMass = central ? central.mass : 3000;
+
+        const startAngle = Math.random() * Math.PI * 2;
+        const startDist = 550;
+        const px = cx + Math.cos(startAngle) * startDist;
+        const py = cy + Math.sin(startAngle) * startDist;
+
+        const targetPeri = 60;
+        const vCometMag = Math.sqrt((2 * Sim.G * cMass) / startDist) * 0.94;
+
+        const radialX = (cx - px) / startDist;
+        const radialY = (cy - py) / startDist;
+        const perpX = -radialY;
+        const perpY = radialX;
+        const impactParam = targetPeri / startDist;
+        const vx = cvx + (radialX + perpX * impactParam) * vCometMag;
+        const vy = cvy + (radialY + perpY * impactParam) * vCometMag;
+
+        const comet = new CelestialBody({
+          name: `혜성 C/${Math.floor(Math.random() * 900 + 100)}`,
+          x: px,
+          y: py,
+          vx: vx,
+          vy: vy,
+          mass: 0.12,
+          radius: 2.8,
+          color: '#a5f3fc',
+          type: 'moon'
+        });
+
+        Sim.bodies.push(comet);
+        Sim.selectedBody = comet;
+        updateStats();
+        updateInspectorCard();
+        showToast('☄️ 장주기 혜성이 태양계를 향해 스윙바이 궤도로 진입합니다!');
+      });
+    }
+
+    // 우주 마법사: 초신성 폭발
+    const btnSupernova = document.getElementById('btn-spawn-supernova');
+    if (btnSupernova) {
+      btnSupernova.addEventListener('click', () => {
+        let star = Sim.selectedBody;
+        if (!star || star.mass < 100) {
+          let maxM = 0;
+          for (let b of Sim.bodies) {
+            if (b.mass > maxM) {
+              maxM = b.mass;
+              star = b;
+            }
+          }
+        }
+
+        if (!star || star.mass < 50) {
+          showToast('폭발시킬 거대 항성이 존재하지 않습니다.');
+          return;
+        }
+
+        const sx = star.x;
+        const sy = star.y;
+        const svx = star.vx;
+        const svy = star.vy;
+        const oldName = star.name;
+        const origMass = star.mass;
+
+        const remnantMass = Math.max(20, origMass * 0.3);
+        const remnantRadius = Math.max(4, star.radius * 0.32);
+        const isBlackHole = origMass >= 1800;
+
+        const remnant = new CelestialBody({
+          name: isBlackHole ? `블랙홀 잔해 (${oldName})` : `중성자별 잔해 (${oldName})`,
+          x: sx,
+          y: sy,
+          vx: svx,
+          vy: svy,
+          mass: remnantMass,
+          radius: remnantRadius,
+          color: isBlackHole ? '#0f172a' : '#caf0f8',
+          type: isBlackHole ? 'blackhole' : 'whitedwarf'
+        });
+
+        const fragCount = 32;
+        const fragMass = (origMass * 0.7) / fragCount;
+        const frags = [];
+
+        for (let i = 0; i < fragCount; i++) {
+          const angle = (i / fragCount) * Math.PI * 2 + (Math.random() * 0.2 - 0.1);
+          const speed = Math.random() * 5.0 + 3.0;
+          frags.push(new CelestialBody({
+            name: `성운 파편 #${i + 1}`,
+            x: sx + Math.cos(angle) * (star.radius + 8),
+            y: sy + Math.sin(angle) * (star.radius + 8),
+            vx: svx + Math.cos(angle) * speed,
+            vy: svy + Math.sin(angle) * speed,
+            mass: Math.max(0.01, fragMass),
+            radius: Math.random() * 2 + 1.8,
+            color: Math.random() > 0.4 ? '#fb7171' : '#f59e0b',
+            type: 'moon'
+          }));
+        }
+
+        createCollisionSparks(sx, sy, '#ffffff', '#fbbf24');
+        Sim.bodies = Sim.bodies.filter(b => b !== star);
+        Sim.bodies.push(remnant, ...frags);
+
+        if (Sim.camera.targetBody === star) Sim.camera.targetBody = remnant;
+        Sim.selectedBody = remnant;
+
+        updateStats();
+        updateInspectorCard();
+        showToast(`💥 [${oldName}] 초신성 폭발! 중심에 ${isBlackHole ? '블랙홀' : '중성자별'} 잔해가 탄생했습니다.`);
+      });
+    }
+
+    /* ==========================================================================
+       인스펙터 카드 렌더링 & 조작
+       ========================================================================== */
+
+    // 인스펙터 버튼 클릭 전역 핸들러 (어떤 환경에서도 100% 동작 보장)
+    window.handleInspectorAction = function(action) {
+      const body = Sim.selectedBody;
+      if (!body) {
+        showToast('선택된 천체가 없습니다.');
+        return;
+      }
+
+      if (action === 'delete') {
+        createCollisionSparks(body.x, body.y, body.color, '#ff4757');
+        Sim.bodies = Sim.bodies.filter(b => b !== body);
+        if (Sim.camera.targetBody === body) Sim.camera.targetBody = null;
+        Sim.selectedBody = null;
+        updateStats();
+        updateInspectorCard();
+        showToast(`🗑️ [${body.name}]을(를) 삭제했습니다.`);
+      }
+      else if (action === 'track') {
+        if (Sim.camera.targetBody === body) {
+          Sim.camera.targetBody = null;
+          showToast('카메라 추적을 해제했습니다.');
+        } else {
+          Sim.camera.targetBody = body;
+          Sim.camera.followBarycenter = false;
+          // 카메라를 천체 위치로 즉시 센터링
+          Sim.camera.x = body.x;
+          Sim.camera.y = body.y;
+          showToast(`🎥 [${body.name}] 카메라 추적 활성화!`);
+        }
+        updateInspectorCard();
+      }
+      else if (action === 'stop') {
+        body.vx = 0;
+        body.vy = 0;
+        body.ax = 0;
+        body.ay = 0;
+        updateInspectorCard();
+        showToast(`🛑 [${body.name}]의 속도를 0으로 완전히 정지했습니다.`);
+      }
+      else if (action === 'explode') {
+        const fragments = 16;
+        const fragMass = Math.max(0.01, body.mass / fragments);
+        const fragRadius = Math.max(1.8, body.radius / 2.8);
+
+        for (let i = 0; i < fragments; i++) {
+          const angle = (i / fragments) * Math.PI * 2;
+          const burstSpeed = Math.random() * 3.5 + 2.0;
+          Sim.bodies.push(new CelestialBody({
+            name: `${body.name} 파편 #${i+1}`,
+            x: body.x + Math.cos(angle) * (body.radius + 6),
+            y: body.y + Math.sin(angle) * (body.radius + 6),
+            vx: body.vx + Math.cos(angle) * burstSpeed,
+            vy: body.vy + Math.sin(angle) * burstSpeed,
+            mass: fragMass,
+            radius: fragRadius,
+            color: body.color,
+            type: 'planet'
+          }));
+        }
+
+        createCollisionSparks(body.x, body.y, body.color, '#ffd32a');
+        Sim.bodies = Sim.bodies.filter(b => b !== body);
+        if (Sim.camera.targetBody === body) Sim.camera.targetBody = null;
+        Sim.selectedBody = null;
+        updateStats();
+        updateInspectorCard();
+        showToast(`💥 [${body.name}]이(가) ${fragments}개의 파편으로 폭발 분해되었습니다!`);
+      }
+    };
+
+    function updateInspectorCard() {
+      const card = document.getElementById('inspector-card');
+      const body = Sim.selectedBody;
+
+      if (!body || !Sim.bodies.includes(body)) {
+        card.innerHTML = `<div class="card-empty">화면의 천체를 마우스로 클릭하면<br>실시간 물리 상태를 분석합니다.</div>`;
+        return;
+      }
+
+      const isTracking = Sim.camera.targetBody === body;
+      const speed = Math.hypot(body.vx, body.vy).toFixed(2);
+
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="color" value="${body.color}" onchange="if(Sim.selectedBody) Sim.selectedBody.color=this.value;" style="width: 20px; height: 20px; padding: 0; border: none; border-radius: 50%; cursor: pointer;" title="천체 색상 변경">
+            <input type="text" id="insp-name" value="${body.name}" oninput="if(Sim.selectedBody) Sim.selectedBody.name=this.value;" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: #fff; font-weight: bold; font-size: 13px; width: 130px; padding: 2px 6px;">
+          </div>
+          <button class="btn btn-danger" onclick="window.handleInspectorAction('delete')" style="padding: 3px 10px; font-size: 11px; cursor: pointer;">삭제</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; margin-top: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>질량 (Mass):</span>
+            <input type="number" step="any" min="0.001" value="${body.mass.toFixed(1)}" onchange="if(Sim.selectedBody) Sim.selectedBody.mass=parseFloat(this.value)||1;" style="width: 85px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-family: monospace; font-weight: bold; border-radius: 4px; padding: 2px 6px; text-align: right;">
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>반지름 (Radius):</span>
+            <input type="number" step="0.5" min="1" max="150" value="${body.radius.toFixed(1)}" onchange="if(Sim.selectedBody) Sim.selectedBody.radius=parseFloat(this.value)||5;" style="width: 85px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-family: monospace; border-radius: 4px; padding: 2px 6px; text-align: right;">
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>현재 속력:</span>
+            <b id="insp-val-speed" class="stat-badge">${speed} v</b>
+          </div>
+          ${body.realDistDesc ? `
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(56,189,248,0.12); padding: 4px 6px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3); margin-top: 2px;">
+            <span style="color: #38bdf8; font-weight: bold;">실제 거리:</span>
+            <b style="color: #7dd3fc; font-family: monospace; font-size: 11px;">${body.realDistDesc}</b>
+          </div>` : ''}
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>위치 고정 (Immovable):</span>
+            <label class="toggle-switch" style="transform: scale(0.85);">
+              <input type="checkbox" ${body.isFixed ? 'checked' : ''} onchange="if(Sim.selectedBody) Sim.selectedBody.isFixed=this.checked;">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 6px; margin-top: 8px;">
+          <button class="btn ${isTracking ? 'btn-primary' : ''}" onclick="window.handleInspectorAction('track')" style="flex: 1; padding: 6px 8px; cursor: pointer;">
+            ${isTracking ? '🎯 추적 해제' : '🎥 카메라 추적'}
+          </button>
+          <button class="btn" onclick="window.handleInspectorAction('stop')" style="padding: 6px 8px; cursor: pointer;">🛑 속도 정지</button>
+          <button class="btn btn-danger" onclick="window.handleInspectorAction('explode')" style="padding: 6px 8px; cursor: pointer;" title="소행성 조각들로 분해">💥 폭발</button>
+        </div>
+      `;
+    }
+
+    function updateInspectorValues() {
+      const b = Sim.selectedBody;
+      const speedEl = document.getElementById('insp-val-speed');
+      if (speedEl && b) {
+        speedEl.textContent = Math.hypot(b.vx, b.vy).toFixed(2) + ' v';
+      }
+    }
+
+    // UI 패널 클릭 시 캔버스 물리 조작 이벤트로 전파 차단
+    document.querySelectorAll('.glass-panel').forEach(panel => {
+      ['mousedown', 'mouseup', 'click', 'touchstart', 'touchend'].forEach(evt => {
+        panel.addEventListener(evt, e => e.stopPropagation());
+      });
+    });
+
+    // 초기화 및 실행 시작
+    resizeCanvas();
+    loadPreset('solarsystem');
+    requestAnimationFrame(animate);
+
+  </script>
+</body>
+</html>

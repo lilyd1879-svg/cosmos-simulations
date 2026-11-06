@@ -1,0 +1,19 @@
+# Executables and large binaries
+*.exe
+cloudflared.exe
+
+# Temporary and local data
+__pycache__/
+*.log
+scratch/
+.keep
+코스모스/
+
+# Sensitive / internal club lists
+*.xls
+*.xlsx
+*.csv
+
+# OS metadata
+.DS_Store
+Thumbs.db

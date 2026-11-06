@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COSMOS - 대기 만들기 & 행성 환경 시뮬레이터 (Atmosphere Synthesizer)</title>
+  <style>
+    :root {
+      --bg-dark: #050711;
+      --panel-bg: rgba(13, 19, 38, 0.82);
+      --panel-border: rgba(56, 189, 248, 0.22);
+      --panel-hover: rgba(25, 36, 69, 0.9);
+      --accent-cyan: #38bdf8;
+      --accent-glow: #60a5fa;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-emerald: #10b981;
+      --accent-violet: #a855f7;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      font-size: 13px;
+    }
+
+    /* Glassmorphism Common Style */
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      z-index: 10;
+      transition: all 0.2s ease;
+    }
+
+    /* Top Navigation Bar */
+    header#top-bar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      z-index: 50;
+    }
+    header#top-bar::-webkit-scrollbar { display: none; }
+    header#top-bar * { white-space: nowrap !important; }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .brand-badge {
+      font-size: 9.5px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .controls-center {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: var(--text-main);
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.18s ease;
+      flex-shrink: 0 !important;
+      height: 34px;
+      box-sizing: border-box;
+      line-height: 1;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #10b981);
+      border-color: #34d399;
+      color: #fff;
+    }
+    .btn-warning {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      border-color: #fcd34d;
+      color: #fff;
+    }
+
+    select.preset-select {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      flex-shrink: 0 !important;
+      height: 34px;
+      box-sizing: border-box;
+    }
+
+    /* Main Container Layout */
+    #main-container {
+      position: absolute;
+      top: 70px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    /* Left View Area (Simulation Display) */
+    #sim-view-panel {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    #view-mode-tabs {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 30;
+      display: flex;
+      gap: 4px;
+      background: rgba(10, 15, 30, 0.85);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .view-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .view-tab-btn.active {
+      background: linear-gradient(135deg, #0284c7, #3b82f6);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    #canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #02040a;
+    }
+
+    #sim-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Overlay HUD Info on Canvas */
+    #hud-info {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 30;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+      min-width: 220px;
+      background: rgba(10, 15, 30, 0.82);
+    }
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hud-label {
+      color: var(--text-muted);
+    }
+    .hud-val {
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    /* Floating Interactive Experiments Toolbar on Canvas */
+    #exp-toolbar {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(10, 15, 30, 0.88);
+      border-radius: 30px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .exp-btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .exp-btn:hover {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+      transform: translateY(-2px);
+    }
+    .exp-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Right Control & Diagnostics Sidebar */
+    #sidebar-panel {
+      width: 440px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.75);
+    }
+    .sidebar-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-scroll-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .sidebar-scroll-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sidebar-scroll-content::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.25);
+      border-radius: 4px;
+    }
+
+    /* Section Card */
+    .card-section {
+      background: rgba(18, 26, 47, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: 0.3px;
+    }
+
+    /* Gas Sliders Grid */
+    .gas-row {
+      display: grid;
+      grid-template-columns: 24px 75px 1fr 50px 24px;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .gas-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 6px currentColor;
+    }
+    .gas-name {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .gas-name small {
+      color: var(--text-muted);
+      font-size: 9.5px;
+      margin-left: 2px;
+    }
+    .gas-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+      cursor: pointer;
+    }
+    .gas-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-cyan);
+      transition: transform 0.1s;
+    }
+    .gas-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+    .gas-val-box {
+      font-family: monospace;
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 2px 4px;
+      color: #fff;
+      text-align: right;
+      width: 48px;
+    }
+    .gas-lock-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+    .gas-lock-btn.locked {
+      color: var(--accent-amber);
+    }
+
+    /* Diagnostics Dashboard Cards */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .metric-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .metric-box-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .metric-box-val {
+      font-size: 16px;
+      font-weight: 800;
+      font-family: monospace;
+    }
+    .metric-box-sub {
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+
+    /* Diagnosis Alert Box */
+    #diagnosis-box {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+    .status-habitable {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .status-deadly {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.4);
+    }
+    .status-warning {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fde68a;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    /* Atmosphere Spectrum Bar */
+    #spectrum-bar {
+      width: 100%;
+      height: 14px;
+      border-radius: 7px;
+      display: flex;
+      overflow: hidden;
+      margin-top: 4px;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.8);
+    }
+    .spectrum-segment {
+      height: 100%;
+      transition: width 0.2s ease;
+    }
+
+    /* Floating Toast Notification */
+    #toast-msg {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
+    }
+    #toast-msg.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Modal dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(2, 4, 10, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      width: 90%;
+      max-width: 580px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      #main-container {
+        flex-direction: column;
+      }
+      #sidebar-panel {
+        width: 100%;
+        height: 48%;
+      }
+      #sim-view-panel {
+        height: 52%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg">대기 조성이 업데이트되었습니다.</div>
+
+  <!-- Top Navigation Bar (Consistent with COSMOS suite) -->
+  <header id="top-bar" class="glass-panel">
+    <div class="brand-group">
+      <div class="brand-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M8 12a4 4 0 0 0 8 0"></path>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+        COSMOS
+      </div>
+      <div class="brand-badge">🌫️ 대기 합성 & 행성 환경 시뮬레이터</div>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="controls-center">
+      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">행성 대기 프리셋:</span>
+      <select id="preset-selector" class="preset-select">
+        <option value="earth">🌍 지구 (Earth - 생명의 요람)</option>
+        <option value="venus">♀️ 금성 (Venus - 폭주 온실 지옥)</option>
+        <option value="mars">♂️ 화성 (Mars - 희박하고 차가운)</option>
+        <option value="titan">🪐 타이탄 (Titan - 메탄 스모그 위성)</option>
+        <option value="archean">🌋 원시 지구 (Archean - 무산소 원시 대기)</option>
+        <option value="carboniferous">🌲 석탄기 (Carboniferous - 35% 초산소)</option>
+        <option value="volcanic">☣️ 화산 지옥 (Acid Volcano - 황산비)</option>
+        <option value="primordial">🧊 원시 성운가스 (Primordial H₂/He)</option>
+      </select>
+
+      <button id="btn-normalize" class="btn" title="비율의 합을 100%로 자동 비례 조정합니다">
+        ⚖️ 100% 자동 맞춤
+      </button>
+      <button id="btn-reset-earth" class="btn" title="지구 표준 대기로 복원">
+        🔄 지구 초기화
+      </button>
+    </div>
+
+    <!-- Suite Navigation Links -->
+    <div class="header-right">
+      <a href="./index.html" class="btn" title="이중진자 혼돈 시뮬레이터">🌀 이중진자</a>
+      <a href="./gravity.html" class="btn" title="정밀 다체 중력 시뮬레이터">🪐 다체 중력</a>
+      <a href="./sky.html" class="btn" title="실시간 천구 별자리 지도">✨ 별자리 지도</a>
+      <a href="./air.html" class="btn btn-primary" title="현재 위치: 대기 만들기 시뮬레이터">🌫️ 대기 시뮬레이터</a>
+      <a href="./presentation.html" class="btn" title="발표 프레젠테이션">📊 발표자료</a>
+      <button id="btn-help" class="btn" style="padding: 6px 9px;">❓ 가이드</button>
+    </div>
+  </header>
+
+  <!-- Main Work Area -->
+  <main id="main-container">
+
+    <!-- Left Simulation Canvas View -->
+    <section id="sim-view-panel" class="glass-panel">
+      <!-- Tab Controls for View Mode -->
+      <div id="view-mode-tabs">
+        <button class="view-tab-btn active" data-mode="molecular">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"></circle><circle cx="18" cy="18" r="3"></circle><circle cx="18" cy="6" r="3"></circle><path d="M8.5 8.5l7 7"></path></svg>
+          미시 분자 챔버 (Molecular Dynamics)
+        </button>
+        <button class="view-tab-btn" data-mode="planetary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          거시 행성 & 하늘 (Planetary & Sky)
+        </button>
+        <button class="view-tab-btn" data-mode="structure">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path><path d="M7 16l4-8 4 6 5-10"></path></svg>
+          대기권 수직 층위 (Atmospheric Layers)
+        </button>
+      </div>
+
+      <!-- Live Canvas -->
+      <div id="canvas-wrapper">
+        <canvas id="sim-canvas"></canvas>
+      </div>
+
+      <!-- Real-time HUD on Canvas -->
+      <div id="hud-info" class="glass-panel">
+        <div class="hud-row">
+          <span class="hud-label">실시간 표면 온도:</span>
+          <span id="hud-temp" class="hud-val" style="color: #38bdf8;">15.0 °C</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">표면 대기압:</span>
+          <span id="hud-press" class="hud-val" style="color: #fcd34d;">1.00 atm</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">하늘 산란 색상:</span>
+          <span id="hud-sky-color" class="hud-val" style="color: #60a5fa;">선명한 푸른색 (지구형)</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">기상 현상 / 강수:</span>
+          <span id="hud-weather" class="hud-val" style="color: #34d399;">맑음 (안정된 대기)</span>
+        </div>
+      </div>
+
+      <!-- Interactive Experiments Toolbar -->
+      <div id="exp-toolbar">
+        <button id="btn-exp-lightning" class="exp-btn" title="대기 중에 강력한 번개를 방전시켜 광화학/유기 분자 합성 반응을 유도합니다">
+          ⚡ 번개 방전 (밀러-유리)
+        </button>
+        <button id="btn-exp-spark" class="exp-btn" title="점화원(불꽃)을 투입하여 연소 또는 폭발성을 시험합니다">
+          🔥 점화/연소 시험
+        </button>
+        <button id="btn-exp-astronaut" class="exp-btn" title="우주비행사를 맨몸으로 노출시켰을 때의 생존 상태를 진단합니다">
+          🧑‍🚀 우주비행사 투입
+        </button>
+        <button id="btn-exp-uv-toggle" class="exp-btn" title="태양 자외선(UV) 조사 강도를 토글합니다">
+          ☀️ UV 자외선 토글
+        </button>
+      </div>
+    </section>
+
+    <!-- Right Control & Diagnostics Sidebar -->
+    <aside id="sidebar-panel" class="glass-panel">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #38bdf8;"><path d="M12 3v18"></path><path d="M3 12h18"></path><path d="m19 5-7 7-7-7"></path></svg>
+          대기 원소 구성 및 환경 통제
+        </div>
+        <div id="total-percent-badge" style="font-size: 11px; font-weight: 700; font-family: monospace; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 2px 7px; border-radius: 12px;">
+          총합: 100.0%
+        </div>
+      </div>
+
+      <div class="sidebar-scroll-content">
+
+        <!-- Atmosphere Composition Sliders -->
+        <div class="card-section">
+          <div class="card-title">
+            <span>기체 원소 분율 (Mole Fraction %)</span>
+            <span style="font-size: 10px; color: var(--text-muted);">자물쇠로 고정 가능</span>
+          </div>
+
+          <!-- Spectrum Bar of Elements -->
+          <div id="spectrum-bar"></div>
+
+          <!-- Gas Rows Container -->
+          <div id="gas-sliders-container" style="display: flex; flex-direction: column; gap: 7px;">
+            <!-- Generated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Planetary Environment Parameters -->
+        <div class="card-section">
+          <div class="card-title">
+            <span>행성 천체 물리 변수</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+              <span>표면 대기압 (Surface Pressure):</span>
+              <span id="label-press-val" style="font-weight: 700; font-family: monospace; color: var(--accent-amber);">1.00 atm</span>
+            </div>
+            <input type="range" id="slider-pressure" min="-2" max="2.3" step="0.02" value="0" class="gas-slider">
+            <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: var(--text-muted);">
+              <span>0.01 atm (화성급)</span>
+              <span>1.0 atm (지구)</span>
+              <span>100 atm (금성급)</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-top: 4px;">
+              <span>태양 거리 (Orbital Distance):</span>
+              <span id="label-dist-val" style="font-weight: 700; font-family: monospace; color: var(--accent-cyan);">1.00 AU</span>
+            </div>
+            <input type="range" id="slider-distance" min="0.4" max="2.5" step="0.05" value="1.0" class="gas-slider">
+            <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: var(--text-muted);">
+              <span>0.4 AU (수성)</span>
+              <span>1.0 AU (지구)</span>
+              <span>2.5 AU (소행성대)</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-top: 4px;">
+              <span>표면 중력 (Surface Gravity):</span>
+              <span id="label-gravity-val" style="font-weight: 700; font-family: monospace; color: var(--accent-emerald);">1.00 g (9.8 m/s²)</span>
+            </div>
+            <input type="range" id="slider-gravity" min="0.1" max="3.0" step="0.05" value="1.0" class="gas-slider">
+          </div>
+        </div>
+
+        <!-- Real-time Atmospheric Physics Metrics -->
+        <div class="card-section">
+          <div class="card-title">
+            <span>물리 및 온실효과 계산 모니터</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-box">
+              <div class="metric-box-title">지표면 평균 온도</div>
+              <div id="metric-temp" class="metric-box-val" style="color: #38bdf8;">15.0 °C</div>
+              <div id="metric-temp-k" class="metric-box-sub">288.15 K</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">온실효과 기여도 (ΔT)</div>
+              <div id="metric-greenhouse" class="metric-box-val" style="color: #f43f5e;">+33.0 °C</div>
+              <div class="metric-box-sub">복사 강제력 반영</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">평균 분자량 (M)</div>
+              <div id="metric-mol-weight" class="metric-box-val" style="color: #a855f7;">28.96 g/mol</div>
+              <div id="metric-scale-height" class="metric-box-sub">스케일 높이: 8.5 km</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">UV 자외선 차폐율</div>
+              <div id="metric-uv-block" class="metric-box-val" style="color: #10b981;">99.2 %</div>
+              <div id="metric-ozone-status" class="metric-box-sub">오존층 완벽 보호</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Life & Habitability Diagnostics -->
+        <div class="card-section">
+          <div class="card-title">
+            <span>생명 거주 가능성 및 인간 생존 진단</span>
+          </div>
+          <div id="diagnosis-box" class="status-habitable">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span id="diag-badge" class="status-badge status-habitable">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>
+                인간 호흡 가능 & 생명 거주 적합
+              </span>
+              <span id="esi-score" style="font-family: monospace; font-weight: 700;">ESI: 0.98</span>
+            </div>
+            <div id="diag-desc" style="color: var(--text-main); font-size: 11px;">
+              산소 분압(0.21 atm)이 정상 범위(0.16~0.50 atm)에 속하며, 액체 상태의 물이 존재할 수 있는 온화한 기후입니다. 독성 가스가 존재하지 않아 방호구 없이 호흡할 수 있습니다.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+  </main>
+
+  <!-- Guide Modal -->
+  <div id="guide-modal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" id="btn-close-modal">&times;</button>
+      <h2 style="font-size: 18px; margin-bottom: 12px; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
+        🌫️ COSMOS 대기 만들기 시뮬레이터 가이드
+      </h2>
+      <div style="color: #cbd5e1; line-height: 1.6; font-size: 12.5px; display: flex; flex-direction: column; gap: 10px;">
+        <p><strong>대기 만들기 시뮬레이터</strong>는 행성의 대기 조성 비율(N₂, O₂, CO₂, H₂O, CH₄ 등)을 임의로 조합하고, 이에 따른 기체 분자들의 미시적 물리 충돌과 거시적 행성 기후 및 하늘 색상 변화를 실시간으로 탐구할 수 있는 과학 실험실입니다.</p>
+
+        <h4 style="color: #38bdf8; margin-top: 4px;">🔬 세 가지 뷰 모드</h4>
+        <ul style="padding-left: 18px;">
+          <li><strong>미시 분자 챔버</strong>: 각 기체 분자의 열운동, 분자량에 따른 중력 성층화(무거운 CO₂는 바닥에, 가벼운 H₂는 상공으로), 자외선에 의한 오존 생성, 메탄-산소 폭발, 수증기 응결(비) 등을 물리 입자로 관찰합니다.</li>
+          <li><strong>거시 행성 & 하늘</strong>: 레일리 산란(Rayleigh Scattering) 공식에 의해 지표면 하늘 색상이 실시간으로 계산되며, 우주에서 본 행성의 발광 림(Rim Glow)과 구름층을 확인합니다.</li>
+          <li><strong>대기권 수직 층위</strong>: 대류권, 성층권, 중간권, 열권의 고도별 온도 역전 현상과 오존층 형성 위치를 도식화합니다.</li>
+        </ul>
+
+        <h4 style="color: #38bdf8; margin-top: 4px;">⚡ 흥미진진한 대기 인터랙션 실험</h4>
+        <ul style="padding-left: 18px;">
+          <li><strong>⚡ 번개 방전 (밀러-유리 실험)</strong>: 원시 대기(CH₄, NH₃, H₂O, H₂) 조건에서 번개를 방전하면 유기물 전구체 아미노산 입자가 합성됩니다!</li>
+          <li><strong>🔥 점화 시험</strong>: O₂와 가연성 가스(CH₄, H₂) 비율에 따라 격렬한 폭발, 온화한 연소, 혹은 산소 부족으로 인한 불꽃 꺼짐을 시험합니다.</li>
+          <li><strong>🧑‍🚀 우주비행사 투입</strong>: 현재 대기에서 우주복 없이 맨몸 노출 시 생존 가능 시간 및 저산소증, 열사, 동결, 산성 부식 등의 상태를 진단합니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. GAS DEFINITIONS & PROPERTIES DATABASE
+       ========================================================================== */
+    const GASES = [
+      { id: 'N2',  name: '질소', formula: 'N₂',  mass: 28.01, color: '#38bdf8', default: 78.08, ghg: 0.0,  scat: 1.0,  toxic: false, desc: '대기 안정화, 비활성 희석 가스' },
+      { id: 'O2',  name: '산소', formula: 'O₂',  mass: 32.00, color: '#22c55e', default: 20.95, ghg: 0.0,  scat: 0.85, toxic: false, desc: '호흡 유지, 오존층의 모체' },
+      { id: 'CO2', name: '이산화탄소', formula: 'CO₂', mass: 44.01, color: '#f43f5e', default: 0.04,  ghg: 1.0,  scat: 2.2,  toxic: true,  desc: '주요 온실가스, 5% 이상시 질식' },
+      { id: 'H2O', name: '수증기', formula: 'H₂O', mass: 18.02, color: '#60a5fa', default: 0.40,  ghg: 0.8,  scat: 0.7,  toxic: false, desc: '구름 및 강수 형성, 강력 온실가스' },
+      { id: 'CH4', name: '메탄', formula: 'CH₄', mass: 16.04, color: '#f59e0b', default: 0.00,  ghg: 28.0, scat: 1.5,  toxic: false, desc: '초강력 온실가스, 주황색 유기 연무' },
+      { id: 'Ar',  name: '아르곤', formula: 'Ar',  mass: 39.95, color: '#a855f7', default: 0.93,  ghg: 0.0,  scat: 0.9,  toxic: false, desc: '불활성 희귀가스' },
+      { id: 'O3',  name: '오존', formula: 'O₃',  mass: 48.00, color: '#06b6d4', default: 0.00,  ghg: 0.2,  scat: 3.0,  toxic: true,  desc: '자외선 차단막 (성층권 필수)' },
+      { id: 'H2',  name: '수소', formula: 'H₂',  mass: 2.02,  color: '#e2e8f0', default: 0.00,  ghg: 0.0,  scat: 0.15, toxic: false, desc: '초경량 원소가스, 우주 유출' },
+      { id: 'SO2', name: '이산화황', formula: 'SO₂', mass: 64.07, color: '#eab308', default: 0.00,  ghg: 0.5,  scat: 4.5,  toxic: true,  desc: '화산 가스, 치명적 황산비 유발' },
+      { id: 'NH3', name: '암모니아', formula: 'NH₃', mass: 17.03, color: '#ec4899', default: 0.00,  ghg: 0.4,  scat: 0.8,  toxic: true,  desc: '자극성 독성 가스, 환원성 대기' }
+    ];
+
+    const PRESETS = {
+      earth: {
+        name: '지구',
+        comp: { N2: 78.08, O2: 20.95, Ar: 0.93, CO2: 0.04, H2O: 0.00, CH4: 0.0, O3: 0.01, H2: 0.0, SO2: 0.0, NH3: 0.0 },
+        pressure: 1.0, distance: 1.0, gravity: 1.0
+      },
+      venus: {
+        name: '금성',
+        comp: { N2: 3.5, O2: 0.0, Ar: 0.007, CO2: 96.5, H2O: 0.002, CH4: 0.0, O3: 0.0, H2: 0.0, SO2: 0.015, NH3: 0.0 },
+        pressure: 92.0, distance: 0.723, gravity: 0.904
+      },
+      mars: {
+        name: '화성',
+        comp: { N2: 2.6, O2: 0.13, Ar: 1.9, CO2: 95.3, H2O: 0.03, CH4: 0.0, O3: 0.0, H2: 0.0, SO2: 0.0, NH3: 0.0 },
+        pressure: 0.006, distance: 1.524, gravity: 0.38
+      },
+      titan: {
+        name: '타이탄',
+        comp: { N2: 94.2, O2: 0.0, Ar: 0.0, CO2: 0.0, H2O: 0.0, CH4: 5.65, O3: 0.0, H2: 0.15, SO2: 0.0, NH3: 0.0 },
+        pressure: 1.45, distance: 1.8, gravity: 0.14
+      },
+      archean: {
+        name: '원시 지구',
+        comp: { N2: 75.0, O2: 0.0, Ar: 0.5, CO2: 14.0, H2O: 4.5, CH4: 5.0, O3: 0.0, H2: 1.0, SO2: 0.0, NH3: 0.0 },
+        pressure: 1.5, distance: 1.0, gravity: 1.0
+      },
+      carboniferous: {
+        name: '석탄기 지구',
+        comp: { N2: 63.8, O2: 35.0, Ar: 0.9, CO2: 0.1, H2O: 0.2, CH4: 0.0, O3: 0.02, H2: 0.0, SO2: 0.0, NH3: 0.0 },
+        pressure: 1.1, distance: 1.0, gravity: 1.0
+      },
+      volcanic: {
+        name: '화산 지옥',
+        comp: { N2: 15.0, O2: 0.0, Ar: 0.0, CO2: 60.0, H2O: 10.0, CH4: 0.0, O3: 0.0, H2: 0.0, SO2: 15.0, NH3: 0.0 },
+        pressure: 3.5, distance: 0.9, gravity: 1.0
+      },
+      primordial: {
+        name: '원시 성운가스',
+        comp: { N2: 0.0, O2: 0.0, Ar: 0.0, CO2: 0.0, H2O: 0.0, CH4: 2.0, O3: 0.0, H2: 95.0, SO2: 0.0, NH3: 3.0 },
+        pressure: 0.5, distance: 1.2, gravity: 0.5
+      }
+    };
+
+    /* Simulation State */
+    let currentComp = {};
+    let lockedGases = {};
+    let currentPressure = 1.0;   // atm
+    let currentDistance = 1.0;   // AU
+    let currentGravity = 1.0;    // g
+    let uvEnabled = true;
+    let viewMode = 'molecular';   // 'molecular', 'planetary', 'structure'
+
+    // Interactive Effects State
+    let lightningFlash = 0;
+    let explosionEffect = 0;
+    let organicMolecules = [];
+    let rainDrops = [];
+    let astronautStatus = null;  // null or object with status
+
+    /* ==========================================================================
+       2. INITIALIZATION & UI GENERATION
+       ========================================================================== */
+    function initApp() {
+      // Set initial composition from Earth preset
+      loadPreset('earth');
+
+      // Build Gas Slider UI
+      const container = document.getElementById('gas-sliders-container');
+      container.innerHTML = '';
+
+      GASES.forEach(gas => {
+        const row = document.createElement('div');
+        row.className = 'gas-row';
+        row.innerHTML = `
+          <span class="gas-icon" style="background: ${gas.color}; color: ${gas.color};"></span>
+          <span class="gas-name">${gas.name}<small>${gas.formula}</small></span>
+          <input type="range" class="gas-slider" id="slider-${gas.id}" min="0" max="100" step="0.1" value="${currentComp[gas.id]}">
+          <input type="number" class="gas-val-box" id="val-${gas.id}" min="0" max="100" step="0.1" value="${currentComp[gas.id]}">
+          <button class="gas-lock-btn" id="lock-${gas.id}" title="고정 토글">🔓</button>
+        `;
+        container.appendChild(row);
+
+        // Event listeners
+        const slider = row.querySelector(`#slider-${gas.id}`);
+        const valBox = row.querySelector(`#val-${gas.id}`);
+        const lockBtn = row.querySelector(`#lock-${gas.id}`);
+
+        slider.addEventListener('input', (e) => {
+          handleGasChange(gas.id, parseFloat(e.target.value));
+        });
+        valBox.addEventListener('change', (e) => {
+          let v = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
+          handleGasChange(gas.id, v);
+        });
+        lockBtn.addEventListener('click', () => {
+          lockedGases[gas.id] = !lockedGases[gas.id];
+          lockBtn.classList.toggle('locked', lockedGases[gas.id]);
+          lockBtn.innerHTML = lockedGases[gas.id] ? '🔒' : '🔓';
+          lockBtn.title = lockedGases[gas.id] ? '고정됨 (자동맞춤 시 변경안됨)' : '고정 해제';
+        });
+      });
+
+      // Planet Physical sliders
+      const sliderPress = document.getElementById('slider-pressure');
+      sliderPress.addEventListener('input', (e) => {
+        currentPressure = Math.pow(10, parseFloat(e.target.value));
+        document.getElementById('label-press-val').innerText = currentPressure >= 10 ? currentPressure.toFixed(1) + ' atm' : currentPressure.toFixed(2) + ' atm';
+        updateSimulation();
+      });
+
+      const sliderDist = document.getElementById('slider-distance');
+      sliderDist.addEventListener('input', (e) => {
+        currentDistance = parseFloat(e.target.value);
+        document.getElementById('label-dist-val').innerText = currentDistance.toFixed(2) + ' AU';
+        updateSimulation();
+      });
+
+      const sliderGrav = document.getElementById('slider-gravity');
+      sliderGrav.addEventListener('input', (e) => {
+        currentGravity = parseFloat(e.target.value);
+        document.getElementById('label-gravity-val').innerText = currentGravity.toFixed(2) + ' g';
+        updateSimulation();
+      });
+
+      // Preset selector
+      document.getElementById('preset-selector').addEventListener('change', (e) => {
+        loadPreset(e.target.value);
+        showToast(`'${PRESETS[e.target.value].name}' 프리셋이 로드되었습니다.`);
+      });
+
+      // Normalize button
+      document.getElementById('btn-normalize').addEventListener('click', () => {
+        normalizeComposition();
+        showToast('대기 조성 분율이 100%로 정규화되었습니다.');
+      });
+
+      // Reset button
+      document.getElementById('btn-reset-earth').addEventListener('click', () => {
+        loadPreset('earth');
+        document.getElementById('preset-selector').value = 'earth';
+        showToast('지구 표준 대기로 복원되었습니다.');
+      });
+
+      // View mode tabs
+      document.querySelectorAll('.view-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.view-tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          viewMode = btn.dataset.mode;
+        });
+      });
+
+      // Experiment buttons
+      document.getElementById('btn-exp-lightning').addEventListener('click', triggerLightning);
+      document.getElementById('btn-exp-spark').addEventListener('click', triggerCombustion);
+      document.getElementById('btn-exp-astronaut').addEventListener('click', triggerAstronaut);
+      document.getElementById('btn-exp-uv-toggle').addEventListener('click', () => {
+        uvEnabled = !uvEnabled;
+        document.getElementById('btn-exp-uv-toggle').style.borderColor = uvEnabled ? 'var(--accent-cyan)' : 'var(--text-muted)';
+        showToast(`자외선(UV) 조사가 ${uvEnabled ? '활성화' : '비활성화'}되었습니다.`);
+      });
+
+      // Modal
+      const modal = document.getElementById('guide-modal');
+      document.getElementById('btn-help').addEventListener('click', () => modal.classList.add('active'));
+      document.getElementById('btn-close-modal').addEventListener('click', () => modal.classList.remove('active'));
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+      // Init Canvas and Particles
+      initCanvas();
+      initParticles();
+
+      // First calculation
+      updateSimulation();
+    }
+
+    function loadPreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      GASES.forEach(g => {
+        currentComp[g.id] = p.comp[g.id] || 0.0;
+        lockedGases[g.id] = false;
+      });
+      currentPressure = p.pressure;
+      currentDistance = p.distance;
+      currentGravity = p.gravity;
+
+      // Sync sliders
+      document.getElementById('slider-pressure').value = Math.log10(Math.max(0.01, Math.min(200, currentPressure)));
+      document.getElementById('label-press-val').innerText = currentPressure >= 10 ? currentPressure.toFixed(1) + ' atm' : currentPressure.toFixed(2) + ' atm';
+
+      document.getElementById('slider-distance').value = currentDistance;
+      document.getElementById('label-dist-val').innerText = currentDistance.toFixed(2) + ' AU';
+
+      document.getElementById('slider-gravity').value = currentGravity;
+      document.getElementById('label-gravity-val').innerText = currentGravity.toFixed(2) + ' g';
+
+      syncInputs();
+      updateSimulation();
+    }
+
+    function handleGasChange(id, newVal) {
+      currentComp[id] = newVal;
+      syncInputs();
+      updateSimulation();
+    }
+
+    function normalizeComposition() {
+      let lockedSum = 0;
+      let unlockedSum = 0;
+
+      GASES.forEach(g => {
+        if (lockedGases[g.id]) lockedSum += currentComp[g.id];
+        else unlockedSum += currentComp[g.id];
+      });
+
+      let remaining = Math.max(0, 100.0 - lockedSum);
+      if (unlockedSum > 0) {
+        GASES.forEach(g => {
+          if (!lockedGases[g.id]) {
+            currentComp[g.id] = parseFloat(((currentComp[g.id] / unlockedSum) * remaining).toFixed(2));
+          }
+        });
+      }
+
+      syncInputs();
+      updateSimulation();
+    }
+
+    function syncInputs() {
+      let total = 0;
+      GASES.forEach(g => {
+        const val = currentComp[g.id] || 0;
+        total += val;
+        const sl = document.getElementById(`slider-${g.id}`);
+        const vb = document.getElementById(`val-${g.id}`);
+        if (sl) sl.value = val;
+        if (vb) vb.value = val.toFixed(2);
+      });
+
+      const totBadge = document.getElementById('total-percent-badge');
+      totBadge.innerText = `총합: ${total.toFixed(1)}%`;
+      if (Math.abs(total - 100) > 0.5) {
+        totBadge.style.color = '#f59e0b';
+        totBadge.style.borderColor = '#f59e0b';
+      } else {
+        totBadge.style.color = '#38bdf8';
+        totBadge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+      }
+
+      // Update Spectrum Bar
+      const specBar = document.getElementById('spectrum-bar');
+      specBar.innerHTML = '';
+      GASES.forEach(g => {
+        const pct = currentComp[g.id] || 0;
+        if (pct > 0.4) {
+          const seg = document.createElement('div');
+          seg.className = 'spectrum-segment';
+          seg.style.width = pct + '%';
+          seg.style.backgroundColor = g.color;
+          seg.title = `${g.name}: ${pct.toFixed(1)}%`;
+          specBar.appendChild(seg);
+        }
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast-msg');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    /* ==========================================================================
+       3. SCIENTIFIC CALCULATIONS & PHYSICS ENGINE
+       ========================================================================== */
+    let calcResults = {};
+
+    function updateSimulation() {
+      // 1. Mean Molecular Weight (M) in g/mol
+      let totalFrac = 0;
+      let weightedMass = 0;
+      let greenhouseFactor = 0;
+      let rayleighScatteringSum = 0;
+
+      GASES.forEach(g => {
+        const frac = (currentComp[g.id] || 0) / 100.0;
+        totalFrac += frac;
+        weightedMass += frac * g.mass;
+        greenhouseFactor += frac * g.ghg;
+        rayleighScatteringSum += frac * g.scat;
+      });
+
+      const meanMolWeight = totalFrac > 0 ? (weightedMass / totalFrac) : 28.0;
+
+      // 2. Solar Constant and Effective Equilibrium Temperature (Stefan-Boltzmann)
+      // S = S0 / (d^2) where S0 = 1361 W/m^2 at 1 AU
+      const solarRatio = 1.0 / (currentDistance * currentDistance);
+      // Base temperature of blackbody at 1 AU is ~255 K (earth without atmosphere)
+      let T_eff = 255.0 * Math.pow(solarRatio, 0.25);
+
+      // 3. Greenhouse Effect Calculation
+      // CO2 radiative forcing ~ 5.35 * ln(C/C0), H2O positive feedback, CH4 forcing
+      const pCO2 = (currentComp.CO2 / 100.0) * currentPressure;
+      const pH2O = (currentComp.H2O / 100.0) * currentPressure;
+      const pCH4 = (currentComp.CH4 / 100.0) * currentPressure;
+      const pO2  = (currentComp.O2 / 100.0)  * currentPressure;
+      const pSO2 = (currentComp.SO2 / 100.0) * currentPressure;
+      const pNH3 = (currentComp.NH3 / 100.0) * currentPressure;
+
+      // ΔT greenhouse:
+      // Earth baseline: CO2=0.0004 atm, H2O=0.004 atm (or trace) -> ΔT = +33.15 K -> T_surf = 15.0 °C
+      let deltaT_greenhouse = 0;
+      if (pCO2 > 0.000001) {
+        deltaT_greenhouse += 23.5 * Math.log10(1 + pCO2 * 6000) * Math.pow(currentPressure, 0.25);
+      }
+      if (pH2O > 0.00001) {
+        deltaT_greenhouse += 34.0 * Math.log10(1 + pH2O * 800);
+      }
+      if (pCH4 > 0.000001) {
+        deltaT_greenhouse += 32.0 * Math.log10(1 + pCH4 * 3000);
+      }
+      // Runaway greenhouse effect limit (like Venus):
+      if (pCO2 > 10.0 || deltaT_greenhouse > 180) {
+        deltaT_greenhouse *= 1.18;
+      }
+
+      // SO2 aerosols cause high albedo cooling unless super dense
+      if (pSO2 > 0.01 && currentPressure < 5.0) {
+        deltaT_greenhouse -= 15.0 * Math.min(2.0, pSO2 * 10);
+      }
+
+      const surfaceTempK = T_eff + Math.max(0, deltaT_greenhouse);
+      const surfaceTempC = surfaceTempK - 273.15;
+
+      // 4. Scale Height H = k*T / (M*g)
+      // Earth: H = (8.314 * 288) / (0.0289 * 9.8) ~ 8.4 km
+      const scaleHeightKm = (8.314 * surfaceTempK) / ((meanMolWeight / 1000) * (currentGravity * 9.806)) / 1000;
+
+      // 5. Ozone Layer & UV Shielding
+      // O3 forms from O2 + UV. If O2 > 1% and UV on, O3 layer thickness correlates with pO2
+      let uvShieldingPct = 0;
+      let hasOzoneLayer = false;
+      const effectiveOzoneFrac = (currentComp.O3 + currentComp.O2 * 0.001) * currentPressure;
+      if (effectiveOzoneFrac > 0.005 || currentComp.O2 > 10) {
+        uvShieldingPct = Math.min(99.9, 85.0 + (effectiveOzoneFrac * 400));
+        hasOzoneLayer = true;
+      } else if (currentComp.O2 > 1.0) {
+        uvShieldingPct = 40.0 + currentComp.O2 * 2;
+      } else {
+        uvShieldingPct = Math.min(30.0, currentPressure * 10);
+      }
+
+      // 6. Sky Color (Rayleigh Scattering ~ 1/λ^4)
+      // Rayleigh formula: higher density & higher scattering coefficient makes blue sky,
+      // extreme density or aerosols shifts to white, yellowish, orange (Mie haze)
+      let skyColorRGB = calculateSkyColor(currentComp, currentPressure);
+
+      // 7. Habitability & Human Breathability
+      let habitability = evaluateHabitability(surfaceTempC, currentPressure, pO2, pCO2, pSO2, pNH3, uvShieldingPct);
+
+      calcResults = {
+        meanMolWeight,
+        surfaceTempK,
+        surfaceTempC,
+        deltaT_greenhouse,
+        scaleHeightKm,
+        uvShieldingPct,
+        hasOzoneLayer,
+        skyColorRGB,
+        habitability,
+        pO2, pCO2, pSO2, pCH4, pH2O
+      };
+
+      updateDiagnosticsUI();
+    }
+
+    function calculateSkyColor(comp, press) {
+      // Base Earth: Deep sky blue
+      // If pure N2/O2: Blue (#38bdf8 to #1e40af)
+      // If heavy CO2/SO2 (Venus): Yellow-Amber (#d97706, #b45309)
+      // If heavy CH4 (Titan): Orange-Haze (#ea580c)
+      // If thin (Mars): Pink-Butterscotch / Dark Sky
+      // If vacuum (press < 0.01): Near Black (#050711)
+
+      if (press < 0.03) {
+        return { r: 15, g: 20, b: 35, name: '초희박 (칠흑 같은 우주와 별빛)' };
+      }
+
+      let r = 30, g = 100, b = 220;
+      let name = '청명한 푸른 하늘 (지구형)';
+
+      const ch4Ratio = (comp.CH4 || 0) / 100;
+      const so2Ratio = (comp.SO2 || 0) / 100;
+      const co2Ratio = (comp.CO2 || 0) / 100;
+
+      if (ch4Ratio > 0.03) {
+        // Titan-like orange haze
+        r = Math.min(240, 180 + ch4Ratio * 150);
+        g = Math.min(180, 100 + ch4Ratio * 80);
+        b = Math.max(20, 40 - ch4Ratio * 40);
+        name = '짙은 오렌지빛 탄화수소 연무 (타이탄형)';
+      } else if (so2Ratio > 0.01 || (co2Ratio > 0.8 && press > 10)) {
+        // Venus-like sulfuric amber
+        r = Math.min(235, 190 + so2Ratio * 200);
+        g = Math.min(195, 160 + so2Ratio * 100);
+        b = Math.max(30, 50 - so2Ratio * 100);
+        name = '황산 에어로졸 황갈색 안개 (금성/화산형)';
+      } else if (co2Ratio > 0.8 && press < 0.1) {
+        // Mars butterscotch
+        r = 195; g = 145; b = 110;
+        name = '버터스카치 분홍빛 희박한 하늘 (화성형)';
+      } else if ((comp.O2 || 0) > 40) {
+        r = 20; g = 140; b = 240;
+        name = '선명한 짙은 에메랄드-푸른 하늘 (산소 과잉)';
+      }
+
+      return { r: Math.round(r), g: Math.round(g), b: Math.round(b), name };
+    }
+
+    function evaluateHabitability(tempC, press, pO2, pCO2, pSO2, pNH3, uvShield) {
+      let isHabitable = true;
+      let warnings = [];
+      let statusClass = 'status-habitable';
+      let statusTitle = '생명 거주 적합 & 호흡 가능';
+
+      // 1. Oxygen partial pressure check (Normal Earth: 0.21 atm. Safe: 0.16 ~ 0.50 atm)
+      if (pO2 < 0.08) {
+        isHabitable = false;
+        warnings.push('치명적 저산소증 (산소 분압 < 0.08 atm, 수십 초 내 의식 상실)');
+      } else if (pO2 < 0.16) {
+        warnings.push('고산증 및 호흡 곤란 (산소 분압 부족)');
+      } else if (pO2 > 0.60) {
+        warnings.push('산소 중독 및 극단적 화재 위험 (산소 분압 > 0.60 atm)');
+      }
+
+      // 2. Toxic gases
+      if (pCO2 > 0.05) {
+        isHabitable = false;
+        warnings.push(`치명적 CO₂ 중독 (CO₂ 분압 ${(pCO2).toFixed(2)} atm, 고탄산혈증)`);
+      } else if (pCO2 > 0.01) {
+        warnings.push('CO₂ 농도 주의 (두통 및 어지럼증 유발)');
+      }
+
+      if (pSO2 > 0.001) {
+        isHabitable = false;
+        warnings.push(`맹독성 SO₂ 오염 (강력한 호흡기 부식 및 황산 중독)`);
+      }
+      if (pNH3 > 0.005) {
+        isHabitable = false;
+        warnings.push(`암모니아 독성 가스 노출`);
+      }
+
+      // 3. Pressure
+      if (press < 0.063) {
+        isHabitable = false;
+        warnings.push('암스트롱 한계 이하 (체액 비등 현상 발생, 기압 0.063 atm 미만)');
+      } else if (press < 0.4) {
+        warnings.push('저압증 (방호복 필수)');
+      } else if (press > 5.0) {
+        isHabitable = false;
+        warnings.push('초고압 압착 및 질소 마취증 위험');
+      }
+
+      // 4. Temperature & Liquid Water
+      if (tempC < -20) {
+        warnings.push(`혹한 동결 기후 (${tempC.toFixed(1)} °C, 수계 동결)`);
+      } else if (tempC > 60) {
+        isHabitable = false;
+        warnings.push(`살인적인 극고온 (${tempC.toFixed(1)} °C, 열사병 및 단백질 변성)`);
+      }
+
+      // 5. UV
+      if (uvShield < 50) {
+        warnings.push('자외선(UV) 차단 미흡 (DNA 손상 유발)');
+      }
+
+      // Calculate Earth Similarity Index (ESI) approximation
+      let tTerm = 1 - Math.abs((tempC - 15) / (tempC + 15 + 273.15));
+      let pTerm = 1 - Math.abs((press - 1) / (press + 1));
+      let oTerm = Math.max(0, 1 - Math.abs(pO2 - 0.21) / 0.5);
+      let esi = Math.max(0, Math.min(1.0, (tTerm * 0.4 + pTerm * 0.3 + oTerm * 0.3))).toFixed(2);
+
+      if (!isHabitable) {
+        statusClass = 'status-deadly';
+        statusTitle = '⚠️ 생명 거주 불가능 (치명적 환경)';
+      } else if (warnings.length > 0) {
+        statusClass = 'status-warning';
+        statusTitle = '⚠️ 주의 필요 (보조 장비 권장)';
+      }
+
+      return {
+        isHabitable,
+        statusClass,
+        statusTitle,
+        warnings,
+        esi
+      };
+    }
+
+    function updateDiagnosticsUI() {
+      if (!calcResults.meanMolWeight) return;
+
+      const r = calcResults;
+
+      // HUD updates
+      document.getElementById('hud-temp').innerText = `${r.surfaceTempC.toFixed(1)} °C`;
+      document.getElementById('hud-press').innerText = currentPressure >= 10 ? `${currentPressure.toFixed(1)} atm` : `${currentPressure.toFixed(2)} atm`;
+      document.getElementById('hud-sky-color').innerText = r.skyColorRGB.name;
+
+      // Weather status
+      let weather = '맑음 (안정된 대기)';
+      if (r.pH2O > 0.05 && r.surfaceTempC > 0 && r.surfaceTempC < 100) {
+        weather = '🌧️ 수증기 응결 강우 (맑은 비)';
+      } else if (r.pSO2 > 0.005 && r.pH2O > 0.005) {
+        weather = '☣️ 독성 황산비 (Acid Rain)';
+      } else if (r.pCH4 > 0.05 && r.surfaceTempC < -150) {
+        weather = '🌧️ 초저온 액체 메탄 비';
+      } else if (r.surfaceTempC > 120) {
+        weather = '🔥 극고온 열풍 (구름 증발)';
+      } else if (currentPressure < 0.05) {
+        weather = '🌌 초희박 진공 (기상 현상 없음)';
+      }
+      document.getElementById('hud-weather').innerText = weather;
+
+      // Metrics in sidebar
+      document.getElementById('metric-temp').innerText = `${r.surfaceTempC.toFixed(1)} °C`;
+      document.getElementById('metric-temp-k').innerText = `${r.surfaceTempK.toFixed(1)} K`;
+      document.getElementById('metric-greenhouse').innerText = `${r.deltaT_greenhouse >= 0 ? '+' : ''}${r.deltaT_greenhouse.toFixed(1)} °C`;
+      document.getElementById('metric-mol-weight').innerText = `${r.meanMolWeight.toFixed(2)} g/mol`;
+      document.getElementById('metric-scale-height').innerText = `스케일 높이: ${r.scaleHeightKm.toFixed(1)} km`;
+      document.getElementById('metric-uv-block').innerText = `${r.uvShieldingPct.toFixed(1)} %`;
+      document.getElementById('metric-ozone-status').innerText = r.hasOzoneLayer ? '오존층 형성됨 (UV 방호)' : '오존층 결핍 (지표 UV 노출)';
+
+      // Habitability Box
+      const dBox = document.getElementById('diagnosis-box');
+      dBox.className = r.habitability.statusClass;
+      document.getElementById('diag-badge').className = `status-badge ${r.habitability.statusClass}`;
+      document.getElementById('diag-badge').innerHTML = r.habitability.statusTitle;
+      document.getElementById('esi-score').innerText = `ESI: ${r.habitability.esi}`;
+
+      if (r.habitability.warnings.length === 0) {
+        document.getElementById('diag-desc').innerHTML = `
+          산소 분압(<strong>${r.pO2.toFixed(2)} atm</strong>)이 정상 호흡 범위(0.16~0.50 atm)에 속하며, 액체 상태 물이 존재하는 온화한 기후입니다. 독성 가스가 없어 안전합니다.
+        `;
+      } else {
+        document.getElementById('diag-desc').innerHTML = `
+          <ul style="padding-left: 16px; margin-top: 4px;">
+            ${r.habitability.warnings.map(w => `<li>${w}</li>`).join('')}
+          </ul>
+        `;
+      }
+    }
+
+    /* ==========================================================================
+       4. CANVAS RENDERING & PARTICLE SIMULATION
+       ========================================================================== */
+    let canvas, ctx;
+    let particles = [];
+    const MAX_PARTICLES = 220;
+
+    class Molecule {
+      constructor(type) {
+        this.reset(type);
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+      }
+
+      reset(type) {
+        this.type = type;
+        const gasDef = GASES.find(g => g.id === type) || GASES[0];
+        this.mass = gasDef.mass;
+        this.color = gasDef.color;
+        this.radius = Math.max(2.5, Math.min(5.5, Math.sqrt(this.mass) * 0.8));
+
+        // Speed inversely proportional to sqrt(mass), proportional to sqrt(T)
+        const tempFactor = Math.sqrt(Math.max(50, calcResults.surfaceTempK || 288) / 288);
+        const speed = (6.0 / Math.sqrt(this.mass)) * tempFactor;
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+      }
+
+      update() {
+        // Buoyancy / gravity effect: lighter gases (H2, He) drift upward, heavy (CO2, SO2) settle
+        const grav = currentGravity * 0.04;
+        const buoyantForce = (this.mass - (calcResults.meanMolWeight || 28)) * grav * 0.08;
+        this.vy += buoyantForce;
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Wall collisions
+        const w = canvas.width;
+        const h = canvas.height;
+
+        if (this.x < this.radius) { this.x = this.radius; this.vx *= -1; }
+        if (this.x > w - this.radius) { this.x = w - this.radius; this.vx *= -1; }
+        if (this.y < this.radius) {
+          // If gas is extremely light (H2) and gravity is low, escape to space!
+          if (this.mass < 5 && currentGravity < 0.8 && Math.random() < 0.03) {
+            this.x = Math.random() * w;
+            this.y = h - 20;
+          } else {
+            this.y = this.radius; this.vy *= -1;
+          }
+        }
+        if (this.y > h - this.radius) { this.y = h - this.radius; this.vy *= -1; }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function initCanvas() {
+      canvas = document.getElementById('sim-canvas');
+      ctx = canvas.getContext('2d');
+
+      function resize() {
+        const wrapper = document.getElementById('canvas-wrapper');
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      requestAnimationFrame(simLoop);
+    }
+
+    function initParticles() {
+      particles = [];
+      // Populate based on composition
+      GASES.forEach(g => {
+        const count = Math.round(((currentComp[g.id] || 0) / 100) * MAX_PARTICLES);
+        for (let i = 0; i < count; i++) {
+          particles.push(new Molecule(g.id));
+        }
+      });
+    }
+
+    // Refresh particle pool when composition changes drastically
+    function syncParticleDistribution() {
+      let targetCounts = {};
+      GASES.forEach(g => {
+        targetCounts[g.id] = Math.round(((currentComp[g.id] || 0) / 100) * MAX_PARTICLES);
+      });
+
+      let currentCounts = {};
+      GASES.forEach(g => currentCounts[g.id] = 0);
+      particles.forEach(p => currentCounts[p.type] = (currentCounts[p.type] || 0) + 1);
+
+      // Rebalance
+      GASES.forEach(g => {
+        const diff = targetCounts[g.id] - (currentCounts[g.id] || 0);
+        if (diff > 0) {
+          for (let i = 0; i < diff; i++) {
+            particles.push(new Molecule(g.id));
+          }
+        } else if (diff < 0) {
+          for (let i = 0; i < -diff; i++) {
+            const idx = particles.findIndex(p => p.type === g.id);
+            if (idx !== -1) particles.splice(idx, 1);
+          }
+        }
+      });
+    }
+
+    /* ==========================================================================
+       5. MAIN ANIMATION & DRAWING LOOP
+       ========================================================================== */
+    let frameCount = 0;
+
+    function simLoop() {
+      frameCount++;
+      if (frameCount % 30 === 0) {
+        syncParticleDistribution();
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (viewMode === 'molecular') {
+        renderMolecularView();
+      } else if (viewMode === 'planetary') {
+        renderPlanetaryView();
+      } else if (viewMode === 'structure') {
+        renderStructureView();
+      }
+
+      // Render shared overlay effects (Lightning, Explosion, Rain)
+      renderDynamicEffects();
+
+      requestAnimationFrame(simLoop);
+    }
+
+    /* VIEW 1: MOLECULAR DYNAMICS VIEW */
+    function renderMolecularView() {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Chamber Background Gradient based on temperature
+      const tempK = calcResults.surfaceTempK || 288;
+      const redTone = Math.min(60, Math.max(5, (tempK - 273) * 0.4));
+      const blueTone = Math.min(60, Math.max(5, (273 - tempK) * 0.4));
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+      bgGrad.addColorStop(0, `rgb(${redTone + 5}, 10, ${blueTone + 25})`);
+      bgGrad.addColorStop(1, `rgb(${redTone + 15}, 8, ${blueTone + 15})`);
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Draw Chamber Grid
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
+      ctx.lineWidth = 1;
+      const gridSize = 40;
+      for (let x = 0; x < w; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // UV Light Beams coming from top if UV enabled
+      if (uvEnabled) {
+        ctx.save();
+        const uvGrad = ctx.createLinearGradient(0, 0, 0, h * 0.45);
+        uvGrad.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
+        uvGrad.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+        ctx.fillStyle = uvGrad;
+        ctx.fillRect(0, 0, w, h * 0.45);
+
+        ctx.fillStyle = 'rgba(192, 132, 252, 0.6)';
+        ctx.font = '10px monospace';
+        ctx.fillText('☀️ 태양 자외선(UV) 입사 영역', 15, 60);
+        ctx.restore();
+      }
+
+      // Update and draw gas molecules
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      // Photochemical reaction in molecular view:
+      // If O2 in top half & UV enabled, occasionally produce O3 glow particle
+      if (uvEnabled && currentComp.O2 > 5 && Math.random() < 0.08) {
+        const o2Mol = particles.find(p => p.type === 'O2' && p.y < h * 0.35);
+        if (o2Mol) {
+          ctx.beginPath();
+          ctx.arc(o2Mol.x, o2Mol.y, o2Mol.radius * 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
+          ctx.fill();
+        }
+      }
+
+      // Draw Chamber Labels & Stats
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.font = '11px sans-serif';
+      ctx.fillText(`분자 입자 수: ${particles.length} EA  |  기압: ${(currentPressure).toFixed(2)} atm  |  중력 성층화 활성`, 15, h - 18);
+    }
+
+    /* VIEW 2: PLANETARY & SKY VIEW */
+    function renderPlanetaryView() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w * 0.5;
+      const cy = h * 0.62;
+      const planetR = Math.min(w, h) * 0.32;
+
+      // 1. Sky Background (Atmospheric Rayleigh Gradient)
+      const sky = calcResults.skyColorRGB || { r: 56, g: 189, b: 248 };
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, cy);
+      skyGrad.addColorStop(0, '#02040a');
+      skyGrad.addColorStop(0.4, `rgb(${Math.round(sky.r * 0.3)}, ${Math.round(sky.g * 0.3)}, ${Math.round(sky.b * 0.3)})`);
+      skyGrad.addColorStop(1, `rgb(${sky.r}, ${sky.g}, ${sky.b})`);
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Stars in deep space
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      for (let i = 0; i < 60; i++) {
+        const sx = (i * 97) % w;
+        const sy = (i * 53) % (cy - 40);
+        ctx.fillRect(sx, sy, 1.2, 1.2);
+      }
+
+      // 2. Sun Glow
+      const sunX = w * 0.78;
+      const sunY = h * 0.22;
+      const sunGrad = ctx.createRadialGradient(sunX, sunY, 5, sunX, sunY, 80);
+      sunGrad.addColorStop(0, '#ffffff');
+      sunGrad.addColorStop(0.2, '#fef08a');
+      sunGrad.addColorStop(0.8, 'rgba(251, 191, 36, 0.15)');
+      sunGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 80, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Planet Atmosphere Rim Glow
+      const atmoThickness = Math.min(45, (calcResults.scaleHeightKm || 8.5) * 2.2 * Math.sqrt(currentPressure));
+      const rimGrad = ctx.createRadialGradient(cx, cy, planetR - 2, cx, cy, planetR + atmoThickness);
+      rimGrad.addColorStop(0, `rgba(${sky.r}, ${sky.g}, ${sky.b}, 0.85)`);
+      rimGrad.addColorStop(0.6, `rgba(${sky.r}, ${sky.g}, ${sky.b}, 0.4)`);
+      rimGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = rimGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, planetR + atmoThickness, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Planet Sphere Surface
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, planetR, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Base terrain color based on habitability and gas
+      let surfColor1 = '#1e3a8a'; // Ocean blue
+      let surfColor2 = '#15803d'; // Vegetation green
+      if (calcResults.surfaceTempC > 100 || (currentComp.CO2 > 80 && currentPressure > 10)) {
+        // Scorched / Venusian basalt
+        surfColor1 = '#78350f'; surfColor2 = '#b45309';
+      } else if (calcResults.surfaceTempC < -20) {
+        // Ice world
+        surfColor1 = '#cbd5e1'; surfColor2 = '#94a3b8';
+      } else if (currentComp.CH4 > 10) {
+        // Titan hydrocarbon lakes
+        surfColor1 = '#451a03'; surfColor2 = '#9a3412';
+      } else if (currentComp.O2 < 1) {
+        // Archean barren iron rock
+        surfColor1 = '#57534e'; surfColor2 = '#78716c';
+      }
+
+      const planetGrad = ctx.createLinearGradient(cx - planetR, cy - planetR, cx + planetR, cy + planetR);
+      planetGrad.addColorStop(0, surfColor2);
+      planetGrad.addColorStop(0.6, surfColor1);
+      planetGrad.addColorStop(1, '#050711');
+      ctx.fillStyle = planetGrad;
+      ctx.fillRect(cx - planetR, cy - planetR, planetR * 2, planetR * 2);
+
+      // Cloud Cover Swirls (based on H2O %)
+      const cloudFrac = (currentComp.H2O || 0) / 100;
+      if (cloudFrac > 0.001) {
+        ctx.fillStyle = currentComp.SO2 > 2 ? 'rgba(254, 240, 138, 0.45)' : 'rgba(255, 255, 255, 0.4)';
+        for (let i = 0; i < 5; i++) {
+          ctx.beginPath();
+          const cloudY = cy - planetR * 0.6 + i * (planetR * 0.3);
+          ctx.ellipse(cx + Math.sin(frameCount * 0.01 + i) * 20, cloudY, planetR * 0.85 * cloudFrac * 12, 14, 0.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Planet shadow (spherical shading)
+      const shadowGrad = ctx.createRadialGradient(cx - planetR * 0.4, cy - planetR * 0.4, planetR * 0.2, cx, cy, planetR);
+      shadowGrad.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+      shadowGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.4)');
+      shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+      ctx.fillStyle = shadowGrad;
+      ctx.fillRect(cx - planetR, cy - planetR, planetR * 2, planetR * 2);
+
+      ctx.restore();
+
+      // Info badge
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(`🪐 거시 행성 외관 및 지표면 하늘 색상 (${sky.name})`, 18, 55);
+    }
+
+    /* VIEW 3: VERTICAL ATMOSPHERIC STRUCTURE */
+    function renderStructureView() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const leftPad = 80;
+      const rightPad = w - 40;
+      const bottom = h - 60;
+      const top = 60;
+      const plotH = bottom - top;
+
+      // Draw Layers bands
+      // Troposphere (0-12km), Stratosphere (12-50km), Mesosphere (50-85km), Thermosphere (85-150km)
+      const layers = [
+        { name: '대류권 (Troposphere 0~12km)', hStart: 0, hEnd: 0.2, color: 'rgba(56, 189, 248, 0.12)', desc: '기상 현상, 구름 및 강우' },
+        { name: '성층권 (Stratosphere 12~50km)', hStart: 0.2, hEnd: 0.5, color: 'rgba(168, 85, 247, 0.12)', desc: '오존층 존재 및 UV 흡수' },
+        { name: '중간권 (Mesosphere 50~85km)', hStart: 0.5, hEnd: 0.75, color: 'rgba(59, 130, 246, 0.08)', desc: '최저 기온 및 유성 소멸' },
+        { name: '열권 (Thermosphere 85km+)', hStart: 0.75, hEnd: 1.0, color: 'rgba(244, 63, 94, 0.08)', desc: '오로라 및 고에너지 흡수' }
+      ];
+
+      layers.forEach(l => {
+        const y1 = bottom - l.hEnd * plotH;
+        const y2 = bottom - l.hStart * plotH;
+        ctx.fillStyle = l.color;
+        ctx.fillRect(leftPad, y1, rightPad - leftPad, y2 - y1);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.strokeRect(leftPad, y1, rightPad - leftPad, y2 - y1);
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(l.name, leftPad + 12, y2 - 10);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9.5px sans-serif';
+        ctx.fillText(l.desc, leftPad + 12, y2 - 24);
+      });
+
+      // Draw Ozone Layer if present
+      if (calcResults.hasOzoneLayer) {
+        const o3Y1 = bottom - 0.42 * plotH;
+        const o3Y2 = bottom - 0.28 * plotH;
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.25)';
+        ctx.fillRect(leftPad, o3Y1, rightPad - leftPad, o3Y2 - o3Y1);
+        ctx.strokeStyle = '#06b6d4';
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(leftPad, o3Y1, rightPad - leftPad, o3Y2 - o3Y1);
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#67e8f9';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('🛡️ 오존층 (Ozone Layer - UV 차단막)', rightPad - 220, (o3Y1 + o3Y2) / 2 + 4);
+      }
+
+      // Draw Temperature Lapse Rate Curve
+      // Earth standard: Ground ~15C, Tropopause ~ -55C, Stratopause ~ 0C, Mesopause ~ -90C, Thermosphere ~ +500C
+      const surfC = calcResults.surfaceTempC || 15;
+      const tempPoints = [
+        { y: bottom, t: surfC },
+        { y: bottom - 0.2 * plotH, t: surfC - 65 },
+        { y: bottom - 0.5 * plotH, t: surfC - (calcResults.hasOzoneLayer ? 15 : 85) },
+        { y: bottom - 0.75 * plotH, t: surfC - 105 },
+        { y: top, t: surfC + 150 }
+      ];
+
+      // Map temperature to X coordinate
+      const tMin = -120, tMax = 120;
+      function mapT(t) {
+        const norm = (t - tMin) / (tMax - tMin);
+        return leftPad + 100 + norm * (rightPad - leftPad - 150);
+      }
+
+      // Draw Curve
+      ctx.beginPath();
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 2.5;
+      tempPoints.forEach((p, idx) => {
+        const px = mapT(p.t);
+        if (idx === 0) ctx.moveTo(px, p.y);
+        else ctx.lineTo(px, p.y);
+      });
+      ctx.stroke();
+
+      // Points and labels
+      tempPoints.forEach(p => {
+        const px = mapT(p.t);
+        ctx.beginPath();
+        ctx.arc(px, p.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#f43f5e';
+        ctx.fill();
+        ctx.fillStyle = '#fecdd3';
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText(`${p.t.toFixed(0)}°C`, px + 8, p.y + 3);
+      });
+
+      // Title & Legend
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('📊 고도별 대기권 수직 층위 및 기온 감률 곡선 (Lapse Rate)', leftPad, top - 20);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillText('― 붉은선: 고도별 대기 기온 변화선', rightPad - 180, top - 20);
+    }
+
+    /* DYNAMIC INTERACTIVE EFFECTS (Lightning, Explosions, Rain, Astronaut) */
+    function renderDynamicEffects() {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // 1. Lightning Discharge Effect
+      if (lightningFlash > 0) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningFlash * 0.45})`;
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw Jagged Lightning Bolt
+        ctx.beginPath();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 18;
+
+        let curX = w * 0.5 + (Math.random() - 0.5) * 80;
+        let curY = 20;
+        ctx.moveTo(curX, curY);
+        while (curY < h - 40) {
+          curX += (Math.random() - 0.5) * 45;
+          curY += Math.random() * 30 + 15;
+          ctx.lineTo(curX, curY);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        lightningFlash -= 0.08;
+      }
+
+      // 2. Combustion Explosion Effect
+      if (explosionEffect > 0) {
+        ctx.save();
+        const expX = w * 0.5;
+        const expY = h * 0.5;
+        const rad = (1 - explosionEffect) * 160 + 20;
+        const expGrad = ctx.createRadialGradient(expX, expY, 5, expX, expY, rad);
+        expGrad.addColorStop(0, `rgba(255, 255, 255, ${explosionEffect})`);
+        expGrad.addColorStop(0.3, `rgba(249, 115, 22, ${explosionEffect * 0.9})`);
+        expGrad.addColorStop(0.7, `rgba(239, 68, 68, ${explosionEffect * 0.6})`);
+        expGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = expGrad;
+        ctx.beginPath();
+        ctx.arc(expX, expY, rad, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        explosionEffect -= 0.035;
+      }
+
+      // 3. Rain / Acid Rain Particles
+      const h2oFrac = (currentComp.H2O || 0) / 100;
+      const so2Frac = (currentComp.SO2 || 0) / 100;
+      if (h2oFrac > 0.02 && calcResults.surfaceTempC > 0 && calcResults.surfaceTempC < 100) {
+        if (rainDrops.length < 50) {
+          rainDrops.push({
+            x: Math.random() * w,
+            y: Math.random() * h * 0.3,
+            len: Math.random() * 12 + 6,
+            speed: Math.random() * 7 + 8,
+            isAcid: so2Frac > 0.01
+          });
+        }
+      }
+
+      for (let i = rainDrops.length - 1; i >= 0; i--) {
+        const rd = rainDrops[i];
+        rd.y += rd.speed;
+        ctx.beginPath();
+        ctx.moveTo(rd.x, rd.y);
+        ctx.lineTo(rd.x, rd.y + rd.len);
+        ctx.strokeStyle = rd.isAcid ? '#eab308' : '#38bdf8';
+        ctx.lineWidth = rd.isAcid ? 1.8 : 1.2;
+        ctx.stroke();
+
+        if (rd.y > h - 10) {
+          rainDrops.splice(i, 1);
+        }
+      }
+
+      // 4. Organic Molecules synthesized from Miller-Urey experiment
+      for (let i = organicMolecules.length - 1; i >= 0; i--) {
+        const org = organicMolecules[i];
+        org.y += org.vy;
+        org.x += org.vx;
+        org.life -= 0.008;
+
+        ctx.save();
+        ctx.fillStyle = `rgba(52, 211, 153, ${org.life})`;
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(org.x, org.y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgba(255, 255, 255, ${org.life})`;
+        ctx.font = '9px monospace';
+        ctx.fillText(org.name, org.x + 6, org.y + 3);
+        ctx.restore();
+
+        if (org.life <= 0) organicMolecules.splice(i, 1);
+      }
+
+      // 5. Astronaut Survival Chamber Popup
+      if (astronautStatus && astronautStatus.timer > 0) {
+        astronautStatus.timer--;
+        renderAstronautHUD(w, h);
+      }
+    }
+
+    function renderAstronautHUD(w, h) {
+      ctx.save();
+      const bx = w * 0.5 - 140;
+      const by = 80;
+      const bw = 280;
+      const bh = 100;
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      ctx.strokeStyle = astronautStatus.alive ? '#10b981' : '#f43f5e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(astronautStatus.alive ? '🧑‍🚀 우주비행사 상태: 생존 중' : '☠️ 우주비행사 사망 판정', bx + 14, by + 24);
+
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = astronautStatus.alive ? '#a7f3d0' : '#fecdd3';
+      ctx.fillText(`원인: ${astronautStatus.cause}`, bx + 14, by + 46);
+      ctx.fillText(`체온: ${astronautStatus.bodyTemp} | 산소포화도: ${astronautStatus.spo2}`, bx + 14, by + 66);
+      ctx.fillText(`경과 시간: ${astronautStatus.seconds}초`, bx + 14, by + 86);
+      ctx.restore();
+    }
+
+    /* ==========================================================================
+       6. INTERACTIVE EXPERIMENT HANDLERS & WEB AUDIO SYNTHESIS
+       ========================================================================== */
+    // Web Audio Sound FX Synthesizer
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playThunderSound() {
+      try {
+        const actx = getAudioContext();
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(90, actx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, actx.currentTime + 0.6);
+        gain.gain.setValueAtTime(0.4, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + 0.65);
+      } catch (e) {}
+    }
+
+    function playExplosionSound() {
+      try {
+        const actx = getAudioContext();
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(140, actx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(20, actx.currentTime + 0.8);
+        gain.gain.setValueAtTime(0.5, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + 0.85);
+      } catch (e) {}
+    }
+
+    function triggerLightning() {
+      lightningFlash = 1.0;
+      playThunderSound();
+
+      // Check if Miller-Urey conditions met: Reducing atmosphere (CH4, NH3, H2O, H2 present, No O2)
+      const hasReducers = (currentComp.CH4 > 1 || currentComp.NH3 > 1 || currentComp.H2 > 1) && currentComp.H2O > 1;
+      const noO2 = (currentComp.O2 < 2);
+
+      if (hasReducers && noO2) {
+        showToast('⚡ 번개 방전 성공! 원시 기체에서 아미노산 전구체(글리신, 알라닌) 유기분자가 합성되었습니다!');
+        const compounds = ['Glycine (아미노산)', 'Alanine', 'HCN', 'Formaldehyde', 'Urea'];
+        for (let i = 0; i < 8; i++) {
+          organicMolecules.push({
+            x: canvas.width * 0.5 + (Math.random() - 0.5) * 120,
+            y: canvas.height * 0.5 + (Math.random() - 0.5) * 100,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
+            life: 1.0,
+            name: compounds[Math.floor(Math.random() * compounds.length)]
+          });
+        }
+      } else if (currentComp.O2 > 5) {
+        showToast('⚡ 번개 방전! 산소(O₂)가 오존(O₃) 및 질소산화물(NOx)로 광화학 변환되었습니다.');
+      } else {
+        showToast('⚡ 번개 방전 완료 (단순 대기 방전)');
+      }
+    }
+
+    function triggerCombustion() {
+      const pO2 = calcResults.pO2 || 0;
+      const pCH4 = calcResults.pCH4 || 0;
+      const pH2 = (currentComp.H2 / 100) * currentPressure;
+
+      if (pO2 >= 0.12 && (pCH4 > 0.04 || pH2 > 0.04)) {
+        // EXPLOSION!
+        explosionEffect = 1.0;
+        playExplosionSound();
+        showToast('💥 쾅! 가연성 가스(메탄/수소)와 산소가 만나 격렬한 연소 폭발을 일으켰습니다!');
+      } else if (pO2 >= 0.15) {
+        showToast('🔥 점화 성공: 산소가 충분하여 성냥불이 안정적으로 타오릅니다.');
+      } else {
+        showToast('💨 점화 실패: 산소 분압 부족으로 불꽃이 즉시 꺼집니다 (질식 대기).');
+      }
+    }
+
+    function triggerAstronaut() {
+      const hab = calcResults.habitability;
+      let alive = true;
+      let cause = '생체 신호 정상 안정';
+      let spo2 = '98%';
+      let bodyTemp = '36.5 °C';
+      let seconds = 300;
+
+      if (currentPressure < 0.063) {
+        alive = false;
+        cause = '암스트롱 한계 도달 (체액 비등 및 즉사)';
+        spo2 = '0%';
+        seconds = 9;
+      } else if (calcResults.pO2 < 0.08) {
+        alive = false;
+        cause = '극심한 저산소증 질식 (산소 결핍)';
+        spo2 = '15%';
+        seconds = 14;
+      } else if (calcResults.pSO2 > 0.005) {
+        alive = false;
+        cause = '황산가스 흡입에 의한 호흡기 전소';
+        spo2 = '0%';
+        seconds = 5;
+      } else if (calcResults.surfaceTempC > 70) {
+        alive = false;
+        cause = '초고온 열사병 및 단백질 응고';
+        bodyTemp = '44.0 °C';
+        seconds = 45;
+      } else if (calcResults.surfaceTempC < -40) {
+        alive = false;
+        cause = '극저온 동결 심정지';
+        bodyTemp = '27.0 °C';
+        seconds = 60;
+      }
+
+      astronautStatus = {
+        timer: 360, // frames (~6 seconds)
+        alive,
+        cause,
+        spo2,
+        bodyTemp,
+        seconds
+      };
+
+      if (alive) {
+        showToast('🧑‍🚀 우주비행사가 우주복 없이도 안전하게 호흡하며 지표면을 탐사합니다!');
+      } else {
+        showToast(`☠️ 우주비행사 생존 실패: ${cause}`);
+      }
+    }
+
+    // Start App
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
